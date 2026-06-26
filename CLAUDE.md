@@ -22,6 +22,9 @@ MCP Server     →  capture_learning, batch_capture, status
 | `learnlog service status` | 查看后台服务状态 |
 | `learnlog service restart` | 重启后台服务 |
 | `learnlog service logs` | 查看服务日志 |
+| `learnlog update <id> --energy 5` | 更新记录字段 |
+| `echo "..." \| learnlog update <id> --pipe` | 管道更新长文 |
+| `learnlog delete <id>` | 删除记录 |
 
 ## 目录结构
 

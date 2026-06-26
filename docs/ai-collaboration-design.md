@@ -40,9 +40,12 @@
 ┌─────────────────────────────────────────────────────────────┐
 │              FastAPI Backend (localhost:8002)                │
 │                                                             │
-│  POST /api/entries  ← 学习记录入库                            │
-│  GET  /api/entries  → 前端可视化                              │
-│  GET  /api/graph    → ECharts 知识图谱                        │
+│  POST   /api/entries       ← 学习记录入库                     │
+│  GET    /api/entries       → 前端可视化                       │
+│  GET    /api/entries/{id}  → 单条详情                         │
+│  PUT    /api/entries/{id}  → 部分更新（字段级）               │
+│  DELETE /api/entries/{id}  → 删除记录                         │
+│  GET    /api/graph         → ECharts 知识图谱                 │
 └─────────────────────────────────────────────────────────────┘
                          ▲
 ┌────────────────────────┴────────────────────────────────────┐
@@ -465,9 +468,47 @@ T+10min  用户: "继续讨论分布式场景下的幂等性"
 | **知识可追溯** | STAR 法则 + content_hash 去重 + timestamp 时间线，确保每个洞察有来源 |
 | **持久化运行** | launchd 管理前后端进程，开机自启、崩溃自动恢复，关闭 IDE/终端不受影响 |
 
+## 十、CLI 使用规范（避免数据质量问题）
+
+### 长文必须用管道
+
+shell 的 `argv` 对超长参数有隐形截断风险。**insight > 500 字必须用 `--pipe`**：
+
+```bash
+# ❌ 错误：2000 字塞进命令行参数，会被截断
+learnlog record "主题" "很长很长的 insight..."
+
+# ✅ 正确：用管道传入 stdin
+echo "很长很长的 insight..." | learnlog record "主题" --pipe
+echo "修正内容..." | learnlog update 42 --pipe
+```
+
+### Diagram 换行符
+
+shell 双引号中 `\n` 是字面量反斜杠-n，Mermaid 需要真正的换行符：
+
+```bash
+# ❌ 错误：\n 被存为字面量，Mermaid 收到一行字符串
+learnlog record "主题" "insight" --diagram "graph TD\n A-->B"
+
+# ✅ 正确：用 $'...' 让 bash 解析转义
+learnlog record "主题" "insight" --diagram $'graph TD\n  A-->B'
+
+# ✅ 或者用变量（已含真正换行）
+DIAGRAM="graph TD
+  A-->B"
+learnlog record "主题" "insight" --diagram "$DIAGRAM"
+```
+
+> CLI 内置防护：如果检测到 diagram 包含字面量 `\n` 而无真正换行，会自动转换并提示。
+
+### 更新 vs 覆盖
+
+`learnlog update` 是**部分更新**（PATCH 语义），只改传入的字段，其他字段保持不变。
+
 ---
 
-## 十、复现 AI 协作环境的步骤
+## 十一、复现 AI 协作环境的步骤
 
 1. **安装持久化服务**（推荐，一次配置永久生效）:
    ```bash
