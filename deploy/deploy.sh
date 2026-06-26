@@ -5,7 +5,7 @@
 set -e  # Exit on error
 
 TARGET_DIR="${1:-.}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "🚀 Learning Log System Deployment"
 echo "=================================="
