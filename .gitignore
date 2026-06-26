@@ -1,0 +1,43 @@
+# Learning Log System - Git Ignore
+
+# ── 敏感信息 ────────────────────
+claude.sh                     # API Key
+.env
+.env.local
+*.secret
+
+# ── 数据库 ──────────────────────
+data/*.db
+data/*.sqlite
+backend/data/*.db
+
+# ── Python ──────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# ── Node / Next.js ──────────────
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# ── 个人数据 ────────────────────
+batch_records.json            # 个人学习记录
+reports/
+backend/watch/processed/
+
+# ── IDE / OS ────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── MCP / Runtime ──────────────
+.claude/settings.local.json

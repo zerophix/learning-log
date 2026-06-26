@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "learning-log": {
+      "command": "python3",
+      "args": [
+        "ABSOLUTE_PATH_TO/backend/mcp_server.py"
+      ],
+      "env": {
+        "BACKEND_URL": "http://localhost:8002",
+        "AI_API_URL": "http://localhost:11434/api/generate",
+        "AI_MODEL": "qwen2.5"
+      }
+    }
+  }
+}

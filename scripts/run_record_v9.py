@@ -1,0 +1,25 @@
+import json
+import subprocess
+
+payload = {
+    "topic": "基于决策框架重构 Record Skill 的逻辑立法分析",
+    "insight": "**1. 核心结论 (Core Conclusion)**\n通过将 `ai-decision-framework.md` 中的 CIDED 决策流与 `record.md` 深度整合，我们构建了一套“零拉扯”的认知立法协议。该协议强制要求每次记录必须经过澄清、收集、生成、评估、交付五个阶段，并设定了 2000 字的深度红线，确保了知识沉淀的严谨性与完整性。\n\n**2. 领域场景案例 (Domain Scenario)**\n在大型分布式系统的架构演进中，每一次技术选型（如从单体转向微服务）都伴随着巨大的认知成本。如果缺乏结构化的记录，团队往往会陷入重复讨论的泥潭。本方案类似于金融领域的“交易审计日志”，它不仅记录了最终的决定（Result），还完整保留了当时的市场环境（Situation）、面临的挑战（Task）、权衡过程（Action）以及背后的第一性原理推导。这种“逻辑立法”确保了即使人员流动，核心决策逻辑依然可追溯、可复用。\n\n**3. 第一性原理分析 (First Principles Analysis)**\n*   **认知的熵减**：未经整理的灵感是高熵的碎片，而结构化的记录是低熵的晶体。通过强制六步分析，我们实际上是在执行一个“认知结晶”的过程。\n*   **交互的最小化**：人机协作的最高境界是“意图即结果”。通过消除中间的确认环节（零拉扯），我们将 AI 从“对话者”提升为“执行者”，极大地降低了用户的认知负荷。\n*   **深度的强制性**：2000 字的限制并非为了凑数，而是为了迫使 AI 挖掘表象之下的逻辑链条。只有当逻辑链条足够长时，洞察才具有穿透力。\n\n**4. 图示分析 (Visual Mapping)**\n\n```text\n┌──────────────┐       ┌──────────────────┐       ┌───────────────────┐\n│  用户输入     │       │  AI (Record v9)  │       │  数据库 (SQLite)   │\n│ (/record)    │       │                  │       │                   │\n└──────┬───────┘       └────────┬─────────┘       └─────────┬─────────┘\n       │                        │                           │\n       │ 1. 触发指令            │                           │\n       ├───────────────────────>│                           │\n       │                        │ 2. CIDED 决策流执行        │\n       │                        │ - Clarify: 锁定意图        │\n       │                        │ - Investigate: 保活/查标签  │\n       │                        │ - Generate: 2000字深度分析  │\n       │                        │ - Evaluate: 质量自检        │\n       │                        │ - Deliver: 构造 JSON       │\n       │                        ├──────────────────────────>│\n       │                        │             3. 幂等性校验 & 入库\n       │                        │<──────────────────────────┤\n       │ 4. 返回确认: 已归档    │                           │\n       │<───────────────────────────────────────────────────┤\n```\n\n**5. STAR 法则复盘 (STAR Protocol)**\n*   **S (情境)**：原有的 `record.md` 缺乏明确的决策逻辑支撑，且字数要求较低，导致记录深度不足，存在大量交互拉扯。\n*   **T (任务)**：结合 `ai-decision-framework.md` 重构 `record.md`，确立 2000 字深度标准，实现自动化、零交互的逻辑归档。\n*   **A (行动)**：\n    1. 提取 CIDED 五步决策流并将其植入 Skill 指令。\n    2. 设定 2000 字硬性指标，并定义六步深度分析结构。\n    3. 优化标签推断逻辑，实现从内容到分类的自动映射。\n    4. 编写 Python 辅助脚本处理复杂的 JSON 构造与终端调用。\n*   **R (结果)**：新版 `record.md` (v9.0) 具备了“逻辑立法者”的特征，能够独立、高质量地完成深度认知的持久化工作。\n\n**6. 反问与领域映射拓展 (Socratic Reflection & Domain Mapping)**\n*   **深度反问**：当 AI 被赋予“逻辑立法”的权力后，我们如何确保其生成的 2000 字内容不陷入“正确的废话”？是否需要引入“信息密度”作为新的评估维度？\n*   **领域映射**：这种“零拉扯”的执行模式可以完美映射到 **DevOps 的 CI/CD 流水线**中——代码提交（用户指令）触发自动构建、测试、部署（CIDED 流程），最终产出可用的制品（数据库记录），全程无需人工干预。",
+    "diagram": "graph TB\n    A[用户触发 /record] --> B{CIDED 决策流}\n    B --> C[Clarify: 意图锁定]\n    C --> D[Investigate: 环境保活 & 标签预检]\n    D --> E[Generate: 2000字六步深度分析]\n    E --> F[Evaluate: 质量自检 & 能量评级]\n    F --> G[Deliver: 构造 JSON 并入库]\n    G --> H[✅ 归档完成]\n    style A fill:#e1f5ff\n    style H fill:#90EE90\n    style E fill:#FFE4B5",
+    "code_snippet": "def execute_record_protocol(context):\n    # 1. 环境保活\n    home = os.environ.get('HOME', '/Users/mingxilv')\n    backend = f\"{home}/learn/s-pay-mall-ddd/.lingma/learning-log/backend\"\n    subprocess.run(f\"lsof -i :8002 | grep LISTEN || (cd {backend} && nohup python3 main.py > /tmp/ll.log 2>&1 &)\", shell=True)\n    \n    # 2. 内容生成 (模拟 AI 内部处理，确保 >= 2000 字)\n    insight_content = generate_deep_insight(context, min_words=2000)\n    \n    # 3. 标签推断与创建\n    tag_id = infer_tag(insight_content)\n    ensure_tag_exists(tag_id)\n    \n    # 4. 构造 Payload\n    payload = {\n        \"topic\": extract_topic(context),\n        \"insight\": insight_content,\n        \"diagram\": generate_mermaid_diagram(context),\n        \"code_snippet\": extract_full_code(context),\n        \"star_situation\": \"...\",\n        \"star_task\": \"...\",\n        \"star_action\": \"...\",\n        \"star_result\": \"...\",\n        \"topic_tag_id\": tag_id,\n        \"research_type\": \"deep-research\",\n        \"energy_level\": 5,\n        \"aha_moment\": True,\n        \"source\": \"record-skill-v9\"\n    }\n    \n    # 5. 入库\n    script = f\"{home}/learn/s-pay-mall-ddd/.lingma/learning-log/scripts/auto_record.py\"\n    subprocess.run([\"python3\", script, json.dumps(payload, ensure_ascii=False)])",
+    "star_situation": "原有的 record skill 缺乏决策框架支撑，交互冗余且深度不足",
+    "star_task": "结合 ai-decision-framework.md 重构 record.md，实现 2000 字深度逻辑立法",
+    "star_action": "内嵌 CIDED 流程，设定字数红线，优化标签推断，编写自动化入库脚本",
+    "star_result": "成功发布 record v9.0，实现了零拉扯、高深度的认知自动化归档",
+    "topic_tag_id": "cn.dolphinmind.learning.log.tag.discipline.cs.ai",
+    "project_tag_id": None,
+    "research_type": "deep-research",
+    "related_tag_ids": [],
+    "custom_tags": ["RecordSkill", "DecisionFramework", "LogicLegislation"],
+    "energy_level": 5,
+    "aha_moment": True,
+    "source": "record-skill-execution"
+}
+
+json_str = json.dumps(payload, ensure_ascii=False)
+script_path = "/Users/mingxilv/learn/s-pay-mall-ddd/.lingma/learning-log/scripts/auto_record.py"
+subprocess.run(["python3", script_path, json_str])
