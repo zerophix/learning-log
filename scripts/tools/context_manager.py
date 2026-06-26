@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 from typing import Optional, Dict, List
 
-CHECKPOINT_DIR = os.path.expanduser("~/.lingma/checkpoints")
+CHECKPOINT_DIR = os.path.expanduser("~/.learning-log/checkpoints")
 LATEST_CHECKPOINT = os.path.join(CHECKPOINT_DIR, "latest.json")
 HISTORY_DIR = os.path.join(CHECKPOINT_DIR, "history")
 

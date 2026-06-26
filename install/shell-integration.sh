@@ -1,6 +1,6 @@
 # ───────────────────────────────────────────────────
 # Learning Log Shell 集成
-# 在 ~/.zshrc 中添加: source ~/PycharmProjects/learning-log/access/shell-integration.sh
+# 在 ~/.zshrc 中添加: source ~/PycharmProjects/learning-log/install/shell-integration.sh
 # ───────────────────────────────────────────────────
 
 export LEARNLOG_PROJECT_DIR="$HOME/PycharmProjects/learning-log"

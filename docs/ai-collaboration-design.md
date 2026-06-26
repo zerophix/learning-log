@@ -271,7 +271,7 @@ MCP Server 定时任务 (每 30 分钟):
        │
 AI:  1. 保存断点 (context_manager.save_checkpoint)
       │   保存内容: last_topic, conversation_summary, pending_questions
-      │   存储位置: ~/.lingma/checkpoints/latest.json
+      │   存储位置: ~/.learning-log/checkpoints/latest.json
       │
       ├─ 2. 执行记录 (六步深度分析 → 入库)
       │
@@ -449,7 +449,7 @@ T+10min  用户: "继续讨论分布式场景下的幂等性"
 │  │   ├─ learning_entries: 结构化学习记录                     │
 │  │   └─ nl_commands: 自然语言命令历史                       │
 │  └─ 文件系统                                                │
-│      ├─ ~/.lingma/checkpoints/ (对话断点)                    │
+│      ├─ ~/.learning-log/checkpoints/ (对话断点)                    │
 │      └─ backend/watch/ (离线导入监听)                        │
 └────────────────────────────────────────────────────────────┘
 ```
