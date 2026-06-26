@@ -61,5 +61,5 @@ graph TD
 }
 
 json_str = json.dumps(data, ensure_ascii=False)
-script_path = "/Users/mingxilv/learn/s-pay-mall-ddd/.lingma/learning-log/scripts/auto_record.py"
+script_path = "~/PycharmProjects/learning-log/scripts/auto_record.py"
 subprocess.run([sys.executable, script_path, json_str])

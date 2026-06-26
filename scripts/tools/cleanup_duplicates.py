@@ -66,7 +66,7 @@ def cleanup_duplicates(db_path: str):
 if __name__ == "__main__":
     # 自动定位数据库路径
     home_dir = os.environ.get('HOME', '/Users/mingxilv')
-    db_path = f"{home_dir}/learn/s-pay-mall-ddd/.lingma/learning-log/data/learning-log.db"
+    db_path = f"{home_dir}/PycharmProjects/learning-log/data/learning-log.db"
     
     if os.path.exists(db_path):
         cleanup_duplicates(db_path)

@@ -13,7 +13,7 @@ from pathlib import Path
 DB_PATH = Path(__file__).parent / 'data' / 'learning-log.db'
 
 # Conversation directory to scan
-CONVERSATION_DIR = Path(__file__).parent.parent.parent.parent / '.lingma' / 'agents'
+# LEGACY: 此脚本为旧版对话扫描器，已被 MCP watch 目录取代
 
 def init_database():
     """Initialize database and table"""

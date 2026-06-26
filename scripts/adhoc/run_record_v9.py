@@ -21,5 +21,5 @@ payload = {
 }
 
 json_str = json.dumps(payload, ensure_ascii=False)
-script_path = "/Users/mingxilv/learn/s-pay-mall-ddd/.lingma/learning-log/scripts/auto_record.py"
+script_path = "~/PycharmProjects/learning-log/scripts/auto_record.py"
 subprocess.run(["python3", script_path, json_str])
