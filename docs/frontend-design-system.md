@@ -15,7 +15,7 @@
 | 架构图 | **Mermaid** | 10.9.0 | Markdown 内嵌流程图渲染 |
 | Markdown | **react-markdown** + remark-gfm + rehype-raw | 10.1.0 | 富文本洞察内容渲染 |
 | 代码高亮 | **react-syntax-highlighter** | 16.1.1 | 代码块语法高亮（vscDarkPlus 主题） |
-| 样式方案 | **纯内联 style + CSS 变量 + CSS 文件** | — | 无 CSS-in-JS，无 Tailwind |
+| 样式方案 | **纯内联 style + CSS 变量** | — | 无 CSS-in-JS，无 Tailwind，无独立 CSS 文件 |
 | 后端通信 | **fetch API** | 原生 | RESTful JSON → `http://localhost:8002` |
 
 ### 完整的 `package.json`
@@ -366,37 +366,71 @@ transition: all 0.3s;   /* 较慢（图表预览展开） */
 
 ## 十、组件体系与目录结构
 
+### 10.0 文件组织规范（强制）
+
+| 规则 | 说明 |
+|------|------|
+| **禁止根目录散落文件** | 所有 `.js`/`.ts` 文件必须归属到对应目录，根目录仅保留配置文件（`next.config.js`、`tsconfig.json`、`package.json`） |
+| **禁止 emoji 图标** | 所有图标使用统一 SVG 图标组件（`components/ui/Icons.tsx`），禁止在代码中使用 emoji 作为图标 |
+| **禁止死代码** | 未被任何文件引用的组件、数据文件、CSS 文件必须及时删除 |
+| **禁止空目录** | 不存在的功能不留空目录占位 |
+| **样式方案** | 组件使用内联 `style={{}}`，全局样式仅在 `app/globals.css` 中定义 CSS 变量和重置 |
+| **第三方库通过 npm** | 禁止手动放置 `.min.js` 文件（如 `echarts.min.js`），统一通过 `package.json` 管理 |
+
+### 10.1 目录结构
+
 ```
 frontend/
-├── app/                          # Next.js App Router 页面
-│   ├── layout.tsx                # 根布局（metadata: "Learning Log - Architecture View"）
-│   ├── page.tsx                  # 首页 — 主时间线视图（约 800 行，核心页面）
-│   ├── mvp/page.tsx              # MVP 审核管理页
-│   └── globals.css               # 全局 CSS 变量 + 重置 + 滚动条 + Markdown 样式
-├── components/                   # 可复用组件（共 11 个）
-│   ├── Header.tsx                # 顶部胶囊导航栏
-│   ├── Sidebar.tsx               # 浮动侧边栏（知识透视）
-│   ├── Footer.tsx                # 底栏提示
-│   ├── FeedCard.tsx              # Feed 流卡片
-│   ├── FeedFilterBar.tsx         # Feed 过滤器栏
-│   ├── TimelineView.tsx          # 时间线视图（含左右交错布局）
-│   ├── GraphView.tsx             # ECharts 力导向知识图谱
-│   ├── DataTable.tsx             # 数据表格视图
-│   ├── DetailModal.tsx           # 详情弹窗（Markdown + Mermaid 渲染）
-│   ├── DetailPanel.tsx           # 详情面板（侧边详情）
-│   └── EntryForm.tsx             # 新建学习记录表单弹窗
-├── styles/
-│   └── layout.css                # 所有布局组件的 CSS 类
-├── lib/
-│   └── navigation.ts             # 导航状态管理
-├── data/
-│   └── tech-stack.ts             # 技术栈种子数据（48 个节点 + 边关系）
+├── app/                              # Next.js App Router 页面路由
+│   ├── layout.tsx                    # 根布局（metadata + globals.css 引入）
+│   ├── page.tsx                      # 首页 — 时间线视图（~185 行）
+│   ├── globals.css                   # 全局 CSS 变量 + 重置 + 滚动条 + Markdown 样式
+│   ├── graph/
+│   │   └── page.tsx                  # 知识图谱页（ECharts 力导向图）
+│   └── feed/
+│       └── page.tsx                  # Feed 卡片流页（网格布局）
+├── components/                       # 可复用组件（按职责分组）
+│   ├── ui/                           # 通用 UI 原子组件
+│   │   ├── Icons.tsx                 # 统一 SVG 图标库（14 个图标组件）
+│   │   ├── Tag.tsx                   # 标签徽章
+│   │   ├── CopyButton.tsx           # 复制按钮
+│   │   └── SearchBar.tsx            # 搜索栏
+│   ├── entry/                        # 条目相关组件
+│   │   ├── EntryCard.tsx            # 时间线卡片
+│   │   ├── EntryDetail.tsx          # 详情弹窗（含编辑/删除）
+│   │   ├── EntryForm.tsx            # 新建/编辑表单
+│   │   └── InsightPreview.tsx       # 洞察预览文本
+│   ├── layout/                       # 布局组件
+│   │   ├── Navigation.tsx           # 页面导航栏
+│   │   ├── FilterBar.tsx            # 研究类型过滤器
+│   │   └── StatsPanel.tsx           # 统计面板
+│   ├── renderers/                    # 渲染器
+│   │   ├── MarkdownRenderer.tsx     # Markdown 渲染（含代码高亮）
+│   │   └── MermaidDiagram.tsx       # Mermaid 图表渲染
+│   └── timeline/
+│       └── TimelineView.tsx         # 时间线视图（日期分组 + 交错布局）
+├── lib/                              # 工具库
+│   ├── api.ts                        # 统一 API 客户端（所有 fetch 调用）
+│   └── constants.ts                  # 常量定义（研究类型等）
 ├── types/
-│   └── index.ts                  # TypeScript 类型定义
+│   └── index.ts                      # 统一 TypeScript 类型定义
 ├── package.json
 ├── tsconfig.json
 └── next.config.js
 ```
+
+### 10.2 目录职责说明
+
+| 目录 | 职责 | 文件数量上限 |
+|------|------|------------|
+| `app/` | 页面路由入口，仅做组件组装和数据获取 | 每路由 1 个 `page.tsx` |
+| `components/ui/` | 通用原子组件，无业务逻辑 | ≤ 10 |
+| `components/entry/` | 条目 CRUD 相关组件 | ≤ 8 |
+| `components/layout/` | 页面级布局/导航/统计组件 | ≤ 6 |
+| `components/renderers/` | 内容渲染引擎（Markdown/Mermaid） | ≤ 4 |
+| `components/timeline/` | 时间线专用视图 | ≤ 2 |
+| `lib/` | 纯函数工具，无 React 依赖 | ≤ 5 |
+| `types/` | TypeScript 类型/接口定义 | 1（`index.ts`） |
 
 ---
 
@@ -406,48 +440,33 @@ frontend/
 
 | 路由 | 组件 | 视图 | 说明 |
 |------|------|------|------|
-| `/` | `app/page.tsx` | 时间线 Feed | 按日期分组、无限滚动、研究类型筛选 |
-| `/mvp` | `app/mvp/page.tsx` | 审核管理 | 待审核/已通过/已拒绝表格 + 审核弹窗 |
+| `/` | `app/page.tsx` | 时间线 | 按日期分组、无限滚动、搜索过滤、研究类型筛选、CRUD |
+| `/graph` | `app/graph/page.tsx` | 知识图谱 | ECharts 力导向图，可拖拽/缩放 |
+| `/feed` | `app/feed/page.tsx` | Feed 流 | 卡片网格布局，研究类型过滤 |
 
 ### 11.2 首页 (`/`) 布局结构
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  Header（顶部胶囊）                                    │
-│  [📚 学习日志] [时间线]  [●深度研究] [●主题探索] [●领域映射] │
+│  Navigation（顶部导航栏）                               │
+│  [📖 学习日志]          [时间线] [图谱] [Feed]          │
+├──────────────────────────────────────────────────────┤
+│  SearchBar（搜索框）                                    │
+│  StatsPanel（统计卡片：entries / tags / links）         │
+│  FilterBar（研究类型过滤）                                │
 ├──────────────────────────────────────────────────────┤
 │                                                      │
-│  Main（可滚动时间线区域）                               │
+│  TimelineView（可滚动时间线）                            │
 │  ┌────────────────────────────────────────────────┐  │
 │  │  2026/4/8                        3 条记录 ─────│  │
-│  │  ├─ 14:30 ●───────── [卡片]                    │  │
-│  │  ├─ 11:20 ●───────── [卡片]                    │  │
-│  │  └─ 09:15 ●───────── [卡片]                    │  │
-│  │                                                │  │
-│  │  2026/4/7                        5 条记录 ─────│  │
-│  │  ├─ 22:10 ●───────── [卡片]                    │  │
-│  │  └─ ...                                       │  │
+│  │  ├─ 14:30 ●───────── [EntryCard]                │  │
+│  │  ├─ 11:20 ●───────── [EntryCard]                │  │
+│  │  └─ 09:15 ●───────── [EntryCard]                │  │
 │  └────────────────────────────────────────────────┘  │
 │                                                      │
-│  DetailModal (点击卡片弹出，全屏遮罩)                    │
+│  EntryDetail (点击卡片弹出详情弹窗)                      │
+│  EntryForm (新建/编辑表单弹窗)                           │
 └──────────────────────────────────────────────────────┘
-```
-
-### 11.3 图谱视图布局（在 `app/page.tsx` 中通过 Sidebar/GraphView/DataTable 组合）
-
-```
-┌──────────┬──────────────────────────────────────────┐
-│ Sidebar  │                                          │
-│ (浮动)   │         GraphView (ECharts)              │
-│ 240px    │         或 DataTable                      │
-│          │                                          │
-│ 节点类型 │                                          │
-│ 精力过滤 │                                          │
-│ 项目筛选 │                                          │
-│ 统计信息 │                                          │
-└──────────┴──────────────────────────────────────────┘
-│              Footer (底栏提示)                       │
-└─────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -984,15 +1003,16 @@ module.exports = nextConfig;
 
 1. **初始化项目**: `npx create-next-app@14.1.0 frontend --typescript`
 2. **安装依赖**: 复制上方 package.json 的 dependencies 并 `npm install`
-3. **创建目录**: `components/`, `styles/`, `lib/`, `types/`, `data/`（均在 frontend 根目录下，无 `src/`）
-4. **CSS 文件**: 先写 `globals.css`（变量 + 重置），再写 `layout.css`（布局类）
+3. **创建目录**: `components/ui/`, `components/entry/`, `components/layout/`, `components/renderers/`, `components/timeline/`, `lib/`, `types/`, `app/graph/`, `app/feed/`
+4. **全局样式**: 编写 `app/globals.css`（CSS 变量 + 重置 + 滚动条 + Markdown 样式）
 5. **类型定义**: 创建 `types/index.ts`
-6. **布局组件**: Header → Sidebar → Footer
-7. **内容组件**: FeedCard → FeedFilterBar → TimelineView → DetailModal
-8. **数据组件**: GraphView → DataTable → DetailPanel
-9. **表单组件**: EntryForm
-10. **页面组装**: `app/layout.tsx` → `app/page.tsx` → `app/mvp/page.tsx`
-11. **启动**: `npm run dev -p 3000`，确保后端在 `localhost:8002` 运行
+6. **常量与 API**: 创建 `lib/constants.ts` + `lib/api.ts`
+7. **图标库**: 创建 `components/ui/Icons.tsx`（统一 SVG 图标）
+8. **UI 原子组件**: Tag → CopyButton → SearchBar → InsightPreview
+9. **渲染器**: MarkdownRenderer → MermaidDiagram
+10. **业务组件**: EntryCard → EntryDetail → EntryForm → FilterBar → StatsPanel → Navigation → TimelineView
+11. **页面组装**: `app/layout.tsx` → `app/page.tsx` → `app/graph/page.tsx` → `app/feed/page.tsx`
+12. **启动**: `npm run dev -p 3000`，确保后端在 `localhost:8002` 运行
 
 ---
 
@@ -1001,9 +1021,13 @@ module.exports = nextConfig;
 | 原则 | 实现方式 |
 |------|---------|
 | **暗色主题统一** | 所有背景从 `#0b1120` 到 `#1E293B` 深色梯度，无任何亮色模式 |
-| **毛玻璃层次** | 浮动元素（侧边栏、导航、弹窗）统一 backdrop-filter |
+| **毛玻璃层次** | 浮动元素（导航、弹窗）统一 backdrop-filter |
 | **语义色编码** | 4 种 accent 色对应不同维度（蓝=交互、绿=高能/通过、黄=中能/研究、紫=架构） |
-| **内联样式优先** | 所有组件使用 inline `style={{}}`，CSS 文件仅定义可复用的布局类和全局令牌 |
+| **内联样式优先** | 所有组件使用 inline `style={{}}`，全局 CSS 仅定义变量和重置 |
 | **无外部 UI 库** | 不依赖 Material UI / Ant Design / Chakra 等，纯手工组件 |
-| **TypeScript 全量覆盖** | 所有组件 Props 有显式接口定义 |
+| **TypeScript 全量覆盖** | 所有组件 Props 有显式接口定义，禁止 `any` |
 | **客户端渲染** | `'use client'` 指令在所有交互组件中显式声明 |
+| **SVG 图标统一** | 所有图标使用 `components/ui/Icons.tsx` 管理，禁止 emoji |
+| **文件职责单一** | 每个组件文件 ≤ 200 行，仅负责单一职责 |
+| **无死代码** | 未引用的文件/目录及时清理，根目录不放散落文件 |
+| **依赖 npm 管理** | 第三方库统一通过 `package.json`，禁止手动放 `.min.js` |
