@@ -114,6 +114,10 @@ export default function GraphPage() {
             <IconHourglass size={32} />
             正在加载图谱数据...
           </div>
+        ) : graphData.nodes.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
+            暂无知识图谱数据
+          </div>
         ) : (
           <ErrorBoundary fallback={<div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>图谱渲染异常<button onClick={() => window.location.reload()} style={{ marginLeft: '12px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer' }}>重试</button></div>}>
             <div ref={chartRef} style={{ width: '100%', height: '100%' }} />

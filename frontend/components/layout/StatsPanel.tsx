@@ -17,7 +17,23 @@ export default function StatsPanel() {
   }, []);
 
   if (error) return <div style={{ padding: '12px 0', fontSize: '12px', color: '#ef4444' }}>{error}</div>;
-  if (!stats) return null;
+  if (!stats) return (
+    <>
+      <style>{`@keyframes skeletonPulse { 0%,100% { opacity: 0.3 } 50% { opacity: 0.6 } }`}</style>
+      <div style={{ display: 'flex', gap: '16px', padding: '12px 0' }}>
+        {[1,2,3].map(i => (
+          <div key={i} style={{
+            flex: 1,
+            background: 'var(--border-color)',
+            borderRadius: '8px',
+            height: '64px',
+            animation: 'skeletonPulse 1.5s ease-in-out infinite',
+            animationDelay: `${i * 0.15}s`
+          }} />
+        ))}
+      </div>
+    </>
+  );
 
   return (
     <div style={{
