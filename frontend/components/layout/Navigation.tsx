@@ -13,18 +13,18 @@ export default function Navigation() {
       icon: <IconBook size={16} color="currentColor" />
     },
     { 
-      path: '/graph', 
-      label: '图谱',
-      icon: <IconNetwork size={16} color="currentColor" />
-    },
-    { 
       path: '/feed', 
       label: 'Feed',
       icon: <IconList size={16} color="currentColor" />
     },
     { 
+      path: '/graph', 
+      label: '图谱',
+      icon: <IconNetwork size={16} color="currentColor" />
+    },
+    { 
       path: '/tags', 
-      label: '标签',
+      label: '语义聚类',
       icon: <IconTag size={16} color="currentColor" />
     }
   ];
