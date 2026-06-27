@@ -1,7 +1,8 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import EntryTags from '@/components/entry/EntryTags';
 import EntryDetailContent from '@/components/entry/EntryDetailContent';
+import EntryNeighbors from '@/components/entry/EntryNeighbors';
 import EntryForm from '@/components/entry/EntryForm';
 import DeleteConfirm from '@/components/entry/DeleteConfirm';
 import { api } from '@/lib/api';
@@ -11,29 +12,50 @@ import type { Entry, LearningEntryCreate } from '@/types';
 export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entry | null; onClose: () => void; onRefresh?: () => void }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [navigateId, setNavigateId] = useState<number | null>(null);
+  const [navigateEntry, setNavigateEntry] = useState<Entry | null>(null);
   const { addToast } = useToast();
+
+  const displayEntry = navigateEntry || entry;
+
   const markdownContent = useMemo(() => {
-    if (!entry) return '';
+    if (!displayEntry) return '';
     let md = '';
-    if (entry.summary) md += `### 摘要\n\n${entry.summary}\n\n`;
-    md += `### 核心洞察\n\n${entry.insight}\n\n`;
-    if (entry.star_situation) md += `### 情境\n\n${entry.star_situation}\n\n`;
-    if (entry.star_task) md += `### 任务\n\n${entry.star_task}\n\n`;
-    if (entry.star_action) md += `### 行动\n\n${entry.star_action}\n\n`;
-    if (entry.star_result) md += `### 结果\n\n${entry.star_result}\n\n`;
-    if (entry.code_snippet) md += `### 代码实现\n\n\`\`\`json\n${entry.code_snippet}\n\`\`\`\n\n`;
+    if (displayEntry.summary) md += `### 摘要\n\n${displayEntry.summary}\n\n`;
+    md += `### 核心洞察\n\n${displayEntry.insight}\n\n`;
+    if (displayEntry.star_situation) md += `### 情境\n\n${displayEntry.star_situation}\n\n`;
+    if (displayEntry.star_task) md += `### 任务\n\n${displayEntry.star_task}\n\n`;
+    if (displayEntry.star_action) md += `### 行动\n\n${displayEntry.star_action}\n\n`;
+    if (displayEntry.star_result) md += `### 结果\n\n${displayEntry.star_result}\n\n`;
+    if (displayEntry.code_snippet) md += `### 代码实现\n\n\`\`\`json\n${displayEntry.code_snippet}\n\`\`\`\n\n`;
     return md;
+  }, [displayEntry]);
+
+  const navigateTo = useCallback(async (id: number) => {
+    if (id === entry?.id) { setNavigateEntry(null); setNavigateId(null); return; }
+    setNavigateId(id);
+    try {
+      const e = await api.entries.get(id);
+      setNavigateEntry(e);
+    } catch {
+      setNavigateEntry(null);
+    }
   }, [entry]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (navigateEntry) { setNavigateEntry(null); setNavigateId(null); }
+        else onClose();
+      }
+    };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, navigateEntry]);
 
   if (!entry) return null;
 
-  const dateTime = new Date(entry.timestamp);
+  const dateTime = new Date((navigateEntry || entry).timestamp);
   const dateStr = `${dateTime.getFullYear()}/${dateTime.getMonth()+1}/${dateTime.getDate()}`;
   const timeStr = `${String(dateTime.getHours()).padStart(2,'0')}:${String(dateTime.getMinutes()).padStart(2,'0')}:${String(dateTime.getSeconds()).padStart(2,'0')}`;
 
@@ -64,6 +86,9 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
     }
   };
 
+  const activeEntry = displayEntry;
+  if (!activeEntry) return null;
+
   if (isEditing && entry) {
     return <EntryForm entry={entry} onSave={handleUpdate} onCancel={() => setIsEditing(false)} />;
   }
@@ -72,7 +97,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={entry.topic}
+        aria-label={activeEntry.topic}
         style={{
           position: 'fixed',
           inset: 0,
@@ -84,7 +109,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
           zIndex: 1000,
           padding: '20px'
         }}
-        onClick={onClose}
+        onClick={() => { if (navigateEntry) { setNavigateEntry(null); setNavigateId(null); } else onClose(); }}
       >
         <div
           style={{
@@ -111,12 +136,17 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
           flexShrink: 0
         }}>
           <div>
-            <EntryTags entry={entry} showEnergy />
+            <EntryTags entry={activeEntry} showEnergy />
             <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: '1.3' }}>
-              {entry.topic}
+              {activeEntry.topic}
             </h2>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-              {dateStr} {timeStr}
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', display: 'flex', gap: '12px' }}>
+              <span>{dateStr} {timeStr}</span>
+              {navigateEntry && (
+                <button onClick={(e) => { e.preventDefault(); setNavigateEntry(null); setNavigateId(null); }} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '12px', padding: 0 }}>
+                  ← 返回 {entry.topic.slice(0, 24)}
+                </button>
+              )}
             </div>
           </div>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -155,7 +185,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
                 删除
               </button>
               <button
-                onClick={onClose}
+                onClick={() => { if (navigateEntry) { setNavigateEntry(null); setNavigateId(null); } else onClose(); }}
                 aria-label="关闭"
                 style={{
                   background: 'var(--border-color)',
@@ -180,7 +210,10 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
             </div>
         </div>
 
-        <EntryDetailContent entry={entry} markdownContent={markdownContent} />
+        <div style={{ overflow: 'auto', flex: 1 }}>
+          <EntryDetailContent entry={activeEntry} markdownContent={markdownContent} />
+          <EntryNeighbors entryId={activeEntry.id} onNavigate={navigateTo} />
+        </div>
 
         {showDeleteConfirm && (
           <DeleteConfirm onConfirm={handleDelete} onCancel={() => setShowDeleteConfirm(false)} />

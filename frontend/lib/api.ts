@@ -51,6 +51,9 @@ export const api = {
     get: (id: number, signal?: AbortSignal) =>
       fetchWithTimeout(`${BASE_URL}/api/entries/${id}`, 10000, signal).then(r => checkResponse<Entry>(r)),
 
+    neighbors: (id: number, signal?: AbortSignal) =>
+      fetchWithTimeout(`${BASE_URL}/api/entries/${id}/neighbors`, 15000, signal).then(r => checkResponse<any>(r)),
+
     create: (data: LearningEntryCreate) =>
       fetch(`${BASE_URL}/api/entries`, {
         method: 'POST',
@@ -125,7 +128,7 @@ export const api = {
     if (params?.w_temporal != null) query.set('w_temporal', String(params.w_temporal));
     if (params?.top_k != null) query.set('top_k', String(params.top_k));
     const qs = query.toString();
-    return fetchWithTimeout(`${BASE_URL}/api/graph/attention${qs ? '?' + qs : ''}`, 30000, signal).then(r => checkResponse<AttentionGraph>(r));
+    return fetchWithTimeout(`${BASE_URL}/api/graph/attention${qs ? '?' + qs : ''}`, 60000, signal).then(r => checkResponse<AttentionGraph>(r));
   },
 
   stats: (signal?: AbortSignal) =>

@@ -32,6 +32,10 @@ _conn.close()
 
 app = FastAPI(title="Learning Log API", version="2.0.0")
 
+@app.on_event("startup")
+def warmup():
+    _get_embedding_model()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -573,15 +577,28 @@ def _entries_for_attention(conn) -> list[dict]:
         entries.append(e)
     return entries
 
+_EMBEDDING_MODEL = None
+
+def _get_embedding_model():
+    global _EMBEDDING_MODEL
+    if _EMBEDDING_MODEL is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            _EMBEDDING_MODEL = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+        except Exception:
+            _EMBEDDING_MODEL = None
+    return _EMBEDDING_MODEL
+
 def _compute_embeddings(texts: list[str]):
-    try:
-        from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-        return model.encode(texts, show_progress_bar=False)
-    except Exception as e:
-        from sklearn.feature_extraction.text import TfidfVectorizer
-        vec = TfidfVectorizer(max_features=500, stop_words=list(ENGLISH_STOP | STOP_WORDS))
-        return vec.fit_transform(texts).toarray()
+    model = _get_embedding_model()
+    if model is not None:
+        try:
+            return model.encode(texts, show_progress_bar=False)
+        except Exception:
+            pass
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    vec = TfidfVectorizer(max_features=500, stop_words=list(ENGLISH_STOP | STOP_WORDS))
+    return vec.fit_transform(texts).toarray()
 
 def _to_python(obj):
     """Recursively convert numpy types to native Python types."""
@@ -727,6 +744,149 @@ def get_attention_graph(
         "entry_count": n,
     }
     return _to_python(result)
+
+@app.get("/api/entries/{entry_id}/neighbors")
+def get_entry_neighbors(
+    entry_id: int,
+    w_content: float = 0.6,
+    w_tags: float = 0.25,
+    w_temporal: float = 0.15,
+):
+    """Return 3-head neighbors for a given entry — content / tags / temporal"""
+    conn = get_db()
+    entries = _entries_for_attention(conn)
+    conn.close()
+
+    target = None
+    for e in entries:
+        if e['id'] == entry_id:
+            target = e
+            break
+    if not target:
+        raise HTTPException(status_code=404, detail="Entry not found")
+
+    # Parce timestamps
+    def _parse(ts):
+        try:
+            return datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
+
+    # ── Content similarity ──
+    texts = [f"{e['topic']} {e.get('summary', '') or ''} {e.get('insight', '') or ''}"[:2000] for e in entries]
+    try:
+        emb = _compute_embeddings(texts)
+        from sklearn.metrics.pairwise import cosine_similarity
+        all_sim = cosine_similarity(emb)
+    except Exception:
+        all_sim = [[0.0]*len(entries) for _ in range(len(entries))]
+
+    target_idx = next(i for i, e in enumerate(entries) if e['id'] == entry_id)
+    target_ts = _parse(target['timestamp'])
+    target_tags = set(target.get('custom_tags') or [])
+    all_ts = [_parse(e['timestamp']) for e in entries]
+    min_ts = min(all_ts)
+    max_diff = (max(all_ts) - min_ts).days or 1
+
+    content_list = []
+    tags_list = []
+    temporal_list = []
+
+    for i, e in enumerate(entries):
+        if e['id'] == entry_id:
+            continue
+
+        # Content score
+        c_score = float(all_sim[target_idx][i])
+
+        # Tags Jaccard
+        other_tags = set(e.get('custom_tags') or [])
+        if target_tags and other_tags:
+            t_score = len(target_tags & other_tags) / len(target_tags | other_tags)
+        else:
+            t_score = 0.0
+
+        # Temporal proximity
+        diff_days = abs((target_ts - all_ts[i]).days)
+        tmp_score = 1.0 - (diff_days / max_diff)
+
+        # Combined
+        combined = w_content * c_score + w_tags * t_score + w_temporal * tmp_score
+
+        # Reason labels
+        reasons = []
+        if c_score > 0.3:
+            reasons.append(f"语义相似 {c_score*100:.0f}%")
+        if t_score > 0:
+            shared = target_tags & other_tags
+            reasons.append(f"共享标签 {'·'.join(list(shared)[:3])}")
+        if tmp_score > 0.8:
+            reasons.append("邻近时间")
+        if not reasons:
+            if combined > 0.1:
+                reasons.append(f"综合关联 {(combined*100):.0f}%")
+
+        item = {
+            "id": e['id'],
+            "topic": e['topic'],
+            "energy": e['energy_level'],
+            "timestamp": e['timestamp'],
+            "score": round(combined, 4),
+            "breakdown": {
+                "content": round(c_score, 4),
+                "tags": round(t_score, 4),
+                "temporal": round(tmp_score, 4),
+            },
+            "reasons": reasons,
+        }
+
+        if c_score > 0.15:
+            content_list.append(item)
+        if t_score > 0:
+            tags_list.append(item)
+        temporal_list.append(item)
+
+    content_list.sort(key=lambda x: -x['breakdown']['content'])
+    tags_list.sort(key=lambda x: -x['breakdown']['tags'])
+    temporal_list.sort(key=lambda x: -x['breakdown']['temporal'])
+
+    # Energy context: entries just before/after with notable energy shifts
+    energy_list = []
+    sorted_by_time = sorted(entries, key=lambda e: _parse(e['timestamp']))
+    for i, e in enumerate(sorted_by_time):
+        if e['id'] == entry_id:
+            if i > 0:
+                prev = sorted_by_time[i-1]
+                if abs(prev['energy_level'] - target['energy_level']) >= 2:
+                    direction = "↑" if target['energy_level'] > prev['energy_level'] else "↓"
+                    energy_list.append({
+                        "direction": direction,
+                        "type": f"能量{direction}{target['energy_level'] - prev['energy_level']}",
+                        "from_entry": {"id": prev['id'], "topic": prev['topic']},
+                        "to_entry": {"id": target['id'], "topic": target['topic']},
+                    })
+            if i < len(sorted_by_time) - 1:
+                nxt = sorted_by_time[i+1]
+                if abs(nxt['energy_level'] - target['energy_level']) >= 2:
+                    direction = "↑" if nxt['energy_level'] > target['energy_level'] else "↓"
+                    energy_list.append({
+                        "direction": direction,
+                        "type": f"能量{direction}{nxt['energy_level'] - target['energy_level']}",
+                        "from_entry": {"id": target['id'], "topic": target['topic']},
+                        "to_entry": {"id": nxt['id'], "topic": nxt['topic']},
+                    })
+            break
+
+    return _to_python({
+        "entry_id": entry_id,
+        "topic": target['topic'],
+        "neighbors": {
+            "content": content_list[:5],
+            "temporal": temporal_list[:5],
+            "tags": tags_list[:5],
+            "energy_context": energy_list,
+        }
+    })
 
 @app.get("/api/stats")
 def get_stats():
