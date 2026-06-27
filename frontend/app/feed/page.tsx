@@ -29,8 +29,13 @@ export default function FeedPage() {
   return (
     <div style={{ height: '100vh', background: '#0F172A', color: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
       <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '17px', fontWeight: 600 }}>📰 Feed 流</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="4" width="18" height="4" rx="1" stroke="#38bdf8" strokeWidth="1.5"/>
+            <rect x="3" y="10" width="18" height="4" rx="1" stroke="#38bdf8" strokeWidth="1.5"/>
+            <rect x="3" y="16" width="18" height="4" rx="1" stroke="#38bdf8" strokeWidth="1.5"/>
+          </svg>
+          <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: '#F8FAFC' }}>Feed 流</span>
         </div>
         <Navigation />
       </header>

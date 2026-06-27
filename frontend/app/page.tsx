@@ -114,8 +114,16 @@ export default function Home() {
       {/* 顶部导航栏 */}
       <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px' }}>📚 学习日志</span>
-          <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', background: '#1E293B', color: '#64748b' }}>时间线</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 19.5V4.5C4 3.67157 4.67157 3 5.5 3H18.5C19.3284 3 20 3.67157 20 4.5V19.5C20 20.3284 19.3284 21 18.5 21H5.5C4.67157 21 4 20.3284 4 19.5Z" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 7H16" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M8 11H14" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M8 15H12" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: '#F8FAFC' }}>学习日志</span>
+          </div>
+          <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', fontWeight: 500, border: '1px solid rgba(56, 189, 248, 0.2)' }}>时间线</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <SearchBar onSearch={setSearchQuery} />
