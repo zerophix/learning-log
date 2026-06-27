@@ -395,7 +395,8 @@ frontend/
 │   │   ├── Tag.tsx                   # 标签徽章
 │   │   ├── CopyButton.tsx           # 复制按钮
 │   │   ├── DeleteConfirm.tsx        # 删除确认弹窗
-│   │   └── SearchBar.tsx            # 搜索栏
+│   │   ├── SearchBar.tsx            # 搜索栏
+│   │   └── ErrorBoundary.tsx        # 错误边界组件（P6.3 新增）
 │   ├── entry/                        # 条目相关组件
 │   │   ├── EntryCard.tsx            # 时间线卡片
 │   │   ├── EntryDetail.tsx          # 详情弹窗（含编辑/删除）

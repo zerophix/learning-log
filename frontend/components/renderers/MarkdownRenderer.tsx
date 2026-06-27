@@ -2,7 +2,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import CopyButton from '@/components/ui/CopyButton';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import CodeBlock from '@/components/renderers/CodeBlock';
 
 export default function MarkdownRenderer({ content }: { content: string }) {
@@ -13,6 +13,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
       color: 'var(--text-secondary)',
       fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif'
     }}>
+      <ErrorBoundary fallback={<div style={{ padding: '20px', color: 'var(--text-muted)', fontSize: '13px' }}>内容渲染异常，请检查 Markdown 语法</div>}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
@@ -159,6 +160,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
           }
         }}
       >{content}</ReactMarkdown>
+      </ErrorBoundary>
     </div>
   );
 }

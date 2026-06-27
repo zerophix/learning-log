@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 import Navigation from '@/components/layout/Navigation';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { IconNetwork, IconHourglass } from '@/components/ui/Icons';
 import type { GraphData } from '@/types';
 
@@ -117,7 +118,9 @@ export default function GraphPage() {
             正在加载图谱数据...
           </div>
         ) : (
-          <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
+          <ErrorBoundary fallback={<div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>图谱渲染异常<button onClick={() => window.location.reload()} style={{ marginLeft: '12px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer' }}>重试</button></div>}>
+            <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
+          </ErrorBoundary>
         )}
       </main>
     </div>
