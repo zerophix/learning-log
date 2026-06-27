@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { IconBook, IconNetwork, IconList } from '@/components/ui/Icons';
+import { IconBook, IconNetwork, IconList, IconTag } from '@/components/ui/Icons';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -21,6 +21,11 @@ export default function Navigation() {
       path: '/feed', 
       label: 'Feed',
       icon: <IconList size={16} color="currentColor" />
+    },
+    { 
+      path: '/tags', 
+      label: '标签',
+      icon: <IconTag size={16} color="currentColor" />
     }
   ];
 

@@ -1,6 +1,6 @@
 """
 Learning Log API Server
-FastAPI backend with tag management system
+FastAPI backend with auto-growing tag system + attention graph
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,10 +10,25 @@ import re
 import sqlite3
 import json
 import hashlib
+import uuid
 from datetime import datetime, date, timedelta
+from collections import Counter
 from db import DB_PATH, init_db
 
+try:
+    import jieba
+    import jieba.posseg as pseg
+except ImportError:
+    jieba = None
+    pseg = None
+
 init_db()
+
+# Soft-delete pre-seeded tags — they were seed data, not user-grown
+_conn = sqlite3.connect(DB_PATH)
+_conn.execute("UPDATE tags SET is_active = 0 WHERE is_auto = 0 AND is_active = 1")
+_conn.commit()
+_conn.close()
 
 app = FastAPI(title="Learning Log API", version="2.0.0")
 
@@ -108,6 +123,122 @@ def _extract_summary(insight: str, max_chars: int = 200) -> str:
         if total >= max_chars:
             break
     return ' '.join(parts)[:max_chars].rstrip(' ,;.')
+
+# --- Auto Tag Extraction ---
+
+STOP_WORDS = {
+    '的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', 
+    '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着',
+    '没有', '看', '好', '自己', '这', '他', '她', '它', '们', '那', '里',
+    '对', '与', '及', '但', '而', '或', '因为', '所以', '如果', '虽然',
+    '可以', '这个', '那个', '哪些', '什么', '怎么', '如何', '为', '从',
+    '被', '把', '让', '给', '向', '用', '通过', '进行', '使用', '实现',
+    '需要', '能够', '应该', '可能', '已经', '正在', '还是', '就是', '不是',
+    '方式', '方法', '过程', '情况', '部分', '相关', '主要', '基本',
+    '一个', '这个', '那个', '这些', '那些', '非常', '比较', '一些', '很多', '这样',
+}
+
+ENGLISH_STOP = {
+    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might',
+    'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+    'from', 'as', 'into', 'through', 'during', 'before', 'after', 'above',
+    'below', 'this', 'that', 'these', 'those', 'it', 'its', 'they', 'them',
+    'we', 'you', 'he', 'she', 'not', 'no', 'can', 'all', 'each', 'every',
+    'both', 'few', 'more', 'most', 'some', 'any', 'such', 'only', 'own',
+    'same', 'so', 'than', 'too', 'very', 'just', 'because', 'while',
+    'about', 'between', 'under', 'over', 'back', 'then', 'there', 'here',
+    'where', 'which', 'who', 'whom', 'what', 'when', 'why', 'how',
+    'get', 'got', 'make', 'made', 'take', 'took', 'use', 'used', 'using',
+    'like', 'based', 'also', 'well', 'first', 'new', 'one', 'two',
+}
+
+def _clean_for_extraction(text: str) -> str:
+    text = re.sub(r'```[\s\S]*?```', '', text)
+    text = re.sub(r'```', '', text)
+    text = re.sub(r'!\[.*?\]\(.*?\)', '', text)
+    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+    text = re.sub(r'#{1,6}\s+', '', text)
+    text = re.sub(r'[*_~`]', '', text)
+    text = re.sub(r'[—\-–·•→⇒,.;:!?。，；：！？、""''（）()【】\[\]{}《》<>/\\|]', ' ', text)
+    text = re.sub(r'\d+\.\s*', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
+
+def auto_extract_tags(text: str, max_tags: int = 10) -> list[str]:
+    if jieba is None:
+        return []
+    
+    cleaned = _clean_for_extraction(text)
+    
+    # Chinese words via jieba POS
+    chinese_tags = []
+    for word, flag in pseg.cut(cleaned):
+        # Keep nouns, verb-nouns, proper nouns, adjectives (as topic descriptors)
+        if flag[0] in ('n', 'v', 'a', 'x') and len(word) >= 2:
+            if word.lower() not in STOP_WORDS:
+                chinese_tags.append(word)
+    
+    # English technical terms: 3+ chars, title-cased or uppercase
+    eng_words = re.findall(r'\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*\b', cleaned)
+    eng_upper = re.findall(r'\b[A-Z]{2,}\b', cleaned)
+    eng_lower = [w for w in re.findall(r'\b[a-z]{3,}\b', cleaned.lower()) if w not in ENGLISH_STOP]
+    
+    # Filter: remove single-character terms, count frequencies
+    c_freq = Counter(chinese_tags)
+    e_freq = Counter(eng_words) + Counter(eng_upper) + Counter(eng_lower)
+    
+    # Merge: prefer Chinese (keep top 8), then English (keep top 4)
+    top_c = [w for w, _ in c_freq.most_common(8)]
+    top_e = [w for w, _ in e_freq.most_common(4)]
+    
+    # Deduplicate (e.g., "Virtual DOM" could also be in jieba output)
+    seen = set()
+    result = []
+    for w in top_c + top_e:
+        key = w.lower().strip()
+        if key and key not in seen:
+            seen.add(key)
+            result.append(w.strip())
+    return result[:max_tags]
+
+def slugify_tag(name: str) -> str:
+    s = name.lower().strip()
+    s = re.sub(r'[^a-z0-9\u4e00-\u9fff]+', '-', s)
+    s = s.strip('-')
+    return f'auto.{s}' if s else f'auto.{uuid.uuid4().hex[:8]}'
+
+def ensure_tags(conn, tag_names: list[str]) -> list[str]:
+    cursor = conn.cursor()
+    seen_names = set()
+    tag_ids = []
+    for name in tag_names:
+        name = name.strip()
+        if not name or name.lower() in seen_names:
+            continue
+        seen_names.add(name.lower())
+        cursor.execute("SELECT tag_id, usage_count FROM tags WHERE tag_name = ?", (name,))
+        row = cursor.fetchone()
+        if row:
+            tag_id = row['tag_id']
+            cursor.execute("UPDATE tags SET usage_count = usage_count + 1 WHERE tag_id = ?", (tag_id,))
+        else:
+            tag_id = slugify_tag(name)
+            # Ensure unique tag_id (handle slug collisions like 'Claude Code' vs 'claude-code')
+            cursor.execute("SELECT 1 FROM tags WHERE tag_id = ?", (tag_id,))
+            if cursor.fetchone():
+                for i in range(1, 100):
+                    candidate = f'{tag_id}-{i}'
+                    cursor.execute("SELECT 1 FROM tags WHERE tag_id = ?", (candidate,))
+                    if not cursor.fetchone():
+                        tag_id = candidate
+                        break
+            cursor.execute('''
+                INSERT INTO tags (tag_id, tag_name, tag_category, is_active, is_auto, usage_count)
+                VALUES (?, ?, 'auto', 1, 1, 1)
+            ''', (tag_id, name))
+        tag_ids.append(tag_id)
+    return tag_ids
 
 def get_week_dates(year: int, week: int) -> tuple[date, date]:
     """Return (monday, sunday) for %W week number (Monday start)."""
@@ -234,33 +365,22 @@ def list_tag_links(source_tag_id: Optional[str] = None):
 
 @app.post("/api/entries")
 def create_entry(entry: LearningEntryCreate):
-    """Create a new learning entry with multi-dimensional tag references"""
+    """Create a new learning entry — auto-extracts tags from content"""
     conn = get_db()
     cursor = conn.cursor()
     
-    # Validate tags exist
-    if entry.topic_tag_id:
-        cursor.execute("SELECT tag_id FROM tags WHERE tag_id = ?", (entry.topic_tag_id,))
-        if not cursor.fetchone():
-            conn.close()
-            raise HTTPException(status_code=400, detail=f"Topic tag not found: {entry.topic_tag_id}")
+    # Auto-extract tags from content
+    extract_text = f"{entry.topic} {entry.summary or ''} {entry.insight}"
+    auto_names = auto_extract_tags(extract_text)
     
-    if entry.project_tag_id:
-        cursor.execute("SELECT tag_id FROM tags WHERE tag_id = ?", (entry.project_tag_id,))
-        if not cursor.fetchone():
-            conn.close()
-            raise HTTPException(status_code=400, detail=f"Project tag not found: {entry.project_tag_id}")
+    # Merge with user-supplied custom_tags
+    all_tags = list(dict.fromkeys(entry.custom_tags + auto_names))
+    auto_ids = ensure_tags(conn, all_tags)
     
     session_id = datetime.now().strftime('%Y%m%d_%H%M%S')
     content_hash = hashlib.sha256(entry.insight.encode('utf-8')).hexdigest()
     
     try:
-        # 幂等性校验：检查 topic + tag 是否已存在
-        cursor.execute('SELECT id FROM learning_entries WHERE topic = ? AND topic_tag_id = ? LIMIT 1', (entry.topic, entry.topic_tag_id))
-        if cursor.fetchone():
-            return {"message": "Entry already exists (deduplicated)", "status": "skipped"}
-
-        # 显式获取当前系统时间，确保时间线由后端统一控制
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         cursor.execute('''
@@ -283,8 +403,8 @@ def create_entry(entry: LearningEntryCreate):
             entry.topic_tag_id,
             entry.project_tag_id,
             entry.research_type,
-            json.dumps(entry.related_tag_ids),
-            json.dumps(entry.custom_tags),
+            json.dumps(auto_ids),
+            json.dumps(all_tags),
             entry.analogy,
             entry.transfer_pattern,
             entry.energy_level,
@@ -296,7 +416,7 @@ def create_entry(entry: LearningEntryCreate):
         ))
         
         conn.commit()
-        return {"id": cursor.lastrowid, "message": "Entry created", "session_id": session_id}
+        return {"id": cursor.lastrowid, "message": "Entry created", "session_id": session_id, "tags_added": len(auto_ids)}
     
     except sqlite3.IntegrityError as e:
         conn.rollback()
@@ -389,47 +509,224 @@ def get_entries_by_week(year: int, week: int, limit: int = 50):
     }
 
 
+@app.post("/api/tags/backfill")
+def backfill_tags():
+    """Re-extract tags from all existing entries (for migration)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM learning_entries ORDER BY id")
+    rows = cursor.fetchall()
+    
+    count = 0
+    for row in rows:
+        e = row_to_dict(row)
+        extract_text = f"{e['topic']} {e.get('summary', '') or ''} {e.get('insight', '') or ''}"
+        auto_names = auto_extract_tags(extract_text)
+        existing_custom = json.loads(e.get('custom_tags', '[]')) if isinstance(e.get('custom_tags'), str) else (e.get('custom_tags') or [])
+        all_tags = list(dict.fromkeys(existing_custom + auto_names))
+        auto_ids = ensure_tags(conn, all_tags)
+        cursor.execute(
+            "UPDATE learning_entries SET related_tag_ids = ?, custom_tags = ? WHERE id = ?",
+            (json.dumps(auto_ids), json.dumps(all_tags), e['id'])
+        )
+        count += 1
+    conn.commit()
+    conn.close()
+    return {"message": f"Backfilled {count} entries"}
+
 @app.get("/api/graph")
 def get_graph_data():
-    """Get graph data for ECharts (nodes + links) with new hierarchy level
-    
-    新的层级结构：
-    - 第一层：学科领域（discipline，如计算机科学、数学、物理等）
-    - 第二层：科目/技术栈（subject，如Java生态、Python生态等）
-    - 第三层：学习主题（topic，如Spring Boot、JVM等）
-    - 第四层：学习记录（学习记录表）
-    
-    研究类型（小题深研/专题探索/领域映射）是学习记录的标签维度，不是图谱节点
-    """
+    """Legacy tag-based graph"""
     conn = get_db()
     cursor = conn.cursor()
     
-    # Get nodes (tags) with new level calculation
     cursor.execute("""
-        SELECT 
-            tag_id as id, 
-            tag_name as name, 
-            tag_category as category, 
-            energy_level as value,
-            parent_tag_id,
-            CASE 
-                WHEN tag_category = 'discipline' AND parent_tag_id IS NULL THEN 1
-                WHEN tag_category = 'subject' THEN 2
-                WHEN tag_category = 'topic' THEN 3
-                WHEN tag_category = 'research-type' THEN 0  -- 研究类型不显示在图谱中
-                ELSE 2
-            END as level
-        FROM tags 
-        WHERE is_active = 1 AND tag_category != 'research-type'
+        SELECT tag_id as id, tag_name as name, tag_category as category, usage_count as value
+        FROM tags WHERE is_active = 1 AND is_auto = 1
+        ORDER BY usage_count DESC
     """)
     nodes = [row_to_dict(row) for row in cursor.fetchall()]
     
-    # Get links
-    cursor.execute("SELECT source_tag_id as source, target_tag_id as target, link_type as label FROM tag_links")
+    cursor.execute("""
+        SELECT source_tag_id as source, target_tag_id as target, link_type as label
+        FROM tag_links
+    """)
     links = [row_to_dict(row) for row in cursor.fetchall()]
     
     conn.close()
     return {"nodes": nodes, "links": links}
+
+# --- Attention Graph (自生长图谱) ---
+
+def _entries_for_attention(conn) -> list[dict]:
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, topic, insight, summary, energy_level, aha_moment, 
+               related_tag_ids, custom_tags, timestamp
+        FROM learning_entries ORDER BY id
+    """)
+    entries = []
+    for row in cursor.fetchall():
+        e = row_to_dict(row)
+        e['related_tag_ids'] = json.loads(e['related_tag_ids']) if e['related_tag_ids'] else []
+        e['custom_tags'] = json.loads(e['custom_tags']) if e['custom_tags'] else []
+        entries.append(e)
+    return entries
+
+def _compute_embeddings(texts: list[str]):
+    try:
+        from sentence_transformers import SentenceTransformer
+        model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+        return model.encode(texts, show_progress_bar=False)
+    except Exception as e:
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        vec = TfidfVectorizer(max_features=500, stop_words=list(ENGLISH_STOP | STOP_WORDS))
+        return vec.fit_transform(texts).toarray()
+
+def _to_python(obj):
+    """Recursively convert numpy types to native Python types."""
+    import numpy as np
+    if isinstance(obj, np.floating):
+        return float(obj)
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, list):
+        return [_to_python(v) for v in obj]
+    if isinstance(obj, dict):
+        return {k: _to_python(v) for k, v in obj.items()}
+    return obj
+
+@app.get("/api/graph/attention")
+def get_attention_graph(
+    w_content: float = 0.6,
+    w_tags: float = 0.25,
+    w_temporal: float = 0.15,
+    top_k: int = 5,
+):
+    """3-head attention graph — nodes = entries, edges = weighted similarity"""
+    conn = get_db()
+    entries = _entries_for_attention(conn)
+    conn.close()
+    
+    if len(entries) < 2:
+        return {"nodes": [], "edges": [], "clusters": [], "weights": {"content": w_content, "tags": w_tags, "temporal": w_temporal}}
+    
+    n = len(entries)
+    
+    # ── Head 1: Content similarity ──
+    texts = [f"{e['topic']} {e.get('summary', '') or ''} {e.get('insight', '') or ''}"[:2000] for e in entries]
+    try:
+        emb = _compute_embeddings(texts)
+        content_sim = _cosine_sim_matrix(emb)
+    except Exception:
+        content_sim = [[0.0]*n for _ in range(n)]
+    
+    # ── Head 2: Custom tags Jaccard ──
+    tag_sets = [set(e.get('custom_tags') or []) for e in entries]
+    tag_sim = [[0.0]*n for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            a, b = tag_sets[i], tag_sets[j]
+            if not a or not b:
+                tag_sim[i][j] = 0.0
+            else:
+                union = a | b
+                tag_sim[i][j] = len(a & b) / len(union) if union else 0.0
+    
+    # ── Head 3: Temporal proximity ──
+    timestamps = []
+    for e in entries:
+        try:
+            ts = datetime.strptime(e['timestamp'], '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            ts = datetime.strptime(e['timestamp'], '%Y-%m-%dT%H:%M:%S')
+        timestamps.append(ts)
+    
+    min_ts = min(timestamps)
+    max_diff = (max(timestamps) - min_ts).days or 1
+    temporal_sim = [[0.0]*n for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            diff_days = abs((timestamps[i] - timestamps[j]).days)
+            temporal_sim[i][j] = 1.0 - (diff_days / max_diff)
+    
+    # ── Combine: Attention matrix ──
+    attn = [[0.0]*n for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            attn[i][j] = w_content * content_sim[i][j] + w_tags * tag_sim[i][j] + w_temporal * temporal_sim[i][j]
+    
+    # ── Cluster (k-means on content embeddings) ──
+    from sklearn.cluster import KMeans
+    n_clusters = min(5, max(2, n // 6))
+    try:
+        clusters = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto').fit_predict(emb)
+    except Exception:
+        clusters = [0] * n
+    
+    # ── Build edges: top_k per entry ──
+    edge_set = set()
+    edges = []
+    for i in range(n):
+        sims = [(j, attn[i][j]) for j in range(n) if j != i]
+        sims.sort(key=lambda x: -x[1])
+        for j, w in sims[:top_k]:
+            if w > 0.05:
+                key = (min(i, j), max(i, j))
+                if key not in edge_set:
+                    edge_set.add(key)
+                    edges.append({
+                        "source": entries[i]['id'],
+                        "target": entries[j]['id'],
+                        "weight": round(w, 4),
+                        "heads": {
+                            "content": round(content_sim[i][j], 4),
+                            "tags": round(tag_sim[i][j], 4),
+                            "temporal": round(temporal_sim[i][j], 4),
+                        }
+                    })
+    
+    # ── Cluster names (nearest entry to centroid) ──
+    cluster_names = {}
+    for cid in range(n_clusters):
+        indices = [idx for idx, c in enumerate(clusters) if c == cid]
+        if indices:
+            cluster_names[cid] = entries[indices[0]]['topic']
+    
+    # ── Build nodes ──
+    degree = Counter()
+    for e in edges:
+        degree[e['source']] += 1
+        degree[e['target']] += 1
+    max_deg = max(degree.values()) if degree else 1
+    
+    nodes = []
+    for i, e in enumerate(entries):
+        nodes.append({
+            "id": e['id'],
+            "topic": e['topic'],
+            "summary": (e.get('summary') or '')[:100],
+            "energy": e['energy_level'],
+            "aha": bool(e['aha_moment']),
+            "cluster": int(clusters[i]),
+            "cluster_name": cluster_names.get(int(clusters[i]), ''),
+            "timestamp": e['timestamp'],
+            "degree": degree.get(e['id'], 0),
+            "tag_count": len(e.get('custom_tags') or []),
+        })
+    
+    edges.sort(key=lambda x: -x['weight'])
+    
+    result = {
+        "nodes": nodes,
+        "edges": edges,
+        "clusters": [cluster_names.get(i, f"Cluster {i}") for i in range(n_clusters)],
+        "weights": {"content": w_content, "tags": w_tags, "temporal": w_temporal},
+        "entry_count": n,
+    }
+    return _to_python(result)
 
 @app.get("/api/stats")
 def get_stats():
@@ -498,31 +795,45 @@ class LearningEntryUpdate(BaseModel):
 
 @app.put("/api/entries/{entry_id}")
 def update_entry(entry_id: int, entry: LearningEntryUpdate):
-    """Update a learning entry (partial update — only provided fields are changed)"""
+    """Update a learning entry — re-extracts tags if content changes"""
     conn = get_db()
     cursor = conn.cursor()
 
-    # Check exists
-    cursor.execute("SELECT id FROM learning_entries WHERE id = ?", (entry_id,))
-    if not cursor.fetchone():
+    cursor.execute("SELECT * FROM learning_entries WHERE id = ?", (entry_id,))
+    existing = cursor.fetchone()
+    if not existing:
         conn.close()
         raise HTTPException(status_code=404, detail="Entry not found")
 
-    # Build SET clause from non-None fields
+    existing = row_to_dict(existing)
+
     updates = entry.model_dump(exclude_none=True)
     if not updates:
         conn.close()
         return {"message": "Nothing to update", "id": entry_id}
 
-    # JSON-serialize list fields
-    if 'related_tag_ids' in updates and updates['related_tag_ids'] is not None:
-        updates['related_tag_ids'] = json.dumps(updates['related_tag_ids'])
-    if 'custom_tags' in updates and updates['custom_tags'] is not None:
-        updates['custom_tags'] = json.dumps(updates['custom_tags'])
-
-    # Update content_hash if insight changed
-    if 'insight' in updates:
-        updates['content_hash'] = hashlib.sha256(updates['insight'].encode('utf-8')).hexdigest()
+    # If content fields changed, re-extract tags
+    if any(k in updates for k in ('topic', 'insight', 'summary')):
+        topic = updates.get('topic', existing['topic'])
+        summary = updates.get('summary', existing.get('summary', ''))
+        insight = updates.get('insight', existing['insight'])
+        extract_text = f"{topic} {summary or ''} {insight}"
+        auto_names = auto_extract_tags(extract_text)
+        
+        existing_custom = json.loads(existing.get('custom_tags', '[]')) if isinstance(existing.get('custom_tags'), str) else (existing.get('custom_tags') or [])
+        all_tags = list(dict.fromkeys(existing_custom + auto_names))
+        auto_ids = ensure_tags(conn, all_tags)
+        
+        updates['related_tag_ids'] = json.dumps(auto_ids)
+        updates['custom_tags'] = json.dumps(all_tags)
+        updates['content_hash'] = hashlib.sha256(insight.encode('utf-8')).hexdigest()
+    else:
+        if 'related_tag_ids' in updates:
+            updates['related_tag_ids'] = json.dumps(updates['related_tag_ids'])
+        if 'custom_tags' in updates:
+            updates['custom_tags'] = json.dumps(updates['custom_tags'])
+        if 'insight' in updates:
+            updates['content_hash'] = hashlib.sha256(updates['insight'].encode('utf-8')).hexdigest()
 
     set_clause = ", ".join(f"{k} = ?" for k in updates)
     values = list(updates.values())
@@ -678,6 +989,42 @@ def get_entries_by_project(project_id: str, research_type: Optional[str] = None)
     
     conn.close()
     return entries
+
+@app.get("/api/tags/cloud")
+def get_tag_cloud(min_usage: int = 1):
+    """Tag cloud: auto-grown tags ordered by usage_count"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT tag_id, tag_name, usage_count, created_at
+        FROM tags
+        WHERE is_auto = 1 AND is_active = 1 AND usage_count >= ?
+        ORDER BY usage_count DESC, tag_name ASC
+    ''', (min_usage,))
+    tags = [row_to_dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return tags
+
+@app.get("/api/tags/auto")
+def list_auto_tags(prefix: str = ''):
+    """Auto-complete: search auto-grown tags by prefix"""
+    conn = get_db()
+    cursor = conn.cursor()
+    if prefix:
+        cursor.execute('''
+            SELECT tag_id, tag_name, usage_count
+            FROM tags WHERE is_auto = 1 AND is_active = 1 AND tag_name LIKE ?
+            ORDER BY usage_count DESC LIMIT 20
+        ''', (f'{prefix}%',))
+    else:
+        cursor.execute('''
+            SELECT tag_id, tag_name, usage_count
+            FROM tags WHERE is_auto = 1 AND is_active = 1
+            ORDER BY usage_count DESC LIMIT 50
+        ''',)
+    tags = [row_to_dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return tags
 
 @app.get("/api/tags/{tag_id}/entries")
 def get_entries_by_tag(tag_id: str, research_type: str = None):

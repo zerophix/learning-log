@@ -101,6 +101,47 @@ export interface GraphData {
   edges: GraphEdge[];
 }
 
+// --- Auto Tag 类型 ---
+
+export interface AutoTag {
+  tag_id: string;
+  tag_name: string;
+  usage_count: number;
+  created_at: string;
+}
+
+export interface AttentionNode {
+  id: number;
+  topic: string;
+  summary: string;
+  energy: number;
+  aha: boolean;
+  cluster: number;
+  cluster_name: string;
+  timestamp: string;
+  degree: number;
+  tag_count: number;
+}
+
+export interface AttentionEdge {
+  source: number;
+  target: number;
+  weight: number;
+  heads: {
+    content: number;
+    tags: number;
+    temporal: number;
+  };
+}
+
+export interface AttentionGraph {
+  nodes: AttentionNode[];
+  edges: AttentionEdge[];
+  clusters: string[];
+  weights: { content: number; tags: number; temporal: number };
+  entry_count: number;
+}
+
 // --- Stats 类型 ---
 
 export interface Stats {

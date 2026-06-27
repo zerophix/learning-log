@@ -126,10 +126,17 @@ def init_db():
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_nl_commands_intent ON nl_commands(intent_category)')
     
     # ── Migration: 为已有数据库添加新字段 ──
-    try:
-        cursor.execute("ALTER TABLE learning_entries ADD COLUMN summary TEXT")
-    except sqlite3.OperationalError:
-        pass
+    for col in ['summary']:
+        try:
+            cursor.execute(f"ALTER TABLE learning_entries ADD COLUMN {col} TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+    for col in ['usage_count', 'is_auto']:
+        try:
+            cursor.execute(f"ALTER TABLE tags ADD COLUMN {col} {'INTEGER DEFAULT 0' if col == 'usage_count' else 'BOOLEAN DEFAULT 0'}")
+        except sqlite3.OperationalError:
+            pass
 
     conn.commit()
     conn.close()

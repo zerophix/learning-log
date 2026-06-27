@@ -16,6 +16,8 @@ import type {
   Stats,
   WeekInfo,
   WeekResponse,
+  AutoTag,
+  AttentionGraph,
 } from '@/types';
 
 export function fetchWithTimeout(url: string, timeout = 10000, signal?: AbortSignal): Promise<Response> {
@@ -94,6 +96,12 @@ export const api = {
     tree: (signal?: AbortSignal) =>
       fetchWithTimeout(`${BASE_URL}/api/tags/tree`, 10000, signal).then(r => checkResponse<TagNode[]>(r)),
 
+    cloud: (signal?: AbortSignal) =>
+      fetchWithTimeout(`${BASE_URL}/api/tags/cloud`, 10000, signal).then(r => checkResponse<AutoTag[]>(r)),
+
+    autoComplete: (prefix: string, signal?: AbortSignal) =>
+      fetchWithTimeout(`${BASE_URL}/api/tags/auto?prefix=${encodeURIComponent(prefix)}`, 10000, signal).then(r => checkResponse<AutoTag[]>(r)),
+
     entries: (tagId: string, researchType?: string, signal?: AbortSignal) => {
       const qs = researchType ? `?research_type=${researchType}` : '';
       return fetchWithTimeout(`${BASE_URL}/api/tags/${tagId}/entries${qs}`, 10000, signal).then(r => checkResponse<Entry[]>(r));
@@ -109,6 +117,16 @@ export const api = {
 
   graph: (signal?: AbortSignal) =>
     fetchWithTimeout(`${BASE_URL}/api/graph`, 10000, signal).then(r => checkResponse<GraphData>(r)),
+
+  attention: (params?: { w_content?: number; w_tags?: number; w_temporal?: number; top_k?: number }, signal?: AbortSignal) => {
+    const query = new URLSearchParams();
+    if (params?.w_content != null) query.set('w_content', String(params.w_content));
+    if (params?.w_tags != null) query.set('w_tags', String(params.w_tags));
+    if (params?.w_temporal != null) query.set('w_temporal', String(params.w_temporal));
+    if (params?.top_k != null) query.set('top_k', String(params.top_k));
+    const qs = query.toString();
+    return fetchWithTimeout(`${BASE_URL}/api/graph/attention${qs ? '?' + qs : ''}`, 30000, signal).then(r => checkResponse<AttentionGraph>(r));
+  },
 
   stats: (signal?: AbortSignal) =>
     fetchWithTimeout(`${BASE_URL}/api/stats`, 10000, signal).then(r => checkResponse<Stats>(r)),
