@@ -21,6 +21,7 @@
 | P5.2 | 消除 `any` 类型 — 4 处改为泛型/接口/unknown | ✅ 完成 |
 | P5.3 | 组件瘦身 — 提取 `DeleteConfirm`(61行) + `CodeBlock`(49行) + 样式常量 | ✅ 完成 |
 | P5.4 | 颜色 CSS 变量 — 109 处 hex → `var(--xxx)`，同步 `globals.css` | ✅ 完成 |
+| P6.1 | API 错误处理 — `checkResponse` 函数 + 4 处 `.catch()` | ✅ 完成 |
 
 ### 1.2 当前文件清单
 
@@ -63,22 +64,22 @@ frontend/
 
 ### 1.3 当前问题清单
 
-| # | 问题 | 严重度 | 涉及文件 |
-|---|------|--------|----------|
-| 1 | **API 无 `response.ok` 检查**: 所有方法静默处理 4xx/5xx | 🔴 高 | `lib/api.ts` |
-| 2 | **4 处缺失 `.catch()`**: API 失败对用户不可见 | 🔴 高 | `page.tsx:57`, `feed/page.tsx:18`, `graph/page.tsx:14`, `StatsPanel.tsx:10` |
-| 3 | **无 Error Boundary**: 渲染崩溃导致白屏 | 🔴 高 | 全项目 |
-| 4 | **无 Toast 通知**: 创建/编辑/删除无反馈 | 🟡 中 | `EntryDetail.tsx`, `EntryForm.tsx`, `DeleteConfirm.tsx` |
-| 5 | **无键盘可访问性**: 无 tabIndex/keyDown/aria | 🟡 中 | 全部交互组件 |
-| 6 | **~20 处残余硬编码色值**: 主要是 accent 色在 JS 中 | 🟡 中 | 7 个组件 |
-| 7 | **未使用的导入/状态**: 死代码残留 | 🟡 中 | `page.tsx:8`(FilterBar), `page.tsx:23`(offset), `MarkdownRenderer.tsx:5`(CopyButton) |
-| 8 | **重复标签行模式**: 3 处重复 `topic_tag_id`+`project_tag_id`+`research_type` JSX | 🟡 中 | `EntryCard.tsx`, `EntryDetail.tsx`, `feed/page.tsx` |
-| 9 | **重复页面头部**: 3 页重复 header JSX | 🟡 中 | `page.tsx`, `graph/page.tsx`, `feed/page.tsx` |
-| 10 | **EntryDetail/EntryForm 超 200 行** | 🟡 中 | `EntryDetail.tsx(217)`, `EntryForm.tsx(227)` |
-| 11 | **Feed 页面内联 FilterBar**: 未使用 `FilterBar` 组件 | 🟢 低 | `feed/page.tsx` |
-| 12 | **Graph 页无空状态**: 无数据时静默失败 | 🟢 低 | `graph/page.tsx` |
-| 13 | **`echarts-for-react` 未使用**: package.json 残留 | 🟢 低 | `package.json` |
-| 14 | **无请求取消/超时**: fetch 无止等待 | 🟢 低 | `lib/api.ts` |
+| # | 问题 | 严重度 | 涉及文件 | 状态 |
+|---|------|--------|----------|------|
+| 1 | **API 无 `response.ok` 检查**: 所有方法静默处理 4xx/5xx | 🔴 高 | `lib/api.ts` | ✅ 已修复 |
+| 2 | **4 处缺失 `.catch()`**: API 失败对用户不可见 | 🔴 高 | `page.tsx`, `feed/page.tsx`, `graph/page.tsx`, `StatsPanel.tsx` | ✅ 已修复 |
+| 3 | **无 Error Boundary**: 渲染崩溃导致白屏 | 🔴 高 | 全项目 | ⏳ P6.3 |
+| 4 | **无 Toast 通知**: 创建/编辑/删除无反馈 | 🟡 中 | `EntryDetail.tsx`, `EntryForm.tsx`, `DeleteConfirm.tsx` | ⏳ P6.2 |
+| 5 | **无键盘可访问性**: 无 tabIndex/keyDown/aria | 🟡 中 | 全部交互组件 | ⏳ P7.1 |
+| 6 | **~20 处残余硬编码色值**: 主要是 accent 色在 JS 中 | 🟡 中 | 7 个组件 | ⏳ P6.4 |
+| 7 | **未使用的导入/状态**: 死代码残留 | 🟡 中 | `page.tsx:8`(FilterBar), `page.tsx:23`(offset), `MarkdownRenderer.tsx:5`(CopyButton) | ⏳ P6.5 |
+| 8 | **重复标签行模式**: 3 处重复 `topic_tag_id`+`project_tag_id`+`research_type` JSX | 🟡 中 | `EntryCard.tsx`, `EntryDetail.tsx`, `feed/page.tsx` | ⏳ P6.6 |
+| 9 | **重复页面头部**: 3 页重复 header JSX | 🟡 中 | `page.tsx`, `graph/page.tsx`, `feed/page.tsx` | ⏳ P6.6 |
+| 10 | **EntryDetail/EntryForm 超 200 行** | 🟡 中 | `EntryDetail.tsx(217)`, `EntryForm.tsx(227)` | ⏳ P6.7 |
+| 11 | **Feed 页面内联 FilterBar**: 未使用 `FilterBar` 组件 | 🟢 低 | `feed/page.tsx` | ⏳ P6.8 |
+| 12 | **Graph 页无空状态**: 无数据时静默失败 | 🟢 低 | `graph/page.tsx` | ⏳ P7.2 |
+| 13 | **`echarts-for-react` 未使用**: package.json 残留 | 🟢 低 | `package.json` | ⏳ P6.5 |
+| 14 | **无请求取消/超时**: fetch 无止等待 | 🟢 低 | `lib/api.ts` | ⏳ P7.3 |
 
 ---
 

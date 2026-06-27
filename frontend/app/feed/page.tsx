@@ -10,14 +10,20 @@ import type { Entry } from '@/types';
 export default function FeedPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     const params = activeFilter ? { research_type: activeFilter } : {};
     api.entries.feed(params)
       .then(data => {
         setEntries(Array.isArray(data) ? data : []);
+      })
+      .catch(err => {
+        setError(err.message || '加载 Feed 失败');
+        console.error('Feed load failed:', err);
       })
       .finally(() => setLoading(false));
   }, [activeFilter]);
@@ -55,7 +61,11 @@ export default function FeedPage() {
           ))}
         </div>
 
-        {loading ? (
+        {error ? (
+          <div style={{ textAlign: 'center', padding: '80px', color: '#ef4444' }}>
+            <p>{error}</p>
+          </div>
+        ) : loading ? (
           <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
             <IconHourglass size={32} />
             加载中...

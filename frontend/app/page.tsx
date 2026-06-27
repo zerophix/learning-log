@@ -20,7 +20,7 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState<{ type: string; id: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [offset, setOffset] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const limit = 30;
   const offsetRef = useRef(0);
 
@@ -56,16 +56,19 @@ export default function Home() {
     const currentOffset = reset ? 0 : offsetRef.current;
     api.entries.list(limit, currentOffset)
       .then(data => {
+        setError(null);
         const newEntries = Array.isArray(data) ? data : [];
         const newIds = new Set(newEntries.map(e => e.id));
         setEntries(prev => {
           const filtered = prev.filter(e => !newIds.has(e.id));
           return reset ? newEntries : [...filtered, ...newEntries];
         });
-        const nextOffset = reset ? limit : offsetRef.current + limit;
-        setOffset(nextOffset);
-        offsetRef.current = nextOffset;
+        offsetRef.current = reset ? limit : offsetRef.current + limit;
         if (newEntries.length < limit) hasMoreRef.current = false;
+      })
+      .catch(err => {
+        setError(err.message || '加载失败');
+        console.error('Load entries failed:', err);
       })
       .finally(() => {
         setLoading(false);
@@ -160,7 +163,12 @@ export default function Home() {
           padding: '24px 28px 40px',
           minHeight: 0
         }}>
-        {loading && entries.length === 0 ? (
+        {error ? (
+          <div style={{ textAlign: 'center', padding: '80px', color: '#ef4444' }}>
+            <p>{error}</p>
+            <button onClick={() => loadEntries(true)} style={{ marginTop: '12px', padding: '8px 16px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer' }}>重试</button>
+          </div>
+        ) : loading && entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
             <IconHourglass size={32} />
             正在加载学习记录...

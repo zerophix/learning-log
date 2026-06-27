@@ -7,13 +7,17 @@ import type { GraphData } from '@/types';
 
 export default function GraphPage() {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const echartsRef = useRef<any>(null);
 
   useEffect(() => {
-    api.graph().then(data => {
-      setGraphData(data);
-    });
+    api.graph()
+      .then(data => setGraphData(data))
+      .catch(err => {
+        setError(err.message || '加载图谱失败');
+        console.error('Graph load failed:', err);
+      });
   }, []);
 
   useEffect(() => {
@@ -103,7 +107,11 @@ export default function GraphPage() {
       </header>
 
       <main style={{ flex: 1, position: 'relative' }}>
-        {!graphData ? (
+        {error ? (
+          <div style={{ textAlign: 'center', padding: '80px', color: '#ef4444' }}>
+            <p>{error}</p>
+          </div>
+        ) : !graphData ? (
           <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
             <IconHourglass size={32} />
             正在加载图谱数据...

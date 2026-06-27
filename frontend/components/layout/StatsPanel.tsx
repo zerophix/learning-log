@@ -5,11 +5,18 @@ import type { Stats } from '@/types';
 
 export default function StatsPanel() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.stats().then(data => setStats(data));
+    api.stats()
+      .then(data => setStats(data))
+      .catch(err => {
+        setError(err.message || '加载统计失败');
+        console.error('Stats load failed:', err);
+      });
   }, []);
 
+  if (error) return <div style={{ padding: '12px 0', fontSize: '12px', color: '#ef4444' }}>{error}</div>;
   if (!stats) return null;
 
   return (

@@ -16,8 +16,15 @@ import type {
   Stats,
 } from '@/types';
 
+function checkResponse<T>(r: Response): Promise<T> {
+  if (!r.ok) {
+    return r.json().then(e => Promise.reject(new Error(e.detail || `HTTP ${r.status}`)));
+  }
+  return r.json() as Promise<T>;
+}
+
 // --- Types for Feed Params ---
-interface FeedParams {
+export interface FeedParams {
   limit?: number;
   offset?: number;
   project_type?: string;
@@ -27,113 +34,77 @@ interface FeedParams {
 
 export const api = {
   entries: {
-    /**
-     * GET /api/entries?limit=50&offset=0
-     */
     list: (limit = 50, offset = 0) =>
-      fetch(`${BASE_URL}/api/entries?limit=${limit}&offset=${offset}`).then(r => r.json() as Promise<Entry[]>),
+      fetch(`${BASE_URL}/api/entries?limit=${limit}&offset=${offset}`).then(r => checkResponse<Entry[]>(r)),
 
-    /**
-     * GET /api/entries/{id}
-     */
     get: (id: number) =>
-      fetch(`${BASE_URL}/api/entries/${id}`).then(r => r.json() as Promise<Entry>),
+      fetch(`${BASE_URL}/api/entries/${id}`).then(r => checkResponse<Entry>(r)),
 
-    /**
-     * POST /api/entries
-     */
     create: (data: LearningEntryCreate) =>
       fetch(`${BASE_URL}/api/entries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(r => r.json()),
+      }).then(r => checkResponse<any>(r)),
 
-    /**
-     * PUT /api/entries/{id}
-     */
     update: (id: number, data: LearningEntryUpdate) =>
       fetch(`${BASE_URL}/api/entries/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(r => r.json()),
+      }).then(r => checkResponse<any>(r)),
 
-    /**
-     * DELETE /api/entries/{id}
-     */
     delete: (id: number) =>
-      fetch(`${BASE_URL}/api/entries/${id}`, { method: 'DELETE' }).then(r => r.json()),
+      fetch(`${BASE_URL}/api/entries/${id}`, { method: 'DELETE' }).then(r => checkResponse<any>(r)),
 
-    /**
-     * GET /api/entries/feed?limit=&offset=&project_type=&discipline=&research_type=
-     */
     feed: (params?: FeedParams) => {
       if (!params || Object.keys(params).length === 0) {
-        return fetch(`${BASE_URL}/api/entries/feed`).then(r => r.json() as Promise<Entry[]>);
+        return fetch(`${BASE_URL}/api/entries/feed`).then(r => checkResponse<Entry[]>(r));
       }
       const qs = new URLSearchParams(
         Object.entries(params).filter(([, v]) => v !== undefined && v !== null)
       ).toString();
-      return fetch(`${BASE_URL}/api/entries/feed?${qs}`).then(r => r.json() as Promise<Entry[]>);
+      return fetch(`${BASE_URL}/api/entries/feed?${qs}`).then(r => checkResponse<Entry[]>(r));
     },
   },
 
   tags: {
-    /**
-     * GET /api/tags?category=
-     */
     list: (category?: string) => {
       const qs = category ? `?category=${category}` : '';
-      return fetch(`${BASE_URL}/api/tags${qs}`).then(r => r.json() as Promise<Tag[]>);
+      return fetch(`${BASE_URL}/api/tags${qs}`).then(r => checkResponse<Tag[]>(r));
     },
 
-    /**
-     * GET /api/tags/tree
-     */
     tree: () =>
-      fetch(`${BASE_URL}/api/tags/tree`).then(r => r.json() as Promise<TagNode[]>),
+      fetch(`${BASE_URL}/api/tags/tree`).then(r => checkResponse<TagNode[]>(r)),
 
-    /**
-     * GET /api/tags/{tag_id}/entries?research_type=
-     */
     entries: (tagId: string, researchType?: string) => {
       const qs = researchType ? `?research_type=${researchType}` : '';
-      return fetch(`${BASE_URL}/api/tags/${tagId}/entries${qs}`).then(r => r.json() as Promise<Entry[]>);
+      return fetch(`${BASE_URL}/api/tags/${tagId}/entries${qs}`).then(r => checkResponse<Entry[]>(r));
     },
   },
 
   tagLinks: {
-    /**
-     * GET /api/tag-links?source_tag_id=
-     */
     list: (sourceTagId?: string) => {
       const qs = sourceTagId ? `?source_tag_id=${sourceTagId}` : '';
-      return fetch(`${BASE_URL}/api/tag-links${qs}`).then(r => r.json() as Promise<TagLink[]>);
+      return fetch(`${BASE_URL}/api/tag-links${qs}`).then(r => checkResponse<TagLink[]>(r));
     },
   },
 
   graph: () =>
-    fetch(`${BASE_URL}/api/graph`).then(r => r.json() as Promise<GraphData>),
+    fetch(`${BASE_URL}/api/graph`).then(r => checkResponse<GraphData>(r)),
 
   stats: () =>
-    fetch(`${BASE_URL}/api/stats`).then(r => r.json() as Promise<Stats>),
+    fetch(`${BASE_URL}/api/stats`).then(r => checkResponse<Stats>(r)),
 
   projects: {
-    /**
-     * GET /api/projects?type=business|source-code|component
-     */
     list: (projectType?: string) => {
       const qs = projectType ? `?project_type=${projectType}` : '';
-      return fetch(`${BASE_URL}/api/projects${qs}`).then(r => r.json() as Promise<Tag[]>);
+      return fetch(`${BASE_URL}/api/projects${qs}`).then(r => checkResponse<Tag[]>(r));
     },
 
-    /**
-     * GET /api/projects/{id}/entries?research_type=
-     */
     entries: (projectId: string, researchType?: string) => {
       const qs = researchType ? `?research_type=${researchType}` : '';
-      return fetch(`${BASE_URL}/api/projects/${projectId}/entries${qs}`).then(r => r.json() as Promise<Entry[]>);
+      return fetch(`${BASE_URL}/api/projects/${projectId}/entries${qs}`).then(r => checkResponse<Entry[]>(r));
     },
   },
 };
