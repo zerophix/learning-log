@@ -33,7 +33,13 @@ export default function GraphPage() {
 
   const loadGraph = useCallback((signal: AbortSignal) => {
     api.graph(signal)
-      .then(data => setGraphData(data))
+      .then((data: any) => {
+        // normalize: API 返回 links，前端用 edges
+        if (!data.edges && data.links) {
+          data.edges = data.links;
+        }
+        setGraphData(data as GraphData);
+      })
       .catch(err => {
         if (err.name === 'AbortError') return;
         setError(err.message || '加载图谱失败');
