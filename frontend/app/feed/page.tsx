@@ -5,6 +5,7 @@ import Navigation from '@/components/layout/Navigation';
 import PageHeader from '@/components/layout/PageHeader';
 import FilterBar from '@/components/layout/FilterBar';
 import EntryTags from '@/components/entry/EntryTags';
+import EntryDetail from '@/components/entry/EntryDetail';
 import { IconList, IconHourglass, IconEmpty } from '@/components/ui/Icons';
 import type { Entry } from '@/types';
 
@@ -13,6 +14,8 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<{ type: string; id: string } | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -30,7 +33,7 @@ export default function FeedPage() {
       })
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [activeFilter]);
+  }, [activeFilter, refreshCounter]);
 
   return (
     <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
@@ -63,6 +66,10 @@ export default function FeedPage() {
               return (
                 <div
                   key={entry.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedEntry(entry)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedEntry(entry); } }}
                   style={{
                     background: 'var(--bg-secondary)',
                     border: '1px solid var(--border-color)',
@@ -110,6 +117,8 @@ export default function FeedPage() {
           </div>
         )}
       </main>
+
+      <EntryDetail entry={selectedEntry} onClose={() => setSelectedEntry(null)} onRefresh={() => setRefreshCounter(c => c + 1)} />
     </div>
   );
 }
