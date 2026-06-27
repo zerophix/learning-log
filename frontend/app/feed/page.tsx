@@ -104,7 +104,7 @@ export default function FeedPage() {
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden'
                   }}>
-                    {entry.insight.split('\n').filter(l => l.trim()).slice(0, 2).join(' ')}
+                    {entry.summary || entry.insight.split('\n').filter(l => l.trim()).slice(0, 2).join(' ')}
                   </div>
 
                   {/* 时间 */}

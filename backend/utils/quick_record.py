@@ -217,6 +217,7 @@ def interactive_input():
     return {
         "topic": topic,
         "insight": insight,
+        "summary": None,
         "analogy": analogy if analogy else None,
         "transfer_pattern": transfer if transfer else None,
         "energy_level": energy_level,

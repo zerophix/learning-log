@@ -31,6 +31,7 @@ export interface TagLink {
 export interface LearningEntryCreate {
   topic: string;
   insight: string;                          // 核心洞察/分析文章（可长文）
+  summary?: string;                         // AI 提取摘要（预览用途）
   diagram?: string;                         // Mermaid 图示
   code_snippet?: string;                    // 代码实现片段
   star_situation: string;                   // STAR 情境
@@ -58,6 +59,7 @@ export interface Entry {
   id: number;
   topic: string;
   insight: string;
+  summary?: string;
   diagram?: string;
   code_snippet?: string;
   star_situation?: string;
@@ -105,6 +107,22 @@ export interface Stats {
   entries: number;
   tags: number;
   links: number;
+}
+
+// --- 周分页类型 ---
+
+export interface WeekInfo {
+  year: number;
+  week: number;
+  start: string;
+  end: string;
+  count: number;
+}
+
+export interface WeekResponse {
+  data: Entry[];
+  week: WeekInfo;
+  has_more: boolean;
 }
 
 // --- 辅助类型 ---

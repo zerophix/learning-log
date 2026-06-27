@@ -17,6 +17,7 @@ export default function EntryForm({
   const [formData, setFormData] = useState<LearningEntryCreate>({
     topic: '',
     insight: '',
+    summary: '',
     diagram: '',
     code_snippet: '',
     star_situation: '',
@@ -42,6 +43,7 @@ export default function EntryForm({
       setFormData({
         topic: entry.topic || '',
         insight: entry.insight || '',
+        summary: entry.summary || '',
         diagram: entry.diagram || '',
         code_snippet: entry.code_snippet || '',
         star_situation: entry.star_situation || '',
@@ -118,6 +120,9 @@ export default function EntryForm({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <FormField label="主题 *">
             <FormInput value={formData.topic} onChange={v => handleChange('topic', v)} required />
+          </FormField>
+          <FormField label="摘要 (预览用途)">
+            <FormInput value={formData.summary || ''} onChange={v => handleChange('summary', v)} placeholder="1-3句话概括核心结论" />
           </FormField>
           <FormField label="核心洞察 (Markdown) *">
             <FormTextarea value={formData.insight} onChange={v => handleChange('insight', v)} required

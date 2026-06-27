@@ -1,4 +1,18 @@
-export default function InsightPreview({ insight }: { insight: string }) {
+export default function InsightPreview({ insight, summary }: { insight: string; summary?: string }) {
+  if (summary) {
+    return (
+      <div style={{
+        margin: 0,
+        fontSize: '12px',
+        lineHeight: '1.65',
+        color: 'var(--text-secondary)',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Times New Roman", sans-serif'
+      }}>
+        {summary}
+      </div>
+    );
+  }
+
   const renderInsight = () => {
     const lines = insight.split('\n').filter(l => l.trim());
     const elements: JSX.Element[] = [];
@@ -8,7 +22,7 @@ export default function InsightPreview({ insight }: { insight: string }) {
 
     for (const line of lines) {
       if (totalChars >= maxChars) break;
-      
+
       const headingMatch = line.match(/^(#{1,3})\s+(.+)/);
       if (headingMatch) {
         const text = headingMatch[2].trim();

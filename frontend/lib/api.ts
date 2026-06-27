@@ -14,6 +14,8 @@ import type {
   TagLink,
   GraphData,
   Stats,
+  WeekInfo,
+  WeekResponse,
 } from '@/types';
 
 export function fetchWithTimeout(url: string, timeout = 10000, signal?: AbortSignal): Promise<Response> {
@@ -63,6 +65,14 @@ export const api = {
 
     delete: (id: number) =>
       fetch(`${BASE_URL}/api/entries/${id}`, { method: 'DELETE' }).then(r => checkResponse<any>(r)),
+
+    byWeek: (year: number, week: number, limit = 50) =>
+      fetchWithTimeout(`${BASE_URL}/api/entries/week?year=${year}&week=${week}&limit=${limit}`)
+        .then(r => checkResponse<WeekResponse>(r)),
+
+    weekIndex: () =>
+      fetchWithTimeout(`${BASE_URL}/api/entries/week-index`)
+        .then(r => checkResponse<WeekInfo[]>(r)),
 
     feed: (params?: FeedParams, signal?: AbortSignal) => {
       if (!params || Object.keys(params).length === 0) {

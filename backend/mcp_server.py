@@ -119,21 +119,22 @@ def _ensure_backend() -> bool:
 def call_ai_for_analysis(raw_content: str) -> dict:
     """Call AI to analyze raw learning content and extract structured fields"""
     prompt = f"""
-你是一个学习记录分析助手。请从以下原始学习内容中提取结构化信息，返回 JSON 格式：
-
-原始内容：
-{raw_content}
-
-请提取以下字段（用中文回答）：
-- topic: 学习主题（简短标题，10字以内）
-- question: 核心问题或需求
-- insight: 关键洞察或解决方案要点
-- category: 分类（technical/design/debug/architecture/interview/general）
-- tags: 标签列表（3-5个关键词）
-- project_module: 相关项目模块
-- difficulty: 难度（easy/medium/hard）
-- action_items: 后续行动项列表
-- related_skills: 相关技能名称列表
+ 你是一个学习记录分析助手。请从以下原始学习内容中提取结构化信息，返回 JSON 格式：
+ 
+ 原始内容：
+ {raw_content}
+ 
+ 请提取以下字段（用中文回答）：
+ - topic: 学习主题（简短标题，10字以内）
+ - question: 核心问题或需求
+ - insight: 关键洞察或解决方案要点
+ - summary: 摘要（1-3句话概括核心结论，用于前端卡片预览，不含 Markdown 格式）
+ - category: 分类（technical/design/debug/architecture/interview/general）
+ - tags: 标签列表（3-5个关键词）
+ - project_module: 相关项目模块
+ - difficulty: 难度（easy/medium/hard）
+ - action_items: 后续行动项列表
+ - related_skills: 相关技能名称列表
 
 只返回 JSON，不要其他文字。
 """
@@ -165,6 +166,7 @@ def get_default_entry(raw_content: str) -> dict:
         "topic": f"学习记录_{datetime.now().strftime('%m%d_%H%M')}",
         "question": raw_content[:200],
         "insight": "待补充",
+        "summary": "待补充",
         "category": "general",
         "tags": ["auto-captured"],
         "difficulty": "medium",
@@ -370,6 +372,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         entry_data = {
             "topic": topic,
             "insight": insight,
+            "summary": None,
             "star_situation": None,
             "star_task": None,
             "star_action": None,
@@ -399,6 +402,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         entry_data = {
             "topic": topic,
             "insight": insight,
+            "summary": None,
             "star_situation": None,
             "star_task": None,
             "star_action": None,

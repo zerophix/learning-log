@@ -9,7 +9,7 @@ from typing import Optional, List
 import sqlite3
 import json
 import hashlib
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from db import DB_PATH, init_db
 
 init_db()
@@ -42,6 +42,7 @@ class TagLinkCreate(BaseModel):
 class LearningEntryCreate(BaseModel):
     topic: str
     insight: str                       # 核心洞察/分析文章（结论先行，可长文）
+    summary: Optional[str] = None      # AI 提取的摘要（预览用途）
     diagram: Optional[str] = None      # Mermaid 图示（可选）
     code_snippet: Optional[str] = None # 完整代码实现片段
     
@@ -84,6 +85,21 @@ def row_to_dict(row):
     if row is None:
         return None
     return dict(row)
+
+def get_week_dates(year: int, week: int) -> tuple[date, date]:
+    """Return (monday, sunday) for %W week number (Monday start)."""
+    jan1 = date(year, 1, 1)
+    days_to_first_monday = (7 - jan1.weekday()) % 7
+    if days_to_first_monday == 7:
+        days_to_first_monday = 0
+    first_monday = jan1 + timedelta(days=days_to_first_monday)
+    if week == 0:
+        week_start = jan1
+        week_end = first_monday - timedelta(days=1)
+    else:
+        week_start = first_monday + timedelta(weeks=week - 1)
+        week_end = week_start + timedelta(days=6)
+    return week_start, week_end
 
 # --- Tag Management Endpoints ---
 
@@ -226,15 +242,16 @@ def create_entry(entry: LearningEntryCreate):
 
         cursor.execute('''
             INSERT INTO learning_entries 
-            (session_id, topic, insight, diagram, 
+            (session_id, topic, insight, summary, diagram, 
              star_situation, star_task, star_action, star_result,
              topic_tag_id, project_tag_id, research_type, related_tag_ids, custom_tags,
              analogy, transfer_pattern, energy_level, aha_moment, source, confidence_rating, content_hash, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             session_id,
             entry.topic,
             entry.insight,
+            entry.summary,
             entry.diagram,
             entry.star_situation,
             entry.star_task,
@@ -286,6 +303,68 @@ def list_entries(limit: int = 50, offset: int = 0):
     
     conn.close()
     return entries
+
+@app.get("/api/entries/week-index")
+def get_week_index():
+    """List all weeks that have entries, with counts and date ranges."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT strftime('%Y', timestamp) as year,
+               CAST(strftime('%W', timestamp) AS INTEGER) as week,
+               COUNT(*) as count
+        FROM learning_entries
+        GROUP BY strftime('%Y-%W', timestamp)
+        ORDER BY year DESC, week DESC
+    """)
+
+    weeks = []
+    for row in cursor.fetchall():
+        y, w, c = int(row['year']), row['week'], row['count']
+        start_date, end_date = get_week_dates(y, w)
+        weeks.append({
+            "year": y,
+            "week": w,
+            "start": start_date.isoformat(),
+            "end": end_date.isoformat(),
+            "count": c
+        })
+
+    conn.close()
+    return weeks
+
+
+@app.get("/api/entries/week")
+def get_entries_by_week(year: int, week: int, limit: int = 50):
+    """Get all entries for a specific week (Monday-Sunday)."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    start_date, end_date = get_week_dates(year, week)
+    end_plus_one = (end_date + timedelta(days=1)).isoformat()
+
+    cursor.execute("""
+        SELECT * FROM learning_entries
+        WHERE timestamp >= ? AND timestamp < ?
+        ORDER BY timestamp DESC LIMIT ?
+    """, (start_date.isoformat(), end_plus_one, limit))
+
+    entries = []
+    for row in cursor.fetchall():
+        entry = row_to_dict(row)
+        entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
+        entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
+        entries.append(entry)
+
+    conn.close()
+
+    return {
+        "data": entries,
+        "week": {"year": year, "week": week, "start": start_date.isoformat(), "end": end_date.isoformat()},
+        "has_more": len(entries) == limit
+    }
+
 
 @app.get("/api/graph")
 def get_graph_data():
@@ -374,6 +453,7 @@ class LearningEntryUpdate(BaseModel):
     """All fields optional for partial update"""
     topic: Optional[str] = None
     insight: Optional[str] = None
+    summary: Optional[str] = None
     diagram: Optional[str] = None
     code_snippet: Optional[str] = None
     star_situation: Optional[str] = None

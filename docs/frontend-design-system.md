@@ -386,7 +386,7 @@ transition: all 0.3s;   /* 较慢（图表预览展开） */
 frontend/
 ├── app/                              # Next.js App Router 页面路由
 │   ├── layout.tsx                    # 根布局（metadata + globals.css 引入）
-│   ├── page.tsx                      # 首页 — 时间线视图（~197 行）
+│   ├── page.tsx                      # 首页 — 时间线视图（按周分页，~186 行）
 │   ├── globals.css                   # 全局 CSS 变量 + 重置 + 滚动条 + Markdown 样式
 │   ├── graph/
 │   │   └── page.tsx                  # 知识图谱页（ECharts 力导向图）
@@ -468,8 +468,11 @@ frontend/
 │  FilterBar（研究类型过滤）                                │
 ├──────────────────────────────────────────────────────┤
 │                                                      │
-│  TimelineView（可滚动时间线）                            │
+│  TimelineView（按周分页时间线）                          │
 │  ┌────────────────────────────────────────────────┐  │
+│  │  ← W14    第 25 周 · 2026    W26 →              │  │
+│  │  6/22 ~ 6/28 · 16 条     [下拉选择周 ▾]           │  │
+│  │  ──────────────────────────────────────────────│  │
 │  │  2026/4/8                        3 条记录 ─────│  │
 │  │  ├─ 14:30 ●───────── [EntryCard]                │  │
 │  │  ├─ 11:20 ●───────── [EntryCard]                │  │
@@ -551,24 +554,33 @@ interface PageHeaderProps {
 点击: toggle 激活态, activeFilter={type, id} | null
 ```
 
-### 12.5 TimelineView.tsx — 时间线视图
+### 12.5 TimelineView.tsx — 时间线视图（按周分页）
 
 ```
 最大宽度: 900px, 水平居中
 padding: 40px 20px
 
+周导航（顶部居中）:
+  [← Wx]  [第 N 周 · YYYY]  [Wx →]   ← 切换按钮
+  [yyyy-mm-dd ~ yyyy-mm-dd · N 条]
+  [下拉选择周 ▾]                       ← weekIndex 填充
+
 时间线轴:
   中轴线 — 2px 宽, 渐变色 rgba(56,189,248,0.3) → transparent
   日期标签 — 居中胶囊, 渐变背景 + blur
 
-记录布局 (左右交错):
-  偶数索引 → flex-start (左侧, padding-right: 50%+30px)
-  奇数索引 → flex-end (右侧, padding-left: 50%+30px)
+每日分组（同旧版，按日分组渲染）:
+  日期头 | N 条记录 | 渐变横线
+  左侧竖线 + EntryCard
 
-  每个条目:
-    ├─ 时间线圆点 (16px, 翡翠绿/琥珀黄, 3px 外发光)
-    ├─ 连接横线 (30px, rgba(56,189,248,0.3))
-    └─ EntryCard 组件
+Props:
+  entries: Entry[]          当前周数据
+  weekInfo: WeekInfo        周元信息（start/end/count）
+  weekIndex: WeekInfo[]     所有有记录的周
+  currentWeek: {year, week} 当前定位
+  onPrevWeek / onNextWeek   周导航回调
+  onSelectWeek              跳转回调
+  onSelect                  选中条目回调
 ```
 
 ### 12.6 EntryCard.tsx — 时间线卡片
@@ -583,7 +595,7 @@ cursor: pointer
 结构:
   [EntryTags — 标签行]
   [标题 h3] — 16px, 600
-  [洞察预览] — 13px, 3 行截断 (-webkit-line-clamp: 3)
+  [洞察预览] — summary ?? truncate(insight), 12px, 3 行截断
   [时间] — 11px, text-muted
 
 可访问性: role="button", tabIndex={0}, onKeyDown Enter/Space
@@ -611,7 +623,8 @@ cursor: pointer
 
 内容区:
   flex: 1, overflow: auto, padding: 28px
-  → EntryDetailContent 组件（Markdown 渲染 + Mermaid + 代码片段 + STAR）
+  → EntryDetailContent 组件（摘要? + Markdown 渲染 + Mermaid + 代码片段 + STAR）
+  summary 非空时在核心洞察前插入 `### 摘要` 区段
 
 操作按钮: [编辑] [删除] (底部, 点击触发 EntryForm / DeleteConfirm)
 
@@ -637,6 +650,7 @@ cursor: pointer
 
 表单字段 (FormField 原子组件):
   ┌─ 核心主题 (input, required)
+  ├─ 摘要 (input, 可选) — 1-3 句话预览
   ├─ 关键洞察 (textarea, required)
   ├─ STAR 情境 (textarea)
   ├─ STAR 任务 (textarea)
@@ -770,6 +784,8 @@ const BACKEND_URL = 'http://localhost:8002';
 | GET | `/api/entries/feed` | Feed 流（带筛选） | `limit`, `offset`, `project_type`, `discipline`, `research_type` |
 | GET | `/api/entries/:id` | 单条详情 | — |
 | POST | `/api/entries` | 创建记录 | body: LearningEntryCreate |
+| GET | `/api/entries/week-index` | 所有有记录的周列表 | — |
+| GET | `/api/entries/week` | 单周记录 | `year`, `week`, `limit` |
 | GET | `/api/tags` | 标签列表 | `category` |
 | GET | `/api/tags/tree` | 标签树 | — |
 | GET | `/api/graph` | 图谱数据 | — |
@@ -851,6 +867,7 @@ export interface TagLink {
 export interface LearningEntryCreate {
   topic: string;
   insight: string;
+  summary?: string;
   diagram?: string;
   code_snippet?: string;
   star_situation: string;
@@ -877,6 +894,7 @@ export interface Entry {
   id: number;
   topic: string;
   insight: string;
+  summary?: string;
   diagram?: string;
   code_snippet?: string;
   star_situation?: string;
@@ -923,8 +941,24 @@ export interface Stats {
   tags: number;
   links: number;
 }
+// --- 周分页类型 ---
+
+export interface WeekInfo {
+  year: number;
+  week: number;
+  start: string;
+  end: string;
+  count: number;
+}
+
+export interface WeekResponse {
+  data: Entry[];
+  week: WeekInfo;
+  has_more: boolean;
+}
 
 // --- 辅助类型 ---
+
 export type ResearchType = keyof typeof import('@/lib/constants').RESEARCH_TYPES;
 export type EntryFilter = { type: 'research' | 'project' | 'tag'; id: string } | null;
 ```
@@ -942,14 +976,14 @@ export type EntryFilter = { type: 'research' | 'project' | 'tag'; id: string } |
   - 筛选后立即过滤已有 entries 列表（前端过滤，非重新请求）
 ```
 
-### 16.2 无限滚动加载
+### 16.2 按周分页加载（取代无限滚动）
 
 ```
-初始加载 → loadEntries(true) 获取前 30 条
-用户滚动 → 距离底部 < 400px 时自动触发 loadEntries(false)
-  - 用 useRef 跟踪 offset，防止闭包问题
-  - isLoadingRef 防止重复请求
-  - hasMoreRef 标记是否还有更多数据
+页面加载 → weekIndex → 定位最新周 → loadWeek() 获取该周数据
+用户切换周 → ←/→ 按钮、下拉选择器、键盘方向键
+  - 当前周索引: weekIndex.findIndex(...)
+  - hasPrev = currentIdx < weekIndex.length - 1
+  - hasNext = currentIdx > 0
 ```
 
 ### 16.3 弹窗交互

@@ -14,7 +14,9 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
   const { addToast } = useToast();
   const markdownContent = useMemo(() => {
     if (!entry) return '';
-    let md = `### 核心洞察\n\n${entry.insight}\n\n`;
+    let md = '';
+    if (entry.summary) md += `### 摘要\n\n${entry.summary}\n\n`;
+    md += `### 核心洞察\n\n${entry.insight}\n\n`;
     if (entry.star_situation) md += `### 情境\n\n${entry.star_situation}\n\n`;
     if (entry.star_task) md += `### 任务\n\n${entry.star_task}\n\n`;
     if (entry.star_action) md += `### 行动\n\n${entry.star_action}\n\n`;

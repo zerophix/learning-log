@@ -86,7 +86,7 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
         </h3>
 
         {/* 洞察摘要 */}
-        <InsightPreview insight={entry.insight} />
+        <InsightPreview insight={entry.insight} summary={entry.summary} />
       </div>
     </div>
   );

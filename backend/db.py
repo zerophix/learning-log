@@ -61,6 +61,7 @@ def init_db():
             -- Content
             topic TEXT NOT NULL,
             insight TEXT NOT NULL,           -- 核心洞察/分析文章（结论先行，可长文）
+            summary TEXT,                    -- AI 提取的摘要（预览用途，降级截断 insight）
             diagram TEXT,                    -- Mermaid 图示（可选，适合时配图）
             code_snippet TEXT,               -- 完整代码实现片段
             
@@ -124,6 +125,12 @@ def init_db():
     cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_content ON learning_entries(topic_tag_id, content_hash)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_nl_commands_intent ON nl_commands(intent_category)')
     
+    # ── Migration: 为已有数据库添加新字段 ──
+    try:
+        cursor.execute("ALTER TABLE learning_entries ADD COLUMN summary TEXT")
+    except sqlite3.OperationalError:
+        pass
+
     conn.commit()
     conn.close()
     

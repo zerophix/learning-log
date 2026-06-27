@@ -9,9 +9,9 @@ FRONTEND_DIR="$PROJECT_DIR/frontend"
 
 cd "$FRONTEND_DIR"
 
-# 确保依赖已安装
+# 确保依赖已安装 + 构建已完成
 if [ ! -d "node_modules" ]; then
-    npm install
+    npm install && npm run build
 fi
 
-npm run build && exec npm start
+exec npm start

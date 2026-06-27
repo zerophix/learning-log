@@ -1,7 +1,7 @@
 # 前端重构指南 v4.0
 
 > **目标读者**: 任何 AI 代理（Claude Code / Cline / Cursor 等）
-> **最后更新**: 2026-06-27
+> **最后更新**: 2026-06-27（P10 按周分页）
 > **状态**: 执行中
 > **前置**: P1-P5 已完成（所有阶段代码已落地）
 
@@ -29,31 +29,46 @@
 | P6.6 | 消除重复 JSX — 创建 `EntryTags` + `PageHeader`，替换 5 处重复模式 | ✅ 完成 |
 | P6.7 | 组件瘦身 — EntryDetail(214→179) + EntryForm(227→165)，提取 `EntryDetailContent` + `FormField` | ✅ 完成 |
 | P6.8 | Feed 页面统一 FilterBar — 内联筛选按钮 → `<FilterBar>` 组件 | ✅ 完成 |
+| P7.1 | 键盘可访问性 — tabIndex/role/aria/onKeyDown 应用到 4 个交互组件 | ✅ 完成 |
+| P7.2 | 空状态 + 骨架屏 — Graph 空数据提示、StatsPanel 脉冲动画骨架屏 | ✅ 完成 |
+| P7.3 | 请求增强 — fetchWithTimeout 10s + AbortController + AbortError 忽略 | ✅ 完成 |
+| P8.1 | Feed 卡片可点击 — 点击打开 EntryDetail，含键盘可访问 | ✅ 完成 |
+| P8.2 | 表单提交 loading 态 — submitting state，按钮禁用+文字变化 | ✅ 完成 |
+| P8.3 | 未保存编辑确认 — dirty state，取消/Escape 时 window.confirm | ✅ 完成 |
+| P8.4 | Ctrl+Enter 快捷提交 — onKeyDown prop 透传给 FormTextarea | ✅ 完成 |
+| P9 | 新增 summary 字段 — 后端迁移 + MCP 同步 + 前端预览/表单/搜索全链路 | ✅ 完成 |
+| P10 | 按周分页 — 后端 week-index/by-week 端点 + 前端周导航替换无限滚动 | ✅ 完成 |
 
 ### 1.2 当前文件清单
 
 ```
 frontend/
 ├── app/
-│   ├── page.tsx              (195 行) — 主页时间线 ⚠️ 接近上限
+│   ├── page.tsx              (186 行) — 主页时间线（按周分页）
 │   ├── layout.tsx             (19 行) — 根布局
 │   ├── globals.css            (89 行) — 全局样式
 │   ├── graph/page.tsx        (116 行) — 知识图谱
-│   └── feed/page.tsx         (138 行) — Feed 卡片流
+│   └── feed/page.tsx         (124 行) — Feed 卡片流
 ├── components/
 │   ├── ui/
 │   │   ├── Icons.tsx         (180 行) — SVG 图标库
 │   │   ├── SearchBar.tsx      (62 行)
 │   │   ├── CopyButton.tsx     (50 行)
 │   │   ├── DeleteConfirm.tsx  (61 行)
-│   │   └── Tag.tsx            (16 行)
+│   │   └── ErrorBoundary.tsx  (43 行)
 │   ├── entry/
-│   │   ├── EntryDetail.tsx   (217 行) ⚠️ 超 200 行
-│   │   ├── EntryForm.tsx     (227 行) ⚠️ 超 200 行
-│   │   ├── EntryCard.tsx     (103 行)
-│   │   └── InsightPreview.tsx (63 行)
+│   │   ├── EntryDetail.tsx   (189 行)
+│   │   ├── EntryForm.tsx     (190 行)
+│   │   ├── EntryCard.tsx     (93 行)
+│   │   ├── InsightPreview.tsx (79 行)
+│   │   ├── EntryTags.tsx     (28 行)
+│   │   ├── EntryDetailContent.tsx (42 行)
+│   │   ├── EntryDetailContent.tsx (42 行)
+│   │   ├── FormField.tsx     (54 行)
+│   │   └── DeleteConfirm.tsx (61 行)
 │   ├── layout/
-│   │   ├── StatsPanel.tsx     (56 行)
+│   │   ├── PageHeader.tsx     (46 行)
+│   │   ├── StatsPanel.tsx     (62 行)
 │   │   ├── Navigation.tsx     (54 行)
 │   │   └── FilterBar.tsx      (47 行)
 │   ├── renderers/
@@ -61,12 +76,14 @@ frontend/
 │   │   ├── CodeBlock.tsx       (49 行)
 │   │   └── MermaidDiagram.tsx  (103 行)
 │   └── timeline/
-│       └── TimelineView.tsx    (54 行)
+│       └── TimelineView.tsx    (114 行) — 周导航 + 日分组
+├── hooks/
+│   └── useToast.tsx           (93 行)
 ├── lib/
-│   ├── api.ts                (140 行)
+│   ├── api.ts                (142 行)
 │   └── constants.ts           (57 行)
 └── types/
-    └── index.ts              (120 行)
+    └── index.ts              (119 行)
 ```
 
 ### 1.3 当前问题清单
@@ -130,12 +147,20 @@ P8.1 Feed 卡片可点击 ─────── 可独立
 P8.2 表单提交 loading 态 ──── 可独立
 P8.3 未保存编辑确认 ──────── 依赖 P8.2（form dirty 状态复用）
 P8.4 Ctrl+Enter 快捷提交 ──── 可独立
+───────────────────────────────────────
+       │
+       ▼
+P10.1 后端 — week-index + by-week 端点 ── 可独立
+P10.2 前端 types/api ────── 依赖 P10.1
+P10.3 TimelineView 周导航 ── 依赖 P10.2
+P10.4 page.tsx 移除无限滚动 ── 依赖 P10.2
+P10.5 文档一致性检查 ────── 依赖 P10.1-10.4
 ```
 
 ### 执行顺序
 
 ```
-P6.1 → P6.2 → P6.3 → P6.4 → P6.5 → P6.6 → P6.7 → P6.8 → P7.1 → P7.2 → P7.3 → P8.1 → P8.2 → P8.3 → P8.4 ✅
+P6.1 → P6.2 → P6.3 → P6.4 → P6.5 → P6.6 → P6.7 → P6.8 → P7.1 → P7.2 → P7.3 → P8.1 → P8.2 → P8.3 → P8.4 → P9.1 → P9.2 → P9.3 → P9.4 → P9.5 → P9.6 → P10.1 → P10.2 → P10.3 → P10.4 → P10.5 ✅
 ```
 
 ## 3. 详细任务规格
@@ -617,6 +642,192 @@ interface PageHeaderProps {
 
 **Git**: `feat(frontend): P8.4 快捷提交 — Ctrl+Enter 提交表单`
 
+---
+
+### 阶段 P9：新增 summary 字段（跨层特性）
+
+**背景**: 前端卡片预览时直接截断 `insight` 会泄漏 Markdown 格式符号。方案 B — 后端新增 `summary TEXT` 字段存储纯文本摘要，前端预览优先展示。
+
+**架构设计**:
+
+```
+AI/用户写入 → insight + summary 入库
+                  ↓
+前端预览 → summary ?? truncate(insight)  ← 旧数据降级
+                  ↓
+详情页 → 在核心洞察前插入 ### 摘要 区段
+```
+
+**关键决策**:
+- `summary=NULL` 时预览降级为截断 `insight`（旧数据兼容，无需回填）
+- 后端 `SELECT *` 自动返回新字段，无需修改查询
+- MCP Server 分析 prompt 增加 `summary` 提取指令
+- 前端搜索也扫描 `summary`
+
+---
+
+#### P9.1 后端 — db.py + main.py
+
+**操作**:
+1. `backend/db.py` — CREATE TABLE `learning_entries` 增加 `summary TEXT` after `insight`
+2. `backend/db.py` — 添加 `ALTER TABLE` 迁移（try/except 兼容已有库）
+3. `backend/main.py` — `LearningEntryCreate.summary: Optional[str] = None`
+4. `backend/main.py` — INSERT 增加 `summary` 列和对应 `?` 占位符
+5. `backend/main.py` — `LearningEntryUpdate.summary: Optional[str] = None`
+
+**验证**: `python3 -c "import db; import main"` 无错
+
+**Git**: `feat(backend): P9.1 新增 summary 字段 — db 迁移 + API 模型`
+
+---
+
+#### P9.2 MCP Server — prompt + payload 同步
+
+**操作**:
+1. `backend/mcp_server.py` — `call_ai_for_analysis` prompt 增加 `summary` 提取指令
+2. `backend/mcp_server.py` — `get_default_entry` 增加 `"summary": "待补充"`
+3. `backend/mcp_server.py` — `deep_record` payload 增加 `"summary": None`
+4. `backend/mcp_server.py` — `quick_capture` payload 增加 `"summary": None`
+
+**验证**: `python3 -c "import mcp_server"` 无错
+
+**Git**: `feat(mcp): P9.2 MCP Server — prompt 增加 summary 提取 + payload 同步`
+
+---
+
+#### P9.3 前端 — 类型 + 预览组件
+
+**操作**:
+1. `frontend/types/index.ts` — `LearningEntryCreate` + `Entry` 增加 `summary?: string`
+2. `frontend/components/entry/InsightPreview.tsx` — 新增可选 `summary` prop，优先展示
+3. `frontend/components/entry/EntryCard.tsx` — 透传 `summary` 给 `InsightPreview`
+4. `frontend/app/feed/page.tsx` — 卡片预览使用 `entry.summary || entry.insight...`
+
+**验证**: `npm run build` 通过
+
+**Git**: `feat(frontend): P9.3 前端类型 + 预览组件 — summary 优先展示`
+
+---
+
+#### P9.4 前端 — 表单 + 详情 + 搜索
+
+**操作**:
+1. `frontend/components/entry/EntryForm.tsx` — 新增 `summary` 字段（input 控件）
+2. `frontend/components/entry/EntryDetail.tsx` — markdownContent 在核心洞察前插入 `### 摘要` 区段
+3. `frontend/app/page.tsx` — 搜索条件加入 `summary`
+
+**验证**: `npm run build` 通过
+
+**Git**: `feat(frontend): P9.4 前端表单 + 详情 + 搜索 — summary 全链路`
+
+---
+
+#### P9.5 脚本同步
+
+**操作**:
+1. `backend/utils/quick_record.py` — payload 增加 `"summary": None`
+
+**验证**: `python3 -c "import quick_record"` 无错（需在 backend 目录）
+
+**Git**: `refactor(script): P9.5 quick_record.py — 增加 summary 字段`
+
+---
+
+#### P9.6 文档一致性检查
+
+**操作**:
+1. `docs/frontend-design-system.md` — §12.6/12.7/12.9/15 同步 summary 规格和类型
+2. `docs/frontend-refactoring-guide.md` — §1.1/1.2/2/5 同步状态和行数
+
+**Git**: `docs: P9.6 文档同步 — summary 字段规格 + 完成标记`
+
+---
+
+### 阶段 P10：按周分页（替代无限滚动）
+
+**背景**: 时间线越来越长，无限滚动（OFFSET 分页）加载慢且无时间语义。改为按周分组显示，用户可切换周。
+
+**架构设计**:
+
+```
+后端: week-index → [W14, W25, ...]   ← 所有有记录的周列表
+     by-week?year=2026&week=25      ← 单周数据 (WHERE timestamp 范围查询, 走索引)
+
+前端: initialize() → weekIndex → 最新周 → loadWeek() → TimelineView 渲染
+                               ↑
+           ← W14 | 第25周 | W26 →  ← 导航按钮 + 下拉选择器
+```
+
+**关键决策**:
+- 周定义：SQLite `%W`（周一为周起始），Python 计算起止日期
+- 使用范围查询 `WHERE timestamp >= ? AND timestamp < ?` 而非 `strftime`，确保走 `idx_entries_timestamp` 索引
+- 前端搜索仍为客户端过滤（在当前周数据内），不增加服务端复杂度
+- 周内如果有超过 50 条记录，`has_more` 标记，可扩展周内无限滚动（当前未实现）
+
+---
+
+#### P10.1 后端 — week-index + by-week 端点
+
+**操作**:
+1. `backend/main.py` — 添加 `get_week_dates()` 工具函数
+2. `backend/main.py` — 添加 `GET /api/entries/week-index`：GROUP BY `strftime('%Y-%W')` 返回所有有记录的周
+3. `backend/main.py` — 添加 `GET /api/entries/week?year=&week=`：范围查询单周数据
+
+**验证**: `curl http://localhost:8002/api/entries/week-index` 返回周列表
+
+**Git**: `feat(backend): P10.1 按周分页 — week-index + by-week 端点`
+
+---
+
+#### P10.2 前端 — 类型 + API 方法
+
+**操作**:
+1. `frontend/types/index.ts` — 添加 `WeekInfo`、`WeekResponse` 接口
+2. `frontend/lib/api.ts` — 添加 `entries.byWeek()`、`entries.weekIndex()`
+
+**验证**: `npm run build` 通过
+
+**Git**: `feat(frontend): P10.2 前端类型 + API — WeekInfo + byWeek/weekIndex`
+
+---
+
+#### P10.3 TimelineView 重构 — 周导航 + 日分组
+
+**操作**:
+1. `frontend/components/timeline/TimelineView.tsx` — 重写为接收 `weekInfo`、`weekIndex`、`currentWeek`、`onPrevWeek/onNextWeek/onSelectWeek` props
+2. 渲染周导航栏（← 上一周 / 第 N 周 · 年 / 下一周 →）+ 下拉选择器
+3. 保持每日分组渲染（日期头 + 左侧时间线 + EntryCard）
+
+**验证**: `npm run build` 通过
+
+**Git**: `feat(frontend): P10.3 TimelineView 重构 — 周导航 + 日分组`
+
+---
+
+#### P10.4 page.tsx 重构 — 移除无限滚动
+
+**操作**:
+1. 删除 `offsetRef`、`isLoadingRef`、`hasLoadedRef`、`hasMoreRef`、`loadingMore` state
+2. 删除滚动监听（`scroll` event handler）
+3. 替换 `loadEntries()` 为 `initialize()` → `loadWeek()` 模式
+4. 添加 `currentWeek`、`weekInfo`、`weekIndex` state + 周导航函数
+
+**验证**: `npm run build` 通过，页面打开自动加载本周
+
+**Git**: `refactor(frontend): P10.4 page.tsx 移除无限滚动 — 改用周加载`
+
+---
+
+#### P10.5 文档一致性检查
+
+**操作**:
+1. `docs/frontend-refactoring-guide.md` — §1.1/1.2/2/5 同步 P10 状态和行数
+2. `docs/frontend-design-system.md` — §11/12.5/14/15 同步周分页规格
+
+**Git**: `docs: P10.5 文档同步 — 按周分页规格 + 完成标记`
+
+---
+
 ### 4.1 必须遵守
 
 1. **每步提交前 `npm run build` 必须通过** — 不允许中间态破坏
@@ -668,6 +879,17 @@ feat(frontend): P8.1 Feed 卡片可点击 — 点击打开 EntryDetail
 feat(frontend): P8.2 表单提交 loading 态
 feat(frontend): P8.3 未保存编辑确认
 feat(frontend): P8.4 快捷提交 — Ctrl+Enter
+feat(backend): P9.1 新增 summary 字段 — db 迁移 + API 模型
+feat(mcp): P9.2 MCP Server — prompt 增加 summary 提取 + payload 同步
+feat(frontend): P9.3 前端类型 + 预览组件 — summary 优先展示
+feat(frontend): P9.4 前端表单 + 详情 + 搜索 — summary 全链路
+refactor(script): P9.5 quick_record.py — 增加 summary 字段
+docs: P9.6 文档同步 — summary 字段规格 + 完成标记
+feat(backend): P10.1 按周分页 — week-index + by-week 端点
+feat(frontend): P10.2 前端类型 + API — WeekInfo + byWeek/weekIndex
+feat(frontend): P10.3 TimelineView 重构 — 周导航 + 日分组
+refactor(frontend): P10.4 page.tsx 移除无限滚动 — 改用周加载
+docs: P10.5 文档同步 — 按周分页规格 + 完成标记
 ```
 
 ---
