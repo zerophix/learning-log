@@ -1,0 +1,207 @@
+'use client';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import CopyButton from '@/components/ui/CopyButton';
+import MermaidDiagram from '@/components/renderers/MermaidDiagram';
+
+export default function MarkdownRenderer({ content }: { content: string }) {
+  return (
+    <div style={{
+      fontSize: '14px',
+      lineHeight: '1.8',
+      color: '#CBD5E1',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif'
+    }}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          h1: ({ children }) => (
+            <h1 style={{
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#F1F5F9',
+              margin: '32px 0 16px 0',
+              paddingBottom: '12px',
+              borderBottom: '2px solid #334155',
+              letterSpacing: '-0.02em'
+            }}>{children}</h1>
+          ),
+          h2: ({ children }) => (
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: 600,
+              color: '#F1F5F9',
+              margin: '28px 0 14px 0',
+              paddingBottom: '8px',
+              borderBottom: '1px solid #334155',
+              letterSpacing: '-0.01em'
+            }}>{children}</h2>
+          ),
+          h3: ({ children }) => (
+            <h3 style={{
+              fontSize: '15px',
+              fontWeight: 600,
+              color: '#E2E8F0',
+              margin: '24px 0 12px 0',
+              letterSpacing: '-0.01em'
+            }}>{children}</h3>
+          ),
+          h4: ({ children }) => (
+            <h4 style={{
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#CBD5E1',
+              margin: '20px 0 10px 0'
+            }}>{children}</h4>
+          ),
+          p: ({ children }) => (
+            <p style={{
+              fontSize: '14px',
+              lineHeight: '1.75',
+              color: '#CBD5E1',
+              margin: '0 0 16px 0'
+            }}>{children}</p>
+          ),
+          ul: ({ children }) => (
+            <ul style={{
+              fontSize: '14px',
+              lineHeight: '1.75',
+              color: '#CBD5E1',
+              margin: '0 0 16px 0',
+              paddingLeft: '24px'
+            }}>{children}</ul>
+          ),
+          ol: ({ children }) => (
+            <ol style={{
+              fontSize: '14px',
+              lineHeight: '1.75',
+              color: '#CBD5E1',
+              margin: '0 0 16px 0',
+              paddingLeft: '24px'
+            }}>{children}</ol>
+          ),
+          li: ({ children }) => (
+            <li style={{ margin: '6px 0' }}>{children}</li>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote style={{
+              borderLeft: '4px solid #475569',
+              paddingLeft: '16px',
+              margin: '20px 0',
+              color: '#94A3B8',
+              fontSize: '14px',
+              lineHeight: '1.75',
+              background: 'rgba(51, 65, 85, 0.3)',
+              padding: '12px 16px',
+              borderRadius: '0 8px 8px 0'
+            }}>{children}</blockquote>
+          ),
+          strong: ({ children }) => (
+            <strong style={{ fontWeight: 600, color: '#F1F5F9' }}>{children}</strong>
+          ),
+          em: ({ children }) => (
+            <em style={{ fontStyle: 'italic', color: '#94A3B8' }}>{children}</em>
+          ),
+          a: ({ children, href }) => (
+            <a href={href} style={{
+              color: '#38bdf8',
+              textDecoration: 'none',
+              borderBottom: '1px solid rgba(56, 189, 248, 0.3)',
+              transition: 'border-color 0.2s'
+            }} onMouseEnter={e => { (e.target as HTMLAnchorElement).style.borderColor = '#38bdf8'; }}
+               onMouseLeave={e => { (e.target as HTMLAnchorElement).style.borderColor = 'rgba(56, 189, 248, 0.3)'; }}
+            >{children}</a>
+          ),
+          hr: () => (
+            <hr style={{
+              border: 'none',
+              borderTop: '1px solid #334155',
+              margin: '24px 0'
+            }} />
+          ),
+          code: ({ node, inline, className, children, ...props }: any) => {
+            const match = /language-(\w+)/.exec(className || '');
+            const isTextDiagram = typeof children === 'string' && (children.includes('┌') || children.includes('──'));
+            if (!inline && match) {
+              if (match[1] === 'mermaid') {
+                return <MermaidDiagram chart={String(children).replace(/\n$/, '')} />;
+              }
+              if (isTextDiagram) {
+                return (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    margin: '20px 0'
+                  }}>
+                    <pre style={{
+                      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                      border: '2px solid #e94560',
+                      borderRadius: '12px',
+                      padding: '24px',
+                      overflow: 'auto',
+                      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+                      fontSize: '13px',
+                      lineHeight: '1.8',
+                      color: '#00d9ff',
+                      boxShadow: '0 8px 32px rgba(233, 69, 96, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                      maxWidth: '100%',
+                      textAlign: 'left'
+                    }}><code>{children}</code></pre>
+                  </div>
+                );
+              }
+              return (
+                <div 
+                  style={{
+                    position: 'relative',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    margin: '16px 0',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                  }}
+                  onMouseEnter={e => {
+                    const btn = (e.currentTarget as HTMLDivElement).querySelector('[data-copy-btn]');
+                    if (btn) (btn as HTMLElement).style.opacity = '1';
+                  }}
+                  onMouseLeave={e => {
+                    const btn = (e.currentTarget as HTMLDivElement).querySelector('[data-copy-btn]');
+                    if (btn) (btn as HTMLElement).style.opacity = '0';
+                  }}
+                >
+                  <div style={{
+                    background: 'linear-gradient(to bottom, #374151, #1f2937)',
+                    padding: '6px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f56' }} />
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffbd2e' }} />
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#27c93f' }} />
+                    <span style={{ marginLeft: '8px', fontSize: '11px', color: '#9ca3af' }}>{match[1]}</span>
+                  </div>
+                  <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language={match[1]}
+                    PreTag="div"
+                    customStyle={{ margin: 0, borderRadius: '0 0 8px 8px', background: '#0d1117', fontSize: '13px', lineHeight: '1.6' }}
+                    {...props}
+                  >{String(children).replace(/\n$/, '')}</SyntaxHighlighter>
+                  <div data-copy-btn style={{ opacity: 0, transition: 'opacity 0.2s' }}>
+                    <CopyButton text={String(children).replace(/\n$/, '')} />
+                  </div>
+                </div>
+              );
+            }
+            return <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'Menlo, Monaco, monospace', fontSize: '0.9em', color: '#38bdf8' }} {...props}>{children}</code>;
+          }
+        }}
+      >{content}</ReactMarkdown>
+    </div>
+  );
+}
