@@ -20,36 +20,36 @@ export default function StatsPanel() {
     }}>
       <div style={{
         flex: 1,
-        background: '#1E293B',
+        background: 'var(--bg-secondary)',
         border: '1px solid #334155',
         borderRadius: '8px',
         padding: '12px 16px',
         textAlign: 'center'
       }}>
         <div style={{ fontSize: '24px', fontWeight: 700, color: '#38bdf8' }}>{stats.entries}</div>
-        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>条目总数</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>条目总数</div>
       </div>
       <div style={{
         flex: 1,
-        background: '#1E293B',
+        background: 'var(--bg-secondary)',
         border: '1px solid #334155',
         borderRadius: '8px',
         padding: '12px 16px',
         textAlign: 'center'
       }}>
         <div style={{ fontSize: '24px', fontWeight: 700, color: '#34d399' }}>{stats.tags}</div>
-        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>标签总数</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>标签总数</div>
       </div>
       <div style={{
         flex: 1,
-        background: '#1E293B',
+        background: 'var(--bg-secondary)',
         border: '1px solid #334155',
         borderRadius: '8px',
         padding: '12px 16px',
         textAlign: 'center'
       }}>
         <div style={{ fontSize: '24px', fontWeight: 700, color: '#a78bfa' }}>{stats.links}</div>
-        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>关联总数</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>关联总数</div>
       </div>
     </div>
   );

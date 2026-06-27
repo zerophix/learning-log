@@ -54,3 +54,6 @@ export const DATE_FORMAT = {
   SHORT: 'YYYY/MM/DD',
   TIME: 'HH:mm',
 } as const;
+
+export const getResearchTypeInfo = (type: string) =>
+  RESEARCH_TYPES[type as keyof typeof RESEARCH_TYPES] ?? { label: '', color: '#94a3b8' };

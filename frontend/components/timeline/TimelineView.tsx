@@ -32,12 +32,12 @@ export default function TimelineView({
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: '#64748b',
+              color: 'var(--text-muted)',
               letterSpacing: '0.5px'
             }}>
               {date}
             </span>
-            <span style={{ fontSize: '11px', color: '#475569' }}>{dayEntries.length} 条记录</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{dayEntries.length} 条记录</span>
             <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, #334155, transparent)' }} />
           </div>
 

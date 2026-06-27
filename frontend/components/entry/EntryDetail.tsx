@@ -2,16 +2,12 @@
 import { useState, useMemo } from 'react';
 import Tag from '@/components/ui/Tag';
 import MarkdownRenderer from '@/components/renderers/MarkdownRenderer';
+import MermaidDiagram from '@/components/renderers/MermaidDiagram';
 import EntryForm from '@/components/entry/EntryForm';
 import { IconLightbulb, IconTag } from '@/components/ui/Icons';
 import { api } from '@/lib/api';
+import { getResearchTypeInfo } from '@/lib/constants';
 import type { Entry, LearningEntryCreate } from '@/types';
-
-const researchTypeMap: Record<string, { label: string; color: string }> = {
-  'deep-research': { label: '深度研究', color: '#fbbf24' },
-  'topic-exploration': { label: '主题探索', color: '#34d399' },
-  'domain-mapping': { label: '领域映射', color: '#a78bfa' }
-};
 
 export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entry | null; onClose: () => void; onRefresh?: () => void }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -19,7 +15,6 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
   const markdownContent = useMemo(() => {
     if (!entry) return '';
     let md = `### 核心洞察\n\n${entry.insight}\n\n`;
-    if (entry.diagram) md += `### 架构图表\n\n\`\`\`mermaid\n${entry.diagram}\n\`\`\`\n\n`;
     if (entry.star_situation) md += `### 情境\n\n${entry.star_situation}\n\n`;
     if (entry.star_task) md += `### 任务\n\n${entry.star_task}\n\n`;
     if (entry.star_action) md += `### 行动\n\n${entry.star_action}\n\n`;
@@ -30,7 +25,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
 
   if (!entry) return null;
 
-  const rType = researchTypeMap[entry.research_type || ''] || { label: '', color: '#94a3b8' };
+  const rType = getResearchTypeInfo(entry.research_type || '');
   const dateTime = new Date(entry.timestamp);
   const dateStr = `${dateTime.getFullYear()}/${dateTime.getMonth()+1}/${dateTime.getDate()}`;
   const timeStr = `${String(dateTime.getHours()).padStart(2,'0')}:${String(dateTime.getMinutes()).padStart(2,'0')}:${String(dateTime.getSeconds()).padStart(2,'0')}`;
@@ -79,7 +74,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
     >
       <div
         style={{
-          background: '#1E293B',
+          background: 'var(--bg-secondary)',
           border: '1px solid #334155',
           borderRadius: '16px',
           maxWidth: '1000px',
@@ -110,10 +105,10 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
                 <IconLightbulb size={16} />
               )}
             </div>
-            <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 600, color: '#F8FAFC', lineHeight: '1.3' }}>
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: '1.3' }}>
               {entry.topic}
             </h2>
-            <div style={{ fontSize: '12px', color: '#64748b', fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
               {dateStr} {timeStr}
             </div>
           </div>
@@ -121,17 +116,17 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
               <button
                 onClick={() => setIsEditing(true)}
                 style={{
-                  background: '#334155',
+                  background: 'var(--border-color)',
                   border: 'none',
-                  color: '#94A3B8',
+                  color: 'var(--text-secondary)',
                   fontSize: '14px',
                   cursor: 'pointer',
                   padding: '6px 12px',
                   borderRadius: '6px',
                   transition: 'all 0.2s'
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#475569'; e.currentTarget.style.color = '#F1F5F9'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#334155'; e.currentTarget.style.color = '#94A3B8'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
               >
                 编辑
               </button>
@@ -155,9 +150,9 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
               <button
                 onClick={onClose}
                 style={{
-                  background: '#334155',
+                  background: 'var(--border-color)',
                   border: 'none',
-                  color: '#94A3B8',
+                  color: 'var(--text-secondary)',
                   fontSize: '18px',
                   cursor: 'pointer',
                   width: '36px',
@@ -169,8 +164,8 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
                   flexShrink: 0,
                   transition: 'all 0.2s'
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#475569'; e.currentTarget.style.color = '#F1F5F9'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#334155'; e.currentTarget.style.color = '#94A3B8'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
               >
                 ×
               </button>
@@ -181,10 +176,25 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
         <div style={{ flex: 1, overflow: 'auto', padding: '28px' }}>
           <MarkdownRenderer content={markdownContent} />
 
+          {entry.diagram && (
+            <div>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                margin: '28px 0 14px 0',
+                paddingBottom: '8px',
+                borderBottom: '1px solid #334155',
+                letterSpacing: '-0.01em'
+              }}>架构图表</h3>
+              <MermaidDiagram chart={entry.diagram} />
+            </div>
+          )}
+
           {/* 自定义标签 */}
           {entry.custom_tags && entry.custom_tags.length > 0 && (
             <div>
-              <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <IconTag size={12} />
                 标签
               </div>
@@ -213,7 +223,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
           >
             <div
               style={{
-                background: '#1E293B',
+                background: 'var(--bg-secondary)',
                 border: '1px solid #334155',
                 borderRadius: '12px',
                 padding: '24px',
@@ -221,8 +231,8 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
               }}
               onClick={e => e.stopPropagation()}
             >
-              <h3 style={{ margin: '0 0 12px 0', color: '#F8FAFC', fontSize: '16px' }}>确认删除</h3>
-              <p style={{ margin: '0 0 20px 0', color: '#94A3B8', fontSize: '14px' }}>此操作不可撤销，确定要删除这条记录吗？</p>
+              <h3 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)', fontSize: '16px' }}>确认删除</h3>
+              <p style={{ margin: '0 0 20px 0', color: 'var(--text-secondary)', fontSize: '14px' }}>此操作不可撤销，确定要删除这条记录吗？</p>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
@@ -231,7 +241,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
                     borderRadius: '6px',
                     border: '1px solid #334155',
                     background: 'transparent',
-                    color: '#94A3B8',
+                    color: 'var(--text-secondary)',
                     cursor: 'pointer'
                   }}
                 >

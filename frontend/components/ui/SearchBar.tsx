@@ -31,14 +31,14 @@ export default function SearchBar({
           padding: '8px 32px 8px 12px',
           borderRadius: '16px',
           border: '1px solid #334155',
-          background: '#1E293B',
-          color: '#CBD5E1',
+          background: 'var(--bg-secondary)',
+          color: 'var(--text-secondary)',
           fontSize: '13px',
           outline: 'none',
           transition: 'all 0.2s'
         }}
-        onFocus={e => { e.target.style.borderColor = '#475569'; }}
-        onBlur={e => { e.target.style.borderColor = '#334155'; }}
+        onFocus={e => { e.target.style.borderColor = 'var(--text-muted)'; }}
+        onBlur={e => { e.target.style.borderColor = 'var(--border-color)'; }}
       />
       {query && (
         <button
@@ -48,7 +48,7 @@ export default function SearchBar({
             right: '8px',
             background: 'none',
             border: 'none',
-            color: '#64748b',
+            color: 'var(--text-muted)',
             cursor: 'pointer',
             fontSize: '16px',
             padding: '0 4px'

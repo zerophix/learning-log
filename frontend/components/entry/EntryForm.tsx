@@ -65,7 +65,7 @@ export default function EntryForm({
     onSave(formData);
   };
 
-  const handleChange = (field: keyof LearningEntryCreate, value: any) => {
+  const handleChange = <K extends keyof LearningEntryCreate>(field: K, value: LearningEntryCreate[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -82,7 +82,7 @@ export default function EntryForm({
       padding: '20px'
     }}>
       <div style={{
-        background: '#1E293B',
+        background: 'var(--bg-secondary)',
         border: '1px solid #334155',
         borderRadius: '16px',
         maxWidth: '800px',
@@ -91,14 +91,14 @@ export default function EntryForm({
         overflow: 'auto',
         padding: '28px'
       }}>
-        <h2 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: 600, color: '#F8FAFC' }}>
+        <h2 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)' }}>
           {entry ? '编辑条目' : '新建条目'}
         </h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* 主题 */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>主题 *</label>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>主题 *</label>
             <input
               type="text"
               required
@@ -109,8 +109,8 @@ export default function EntryForm({
                 padding: '10px 12px',
                 borderRadius: '8px',
                 border: '1px solid #334155',
-                background: '#0F172A',
-                color: '#CBD5E1',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-secondary)',
                 fontSize: '14px'
               }}
             />
@@ -118,7 +118,7 @@ export default function EntryForm({
 
           {/* 核心洞察 */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>核心洞察 (Markdown) *</label>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>核心洞察 (Markdown) *</label>
             <textarea
               required
               value={formData.insight}
@@ -129,8 +129,8 @@ export default function EntryForm({
                 padding: '10px 12px',
                 borderRadius: '8px',
                 border: '1px solid #334155',
-                background: '#0F172A',
-                color: '#CBD5E1',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-secondary)',
                 fontSize: '14px',
                 fontFamily: 'monospace',
                 resize: 'vertical'
@@ -140,7 +140,7 @@ export default function EntryForm({
 
           {/* 研究类型 */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>研究类型</label>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>研究类型</label>
             <select
               value={formData.research_type}
               onChange={e => handleChange('research_type', e.target.value)}
@@ -149,8 +149,8 @@ export default function EntryForm({
                 padding: '10px 12px',
                 borderRadius: '8px',
                 border: '1px solid #334155',
-                background: '#0F172A',
-                color: '#CBD5E1',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-secondary)',
                 fontSize: '14px'
               }}
             >
@@ -164,7 +164,7 @@ export default function EntryForm({
           {/* 能量等级 + 顿悟 */}
           <div style={{ display: 'flex', gap: '16px' }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>能量等级 (1-5)</label>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>能量等级 (1-5)</label>
               <input
                 type="number"
                 min="1"
@@ -176,14 +176,14 @@ export default function EntryForm({
                   padding: '10px 12px',
                   borderRadius: '8px',
                   border: '1px solid #334155',
-                  background: '#0F172A',
-                  color: '#CBD5E1',
+                  background: 'var(--bg-primary)',
+                  color: 'var(--text-secondary)',
                   fontSize: '14px'
                 }}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>顿悟时刻</label>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>顿悟时刻</label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
@@ -191,7 +191,7 @@ export default function EntryForm({
                   onChange={e => handleChange('aha_moment', e.target.checked)}
                   style={{ width: '18px', height: '18px' }}
                 />
-                <span style={{ color: '#CBD5E1', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <IconLightbulb size={16} />
                   有顿悟
                 </span>
@@ -201,7 +201,7 @@ export default function EntryForm({
 
           {/* 自定义标签 */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>自定义标签 (逗号分隔)</label>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>自定义标签 (逗号分隔)</label>
             <input
               type="text"
               value={formData.custom_tags?.join(', ') || ''}
@@ -212,8 +212,8 @@ export default function EntryForm({
                 padding: '10px 12px',
                 borderRadius: '8px',
                 border: '1px solid #334155',
-                background: '#0F172A',
-                color: '#CBD5E1',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-secondary)',
                 fontSize: '14px'
               }}
             />
@@ -230,7 +230,7 @@ export default function EntryForm({
               borderRadius: '8px',
               border: '1px solid #334155',
               background: 'transparent',
-              color: '#94A3B8',
+              color: 'var(--text-secondary)',
               fontSize: '14px',
               cursor: 'pointer'
             }}
@@ -244,7 +244,7 @@ export default function EntryForm({
               borderRadius: '8px',
               border: 'none',
               background: '#38bdf8',
-              color: '#0F172A',
+              color: 'var(--bg-primary)',
               fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer'

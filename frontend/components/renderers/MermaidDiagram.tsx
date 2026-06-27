@@ -22,7 +22,7 @@ if (typeof window !== 'undefined') {
       arrowMarkerColor: '#8b95a8',
       primaryColor: '#1e293b',
       primaryTextColor: '#e8e8e8',
-      primaryBorderColor: '#475569',
+      primaryBorderColor: 'var(--text-muted)',
       textColor: '#c8d1dc'
     },
     themeCSS: `
@@ -69,6 +69,8 @@ if (typeof window !== 'undefined') {
 }
 
 export default function MermaidDiagram({ chart }: { chart: string }) {
+  if (!chart) return null;
+
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string>('');
 
@@ -81,8 +83,8 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
         const { svg: renderedSvg } = await mermaid.render(id, chart);
         setSvg(renderedSvg);
         setError('');
-      } catch (err: any) {
-        setError(err.message || '图表渲染失败');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : '图表渲染失败');
         setSvg('');
       }
     };

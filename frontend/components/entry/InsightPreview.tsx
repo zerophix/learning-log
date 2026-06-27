@@ -30,7 +30,7 @@ export default function InsightPreview({ insight }: { insight: string }) {
           <span key={count++} style={{
             display: 'inline',
             fontWeight: 400,
-            color: '#94A3B8',
+            color: 'var(--text-secondary)',
             fontSize: '12px'
           }}>
             {' '}{text}
@@ -40,7 +40,7 @@ export default function InsightPreview({ insight }: { insight: string }) {
     }
 
     if (totalChars > maxChars) {
-      elements.push(<span key="ellipsis" style={{ color: '#64748b' }}>…</span>);
+      elements.push(<span key="ellipsis" style={{ color: 'var(--text-muted)' }}>…</span>);
     }
 
     return elements;

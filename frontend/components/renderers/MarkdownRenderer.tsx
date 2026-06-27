@@ -5,14 +5,13 @@ import rehypeRaw from 'rehype-raw';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import CopyButton from '@/components/ui/CopyButton';
-import MermaidDiagram from '@/components/renderers/MermaidDiagram';
 
 export default function MarkdownRenderer({ content }: { content: string }) {
   return (
     <div style={{
       fontSize: '14px',
       lineHeight: '1.8',
-      color: '#CBD5E1',
+      color: 'var(--text-secondary)',
       fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif'
     }}>
       <ReactMarkdown
@@ -23,7 +22,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
             <h1 style={{
               fontSize: '22px',
               fontWeight: 700,
-              color: '#F1F5F9',
+              color: 'var(--text-primary)',
               margin: '32px 0 16px 0',
               paddingBottom: '12px',
               borderBottom: '2px solid #334155',
@@ -34,7 +33,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
             <h2 style={{
               fontSize: '18px',
               fontWeight: 600,
-              color: '#F1F5F9',
+              color: 'var(--text-primary)',
               margin: '28px 0 14px 0',
               paddingBottom: '8px',
               borderBottom: '1px solid #334155',
@@ -54,7 +53,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
             <h4 style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: '#CBD5E1',
+              color: 'var(--text-secondary)',
               margin: '20px 0 10px 0'
             }}>{children}</h4>
           ),
@@ -62,7 +61,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
             <p style={{
               fontSize: '14px',
               lineHeight: '1.75',
-              color: '#CBD5E1',
+              color: 'var(--text-secondary)',
               margin: '0 0 16px 0'
             }}>{children}</p>
           ),
@@ -70,7 +69,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
             <ul style={{
               fontSize: '14px',
               lineHeight: '1.75',
-              color: '#CBD5E1',
+              color: 'var(--text-secondary)',
               margin: '0 0 16px 0',
               paddingLeft: '24px'
             }}>{children}</ul>
@@ -79,7 +78,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
             <ol style={{
               fontSize: '14px',
               lineHeight: '1.75',
-              color: '#CBD5E1',
+              color: 'var(--text-secondary)',
               margin: '0 0 16px 0',
               paddingLeft: '24px'
             }}>{children}</ol>
@@ -92,7 +91,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
               borderLeft: '4px solid #475569',
               paddingLeft: '16px',
               margin: '20px 0',
-              color: '#94A3B8',
+              color: 'var(--text-secondary)',
               fontSize: '14px',
               lineHeight: '1.75',
               background: 'rgba(51, 65, 85, 0.3)',
@@ -101,10 +100,10 @@ export default function MarkdownRenderer({ content }: { content: string }) {
             }}>{children}</blockquote>
           ),
           strong: ({ children }) => (
-            <strong style={{ fontWeight: 600, color: '#F1F5F9' }}>{children}</strong>
+            <strong style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{children}</strong>
           ),
           em: ({ children }) => (
-            <em style={{ fontStyle: 'italic', color: '#94A3B8' }}>{children}</em>
+            <em style={{ fontStyle: 'italic', color: 'var(--text-secondary)' }}>{children}</em>
           ),
           a: ({ children, href }) => (
             <a href={href} style={{
@@ -123,12 +122,13 @@ export default function MarkdownRenderer({ content }: { content: string }) {
               margin: '24px 0'
             }} />
           ),
-          code: ({ node, inline, className, children, ...props }: any) => {
+          code: ({ node, inline, className, children, ...props }: { node?: any; inline?: boolean; className?: string; children?: React.ReactNode }) => {
             const match = /language-(\w+)/.exec(className || '');
             const isTextDiagram = typeof children === 'string' && (children.includes('┌') || children.includes('──'));
             if (!inline && match) {
               if (match[1] === 'mermaid') {
-                return <MermaidDiagram chart={String(children).replace(/\n$/, '')} />;
+                // diagram 由 EntryDetail 独立管理，insight 中的 mermaid 代码块降级为纯文本
+                return null;
               }
               if (isTextDiagram) {
                 return (

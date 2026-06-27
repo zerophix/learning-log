@@ -1,18 +1,13 @@
 import Tag from '@/components/ui/Tag';
 import InsightPreview from '@/components/entry/InsightPreview';
 import { IconLightbulb } from '@/components/ui/Icons';
+import { getResearchTypeInfo } from '@/lib/constants';
 import type { Entry } from '@/types';
-
-const researchTypeMap: Record<string, { label: string; color: string }> = {
-  'deep-research': { label: '深度研究', color: '#fbbf24' },
-  'topic-exploration': { label: '主题探索', color: '#34d399' },
-  'domain-mapping': { label: '领域映射', color: '#a78bfa' }
-};
 
 export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (e: Entry) => void }) {
   const date = new Date(entry.timestamp);
   const timeStr = `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
-  const rType = researchTypeMap[entry.research_type || ''] || { label: '', color: '#94a3b8' };
+  const rType = getResearchTypeInfo(entry.research_type || '');
 
   return (
     <div
@@ -67,7 +62,7 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
       {/* 右侧：卡片内容 */}
       <div style={{
         flex: 1,
-        background: '#1E293B',
+        background: 'var(--bg-secondary)',
         border: '1px solid #334155',
         borderRadius: '12px',
         padding: '20px',
@@ -75,11 +70,11 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
         minWidth: 0
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = '#475569';
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--text-muted)';
         (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = '#334155';
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-color)';
         (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
       }}
       >
@@ -91,7 +86,7 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
         </div>
 
         {/* 标题 */}
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600, color: '#F1F5F9', lineHeight: '1.4' }}>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: '1.4' }}>
           {entry.topic}
         </h3>
 

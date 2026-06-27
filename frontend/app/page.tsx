@@ -111,13 +111,13 @@ export default function Home() {
   }, [entries, activeFilter, searchQuery]);
 
   return (
-    <div style={{ height: '100vh', background: '#0F172A', color: '#F8FAFC', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* 顶部导航栏 */}
-      <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', flexShrink: 0 }}>
+      <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-primary)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <IconBook size={24} />
-            <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: '#F8FAFC' }}>学习日志</span>
+            <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>学习日志</span>
           </div>
           <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', fontWeight: 500, border: '1px solid rgba(56, 189, 248, 0.2)' }}>时间线</span>
         </div>
@@ -131,7 +131,7 @@ export default function Home() {
               borderRadius: '8px',
               border: 'none',
               background: '#38bdf8',
-              color: '#0F172A',
+              color: 'var(--bg-primary)',
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -161,12 +161,12 @@ export default function Home() {
           minHeight: 0
         }}>
         {loading && entries.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px', color: '#475569' }}>
+          <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
             <IconHourglass size={32} />
             正在加载学习记录...
           </div>
         ) : entries.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '100px 20px', color: '#475569' }}>
+          <div style={{ textAlign: 'center', padding: '100px 20px', color: 'var(--text-muted)' }}>
             <IconEmpty size={64} />
             <p>暂无灵感记录</p>
           </div>
@@ -174,13 +174,13 @@ export default function Home() {
           <>
             <TimelineView entries={filteredEntries} onSelect={setSelected} />
             {loadingMore && (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
                 <IconLoader size={20} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
                 {' '}加载中...
               </div>
             )}
             {!hasMoreRef.current && (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#475569', fontSize: '12px' }}>
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)', fontSize: '12px' }}>
                 — 已加载全部 {entries.length} 条记录 —
               </div>
             )}

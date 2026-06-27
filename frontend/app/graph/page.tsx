@@ -27,14 +27,14 @@ export default function GraphPage() {
       echartsRef.current = chart;
 
       const option = {
-        backgroundColor: '#0F172A',
+        backgroundColor: 'var(--bg-primary)',
         tooltip: {
           trigger: 'item',
-          formatter: (params: any) => {
+          formatter: (params: { dataType?: string; data?: { label?: string; name?: string }; label?: string; name?: string }) => {
             if (params.dataType === 'node') {
-              return params.data.label || params.data.name;
+              return params.data?.label || params.data?.name || '';
             }
-            return params.data.label || '';
+            return params.data?.label || '';
           }
         },
         series: [{
@@ -48,7 +48,7 @@ export default function GraphPage() {
           label: {
             show: true,
             fontSize: 11,
-            color: '#CBD5E1'
+            color: 'var(--text-secondary)'
           },
           force: {
             repulsion: 300,
@@ -72,7 +72,7 @@ export default function GraphPage() {
               formatter: edge.label
             },
             lineStyle: {
-              color: '#475569',
+              color: 'var(--text-muted)',
               width: 1.5,
               curveness: 0.2
             }
@@ -93,18 +93,18 @@ export default function GraphPage() {
   }, [graphData]);
 
   return (
-    <div style={{ height: '100vh', background: '#0F172A', color: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', flexShrink: 0 }}>
+    <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
+      <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-primary)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <IconNetwork size={24} />
-          <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: '#F8FAFC' }}>知识图谱</span>
+          <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>知识图谱</span>
         </div>
         <Navigation />
       </header>
 
       <main style={{ flex: 1, position: 'relative' }}>
         {!graphData ? (
-          <div style={{ textAlign: 'center', padding: '80px', color: '#475569' }}>
+          <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
             <IconHourglass size={32} />
             正在加载图谱数据...
           </div>

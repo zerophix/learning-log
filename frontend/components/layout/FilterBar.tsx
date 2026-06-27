@@ -1,8 +1,4 @@
-const RESEARCH_TYPES = [
-  { id: 'deep-research', label: '深度研究', color: '#fbbf24' },
-  { id: 'topic-exploration', label: '主题探索', color: '#34d399' },
-  { id: 'domain-mapping', label: '领域映射', color: '#a78bfa' }
-];
+import { RESEARCH_TYPES } from '@/lib/constants';
 
 export default function FilterBar({ 
   activeFilter, 
@@ -13,18 +9,18 @@ export default function FilterBar({
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      {RESEARCH_TYPES.map(type => (
+      {Object.entries(RESEARCH_TYPES).map(([id, type]) => (
         <button
-          key={type.id}
-          onClick={() => onFilterChange(activeFilter?.id === type.id ? null : { type: 'research', id: type.id })}
+          key={id}
+          onClick={() => onFilterChange(activeFilter?.id === id ? null : { type: 'research', id })}
           style={{
             padding: '6px 14px',
             borderRadius: '16px',
-            border: activeFilter?.id === type.id ? 'none' : '1px solid #334155',
-            background: activeFilter?.id === type.id ? type.color : 'transparent',
-            color: activeFilter?.id === type.id ? '#0F172A' : '#64748b',
+            border: activeFilter?.id === id ? 'none' : '1px solid #334155',
+            background: activeFilter?.id === id ? type.color : 'transparent',
+            color: activeFilter?.id === id ? 'var(--bg-primary)' : 'var(--text-muted)',
             fontSize: '12px',
-            fontWeight: activeFilter?.id === type.id ? 600 : 400,
+            fontWeight: activeFilter?.id === id ? 600 : 400,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -32,12 +28,12 @@ export default function FilterBar({
             transition: 'all 0.2s'
           }}
         >
-          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: activeFilter?.id === type.id ? '#0F172A' : type.color }}></span>
+          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: activeFilter?.id === id ? 'var(--bg-primary)' : type.color }}></span>
           {type.label}
         </button>
       ))}
       {activeFilter && (
-        <button onClick={() => onFilterChange(null)} style={{ fontSize: '11px', color: '#475569', cursor: 'pointer', background: 'none', border: 'none', padding: '4px 8px' }}>
+        <button onClick={() => onFilterChange(null)} style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', background: 'none', border: 'none', padding: '4px 8px' }}>
           清除
         </button>
       )}
