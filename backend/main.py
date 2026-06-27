@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
+import re
 import sqlite3
 import json
 import hashlib
@@ -85,6 +86,28 @@ def row_to_dict(row):
     if row is None:
         return None
     return dict(row)
+
+def _extract_summary(insight: str, max_chars: int = 200) -> str:
+    lines = insight.strip().split('\n')
+    parts = []
+    total = 0
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith('```'):
+            continue
+        text = re.sub(r'^#{1,6}\s+', '', stripped)
+        text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+        text = re.sub(r'_(.+?)_', r'\1', text)
+        text = re.sub(r'`(.+?)`', r'\1', text)
+        text = re.sub(r'[*_]{1,3}', '', text)
+        if total + len(text) > max_chars:
+            text = text[:max_chars - total]
+        if text.strip():
+            parts.append(text.strip())
+            total += len(text.strip())
+        if total >= max_chars:
+            break
+    return ' '.join(parts)[:max_chars].rstrip(' ,;.')
 
 def get_week_dates(year: int, week: int) -> tuple[date, date]:
     """Return (monday, sunday) for %W week number (Monday start)."""
@@ -251,7 +274,7 @@ def create_entry(entry: LearningEntryCreate):
             session_id,
             entry.topic,
             entry.insight,
-            entry.summary,
+            entry.summary or _extract_summary(entry.insight),
             entry.diagram,
             entry.star_situation,
             entry.star_task,

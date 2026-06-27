@@ -119,22 +119,22 @@ def _ensure_backend() -> bool:
 def call_ai_for_analysis(raw_content: str) -> dict:
     """Call AI to analyze raw learning content and extract structured fields"""
     prompt = f"""
- 你是一个学习记录分析助手。请从以下原始学习内容中提取结构化信息，返回 JSON 格式：
+     你是一个学习记录分析助手。请从以下原始学习内容中提取结构化信息，返回 JSON 格式：
  
  原始内容：
  {raw_content}
  
  请提取以下字段（用中文回答）：
- - topic: 学习主题（简短标题，10字以内）
- - question: 核心问题或需求
- - insight: 关键洞察或解决方案要点
- - summary: 摘要（1-3句话概括核心结论，用于前端卡片预览，不含 Markdown 格式）
- - category: 分类（technical/design/debug/architecture/interview/general）
- - tags: 标签列表（3-5个关键词）
- - project_module: 相关项目模块
- - difficulty: 难度（easy/medium/hard）
- - action_items: 后续行动项列表
- - related_skills: 相关技能名称列表
+  - topic: 学习主题（简短标题，10字以内）
+  - question: 核心问题或需求
+  - insight: 完整洞察（尽量保留原文的视觉结构：Mermaid/ASCII图/表格，使用标准 markdown 格式）
+  - summary: 摘要（1-3句话概括核心结论，用于前端卡片预览，纯文本不含 Markdown 格式）
+  - category: 分类（technical/design/debug/architecture/interview/general）
+  - tags: 标签列表（3-5个关键词）
+  - project_module: 相关项目模块
+  - difficulty: 难度（easy/medium/hard）
+  - action_items: 后续行动项列表
+  - related_skills: 相关技能名称列表
 
 只返回 JSON，不要其他文字。
 """
@@ -246,12 +246,12 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="deep_record",
-            description="深度知识沉淀。将 AI 已在对话中完成的完整分析内容（六步法全文）直接保存。所有内容包括结论、案例、原理、图示、代码、STAR复盘，全部放入 insight 字段。等同于 /记录 skill。",
+            description="深度知识沉淀。将 AI 已在对话中完成的完整分析内容直接保存。内容格式：一句话结论 + 系统全景(Mermaid) + Why(第一性原理) + 架构与流程 + 关键决策(对比表) + STAR+迁移。全部放入 insight 字段，mermaid 代码块(\`\`\`mermaid)放置于对应章节。等同于 /记录 skill。",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "topic": {"type": "string", "description": "学习主题（简短标题，10字以内）"},
-                    "insight": {"type": "string", "description": "完整的六步法分析全文（≥2000字），包含：核心结论、场景案例、第一性原理、Mermaid图示、代码实现、STAR复盘"},
+                    "insight": {"type": "string", "description": "协议对齐格式全文（≥1200字），包含：一句话结论、系统全景(Mermaid+ASCII)、Why(第一性原理)、架构与流程(ASCII)、关键决策(对比表)、STAR+迁移"},
                     "tags": {
                         "type": "array",
                         "items": {"type": "string"},
@@ -367,7 +367,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         if not topic or not insight:
             return [TextContent(type="text", text="❌ Error: topic and insight are required")]
 
-        # Build entry payload — insight 包含完整六步法全文
+        # Build entry payload — insight 包含协议对齐格式全文
         energy = arguments.get("energy", 5)
         entry_data = {
             "topic": topic,

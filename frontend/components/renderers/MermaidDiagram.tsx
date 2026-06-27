@@ -76,27 +76,49 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
 
   useEffect(() => {
     if (!chart) return;
-    
+
+    let cancelled = false;
     const renderDiagram = async () => {
       try {
         const id = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
         const { svg: renderedSvg } = await mermaid.render(id, chart);
-        setSvg(renderedSvg);
-        setError('');
+        if (!cancelled) {
+          setSvg(renderedSvg);
+          setError('');
+        }
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : '图表渲染失败');
-        setSvg('');
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : '图表渲染失败');
+          setSvg('');
+        }
       }
     };
 
     renderDiagram();
+    return () => { cancelled = true; };
   }, [chart]);
 
   if (error) {
     return (
-      <div style={{ color: '#ef4444', padding: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ color: '#ef4444', padding: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
         <IconWarning size={16} />
         {error}
+      </div>
+    );
+  }
+
+  if (!svg) {
+    return (
+      <div style={{
+        background: 'rgba(30, 41, 59, 0.5)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '8px',
+        padding: '40px',
+        textAlign: 'center',
+        color: 'var(--text-muted)',
+        fontSize: '13px'
+      }}>
+        渲染图中...
       </div>
     );
   }

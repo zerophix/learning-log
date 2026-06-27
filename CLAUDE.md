@@ -140,7 +140,7 @@ docs/           设计文档
 ## Skills
 
 自定义 Skill 在全局目录 `~/.config/opencode/skills/`:
-- `/记录` — 深度知识沉淀（六步分析 → 入库，STAR 字段自动 null）
+- `/记录` — 深度知识沉淀（协议对齐格式：结论→Mermaid+ASCII→Why→架构→决策→STAR，STAR 字段自动 null）
 - `/状态` — Learning Log 系统状态
 - `/灵感` — 快速顿悟捕获 (energy=5, aha=true)
 - `/命令` — 列出所有命令
