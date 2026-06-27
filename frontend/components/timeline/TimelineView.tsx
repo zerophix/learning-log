@@ -38,11 +38,11 @@ export default function TimelineView({
               {date}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{dayEntries.length} 条记录</span>
-            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, #334155, transparent)' }} />
+            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--border-color), transparent)' }} />
           </div>
 
           {/* 该日记录 */}
-          <div style={{ position: 'relative', marginLeft: '60px', borderLeft: '2px solid #1E293B', paddingLeft: '24px' }}>
+          <div style={{ position: 'relative', marginLeft: '60px', borderLeft: '2px solid var(--bg-secondary)', paddingLeft: '24px' }}>
             {dayEntries.map((entry) => (
               <EntryCard key={entry.id} entry={entry} onClick={onSelect} />
             ))}

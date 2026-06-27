@@ -101,9 +101,9 @@ export default function FeedPage() {
                 >
                   {/* 标签 */}
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                    {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="#38bdf8" />}
+                    {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="var(--accent-sky)" />}
                     {entry.research_type && <Tag label={rType.label} color={rType.color} />}
-                    <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? '#34d399' : '#fb7185'} />
+                    <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? 'var(--accent-emerald)' : '#fb7185'} />
                     {entry.aha_moment === 1 && (
                       <IconLightbulb size={16} />
                     )}

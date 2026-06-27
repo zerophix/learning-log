@@ -211,7 +211,7 @@ export default function EntryForm({
               padding: '10px 20px',
               borderRadius: '8px',
               border: 'none',
-              background: '#38bdf8',
+              background: 'var(--accent-sky)',
               color: 'var(--bg-primary)',
               fontSize: '14px',
               fontWeight: 600,

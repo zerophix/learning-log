@@ -105,9 +105,9 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
         }}>
           <div>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
-              {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="#38bdf8" />}
+              {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="var(--accent-sky)" />}
               {entry.research_type && <Tag label={rType.label} color={rType.color} />}
-              <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? '#34d399' : '#fb7185'} />
+              <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? 'var(--accent-emerald)' : '#fb7185'} />
               {entry.aha_moment === 1 && (
                 <IconLightbulb size={16} />
               )}
@@ -207,7 +207,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {entry.custom_tags.map((t, i) => (
-                  <span key={i} style={{ padding: '4px 10px', borderRadius: '16px', background: 'rgba(56,189,248,0.12)', color: '#38bdf8', fontSize: '12px' }}>{t}</span>
+                  <span key={i} style={{ padding: '4px 10px', borderRadius: '16px', background: 'rgba(56,189,248,0.12)', color: 'var(--accent-sky)', fontSize: '12px' }}>{t}</span>
                 ))}
               </div>
             </div>

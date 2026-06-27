@@ -88,7 +88,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
           ),
           blockquote: ({ children }) => (
             <blockquote style={{
-              borderLeft: '4px solid #475569',
+              borderLeft: '4px solid var(--border-color)',
               paddingLeft: '16px',
               margin: '20px 0',
               color: 'var(--text-secondary)',
@@ -107,11 +107,11 @@ export default function MarkdownRenderer({ content }: { content: string }) {
           ),
           a: ({ children, href }) => (
             <a href={href} style={{
-              color: '#38bdf8',
+              color: 'var(--accent-sky)',
               textDecoration: 'none',
               borderBottom: '1px solid rgba(56, 189, 248, 0.3)',
               transition: 'border-color 0.2s'
-            }} onMouseEnter={e => { (e.target as HTMLAnchorElement).style.borderColor = '#38bdf8'; }}
+            }} onMouseEnter={e => { (e.target as HTMLAnchorElement).style.borderColor = 'var(--accent-sky)'; }}
                onMouseLeave={e => { (e.target as HTMLAnchorElement).style.borderColor = 'rgba(56, 189, 248, 0.3)'; }}
             >{children}</a>
           ),
@@ -156,7 +156,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
               }
               return <CodeBlock code={String(children).replace(/\n$/, '')} language={match[1]} />;
             }
-            return <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'Menlo, Monaco, monospace', fontSize: '0.9em', color: '#38bdf8' }} {...props}>{children}</code>;
+            return <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'Menlo, Monaco, monospace', fontSize: '0.9em', color: 'var(--accent-sky)' }} {...props}>{children}</code>;
           }
         }}
       >{content}</ReactMarkdown>

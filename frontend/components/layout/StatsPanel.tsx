@@ -33,7 +33,7 @@ export default function StatsPanel() {
         padding: '12px 16px',
         textAlign: 'center'
       }}>
-        <div style={{ fontSize: '24px', fontWeight: 700, color: '#38bdf8' }}>{stats.entries}</div>
+        <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--accent-sky)' }}>{stats.entries}</div>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>条目总数</div>
       </div>
       <div style={{
@@ -44,7 +44,7 @@ export default function StatsPanel() {
         padding: '12px 16px',
         textAlign: 'center'
       }}>
-        <div style={{ fontSize: '24px', fontWeight: 700, color: '#34d399' }}>{stats.tags}</div>
+        <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--accent-emerald)' }}>{stats.tags}</div>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>标签总数</div>
       </div>
       <div style={{
@@ -55,7 +55,7 @@ export default function StatsPanel() {
         padding: '12px 16px',
         textAlign: 'center'
       }}>
-        <div style={{ fontSize: '24px', fontWeight: 700, color: '#a78bfa' }}>{stats.links}</div>
+        <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--accent-purple)' }}>{stats.links}</div>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>关联总数</div>
       </div>
     </div>

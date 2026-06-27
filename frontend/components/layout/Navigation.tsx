@@ -33,7 +33,7 @@ export default function Navigation() {
           style={{
             padding: '6px 14px',
             borderRadius: '16px',
-            background: pathname === item.path ? '#38bdf8' : 'transparent',
+            background: pathname === item.path ? 'var(--accent-sky)' : 'transparent',
             color: pathname === item.path ? 'var(--bg-primary)' : 'var(--text-muted)',
             fontSize: '12px',
             fontWeight: pathname === item.path ? 600 : 400,

@@ -126,7 +126,7 @@ export default function Home() {
             <IconBook size={24} />
             <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>学习日志</span>
           </div>
-          <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', fontWeight: 500, border: '1px solid rgba(56, 189, 248, 0.2)' }}>时间线</span>
+          <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--accent-sky)', fontWeight: 500, border: '1px solid rgba(56, 189, 248, 0.2)' }}>时间线</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <SearchBar onSearch={setSearchQuery} />
@@ -137,7 +137,7 @@ export default function Home() {
               padding: '8px 16px',
               borderRadius: '8px',
               border: 'none',
-              background: '#38bdf8',
+              background: 'var(--accent-sky)',
               color: 'var(--bg-primary)',
               fontSize: '13px',
               fontWeight: 600,
@@ -145,7 +145,7 @@ export default function Home() {
               transition: 'all 0.2s'
             }}
             onMouseEnter={e => { e.currentTarget.style.background = '#7dd3fc'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#38bdf8'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent-sky)'; }}
           >
             + 新建
           </button>

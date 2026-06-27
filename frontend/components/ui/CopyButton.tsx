@@ -26,7 +26,7 @@ export default function CopyButton({ text }: { text: string }) {
         borderRadius: '4px',
         padding: '2px 8px',
         fontSize: '10px',
-        color: copied ? '#34d399' : '#9ca3af',
+        color: copied ? 'var(--accent-emerald)' : '#9ca3af',
         cursor: 'pointer',
         transition: 'all 0.2s',
         fontFamily: 'inherit'

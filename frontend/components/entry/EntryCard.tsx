@@ -30,7 +30,7 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
         <span style={{
           fontSize: '13px',
           fontWeight: 600,
-          color: entry.energy_level >= 4 ? '#34d399' : '#fbbf24',
+          color: entry.energy_level >= 4 ? 'var(--accent-emerald)' : 'var(--accent-amber)',
           fontVariantNumeric: 'tabular-nums'
         }}>
           {timeStr}
@@ -48,8 +48,8 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
           width: entry.energy_level >= 4 ? '14px' : '10px',
           height: entry.energy_level >= 4 ? '14px' : '10px',
           borderRadius: '50%',
-          background: entry.energy_level >= 4 ? '#34d399' : '#fbbf24',
-          border: '3px solid #0F172A',
+          background: entry.energy_level >= 4 ? 'var(--accent-emerald)' : 'var(--accent-amber)',
+          border: '3px solid var(--bg-primary)',
           boxShadow: `0 0 0 2px ${entry.energy_level >= 4 ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.3)'}`,
           flexShrink: 0,
           zIndex: 2
@@ -80,7 +80,7 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
       >
         {/* 标签行 */}
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-          {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="#38bdf8" />}
+          {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="var(--accent-sky)" />}
           {entry.project_tag_id && <Tag label={entry.project_tag_id.split('.').pop() || ''} color="#818cf8" />}
           {entry.research_type && <Tag label={rType.label} color={rType.color} />}
         </div>
