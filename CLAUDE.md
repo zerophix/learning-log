@@ -134,16 +134,15 @@ scripts/tools/  可复用工具 (auto_record, context_manager...)
 scripts/seeds/  种子数据脚本
 deploy/         部署脚本
 docs/           设计文档
-.claude/skills/ 项目 Skills (/记录 /状态 /灵感 /服务 /命令)
+~/.config/opencode/skills/ Skills (/记录 /状态 /灵感 /命令)
 ```
 
 ## Skills
 
-本项目有 5 个自定义 Skill（`.claude/skills/`）:
-- `/记录` — 深度知识沉淀（六步分析 ≥2000字 → 入库）
+自定义 Skill 在全局目录 `~/.config/opencode/skills/`:
+- `/记录` — 深度知识沉淀（六步分析 → 入库，STAR 字段自动 null）
 - `/状态` — Learning Log 系统状态
-- `/灵感` — 快速顿悟捕获 (energy=5)
-- `/服务` — 后台服务管理（install/status/restart/logs）
+- `/灵感` — 快速顿悟捕获 (energy=5, aha=true)
 - `/命令` — 列出所有命令
 
 ## 约束

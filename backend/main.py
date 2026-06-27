@@ -45,11 +45,11 @@ class LearningEntryCreate(BaseModel):
     diagram: Optional[str] = None      # Mermaid 图示（可选）
     code_snippet: Optional[str] = None # 完整代码实现片段
     
-    # STAR 法则
-    star_situation: str                # 情境
-    star_task: str                     # 任务
-    star_action: str                   # 行动
-    star_result: str                   # 结果
+    # STAR 法则（允许空值，cli 不传时留 null）
+    star_situation: Optional[str] = None
+    star_task: Optional[str] = None
+    star_action: Optional[str] = None
+    star_result: Optional[str] = None
     
     # 标签维度
     topic_tag_id: Optional[str] = None
