@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { api } from '@/lib/api';
 import SearchBar from '@/components/ui/SearchBar';
+import Navigation from '@/components/layout/Navigation';
+import StatsPanel from '@/components/layout/StatsPanel';
 import FilterBar from '@/components/layout/FilterBar';
 import TimelineView from '@/components/timeline/TimelineView';
 import EntryDetail from '@/components/entry/EntryDetail';
@@ -117,7 +119,7 @@ export default function Home() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <SearchBar onSearch={setSearchQuery} />
-          <FilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+          <Navigation />
           <button
             onClick={() => setIsCreating(true)}
             style={{
@@ -138,6 +140,11 @@ export default function Home() {
           </button>
         </div>
       </header>
+
+      {/* 统计面板 */}
+      <div style={{ padding: '12px 28px 0', borderBottom: '1px solid #1E293B', flexShrink: 0 }}>
+        <StatsPanel />
+      </div>
 
       {/* 时间线内容 */}
       <main
