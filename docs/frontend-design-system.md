@@ -272,7 +272,7 @@ backdrop-filter: blur(12px);
 backdrop-filter: blur(8px);
 backdrop-filter: blur(4px);  /* 表单弹窗 */
 
-/* 底部提示栏 */
+/* 底部提示栏（未使用） */
 backdrop-filter: blur(8px);
 
 /* 日期标签 */
@@ -333,7 +333,7 @@ transition: all 0.3s;   /* 较慢（图表预览展开） */
 | **警告** | `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18C1.64 18.3 1.55 18.64 1.55 18.98C1.55 19.32 1.64 19.66 1.82 19.96C2 20.26 2.26 20.51 2.57 20.69C2.88 20.87 3.23 20.97 3.59 20.97H20.41C20.77 20.97 21.12 20.87 21.43 20.69C21.74 20.51 22 20.26 22.18 19.96C22.36 19.66 22.45 19.32 22.45 18.98C22.45 18.64 22.36 18.3 22.18 18L13.71 3.86C13.53 3.56 13.27 3.32 12.96 3.14C12.65 2.96 12.3 2.86 11.94 2.86C11.58 2.86 11.23 2.96 10.92 3.14C10.61 3.32 10.35 3.56 10.17 3.86L10.29 3.86Z" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` | 错误/警告提示 |
 | **加载** | `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2V4M12 20V22M4 12H2M22 12H20M6.34 6.34L4.93 4.93M19.07 19.07L17.66 17.66M6.34 17.66L4.93 19.07M19.07 4.93L17.66 6.34" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/></svg>` | 加载旋转变换 |
 | **空状态** | `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" style="opacity:0.3"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` | 空状态占位 |
- 
+
 ### 10.3 使用示例
 
 ```tsx
@@ -955,7 +955,7 @@ export type EntryFilter = { type: 'research' | 'project' | 'tag'; id: string } |
 ### 16.3 弹窗交互
 
 ```
-点击卡片 → setSelected(entry) → DetailModal 渲染
+点击卡片 → setSelected(entry) → EntryDetail 渲染
 点击遮罩 → setSelected(null) → 关闭
 点击内容区 → e.stopPropagation() → 不关闭
 按 × 按钮 → onClose() → 关闭
@@ -1020,9 +1020,10 @@ module.exports = nextConfig;
 5. **类型定义**: 创建 `types/index.ts`
 6. **常量与 API**: 创建 `lib/constants.ts` + `lib/api.ts`
 7. **图标库**: 创建 `components/ui/Icons.tsx`（统一 SVG 图标）
-8. **UI 原子组件**: Tag → CopyButton → SearchBar → InsightPreview
-9. **渲染器**: MarkdownRenderer → MermaidDiagram
-10. **业务组件**: EntryCard → EntryDetail → EntryForm → FilterBar → StatsPanel → Navigation → TimelineView
+8. **UI 原子组件**: Icons → Tag → CopyButton → ErrorBoundary → SearchBar
+9. **渲染器**: MarkdownRenderer → CodeBlock → MermaidDiagram
+10. **表单原子组件**: FormField (FormInput/FormTextarea/FormSelect/FormNumber/FormCheckbox)
+11. **业务组件**: EntryCard → EntryDetail → EntryDetailContent → EntryForm → EntryTags → DeleteConfirm → FilterBar → StatsPanel → PageHeader → Navigation → TimelineView
 11. **页面组装**: `app/layout.tsx` → `app/page.tsx` → `app/graph/page.tsx` → `app/feed/page.tsx`
 12. **启动（生产模式）**: `npm run build && npm start -p 3000`，确保后端在 `localhost:8002` 运行
 
