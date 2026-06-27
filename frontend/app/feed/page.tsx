@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import Navigation from '@/components/layout/Navigation';
 import Tag from '@/components/ui/Tag';
+import { IconList, IconHourglass, IconEmpty, IconLightbulb } from '@/components/ui/Icons';
 import type { Entry } from '@/types';
 
 const researchTypeMap: Record<string, { label: string; color: string }> = {
@@ -30,11 +31,7 @@ export default function FeedPage() {
     <div style={{ height: '100vh', background: '#0F172A', color: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
       <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="4" width="18" height="4" rx="1" stroke="#38bdf8" strokeWidth="1.5"/>
-            <rect x="3" y="10" width="18" height="4" rx="1" stroke="#38bdf8" strokeWidth="1.5"/>
-            <rect x="3" y="16" width="18" height="4" rx="1" stroke="#38bdf8" strokeWidth="1.5"/>
-          </svg>
+          <IconList size={24} />
           <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: '#F8FAFC' }}>Feed 流</span>
         </div>
         <Navigation />
@@ -65,18 +62,12 @@ export default function FeedPage() {
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px', color: '#475569' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 12px' }}>
-              <path d="M5 3H19M5 21H19M6 3V8L12 12L6 16V21M18 3V8L12 12L18 16V21" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <IconHourglass size={32} />
             加载中...
           </div>
         ) : entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '100px 20px', color: '#475569' }}>
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 16px', opacity: 0.3 }}>
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <IconEmpty size={64} />
             <p>暂无记录</p>
           </div>
         ) : (
@@ -109,9 +100,7 @@ export default function FeedPage() {
                     {entry.research_type && <Tag label={rType.label} color={rType.color} />}
                     <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? '#34d399' : '#fb7185'} />
                     {entry.aha_moment === 1 && (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18H15M10 22H14M12 2C8.13 2 5 5.13 5 9C5 11.38 6.19 13.47 8 14.74V17H16V14.74C17.81 13.47 19 11.38 19 9C19 5.13 15.87 2 12 2Z" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <IconLightbulb size={16} />
                     )}
                   </div>
 

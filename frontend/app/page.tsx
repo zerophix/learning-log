@@ -9,6 +9,7 @@ import FilterBar from '@/components/layout/FilterBar';
 import TimelineView from '@/components/timeline/TimelineView';
 import EntryDetail from '@/components/entry/EntryDetail';
 import EntryForm from '@/components/entry/EntryForm';
+import { IconBook, IconHourglass, IconEmpty, IconLoader } from '@/components/ui/Icons';
 import type { Entry, LearningEntryCreate } from '@/types';
 
 export default function Home() {
@@ -115,12 +116,7 @@ export default function Home() {
       <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 19.5V4.5C4 3.67157 4.67157 3 5.5 3H18.5C19.3284 3 20 3.67157 20 4.5V19.5C20 20.3284 19.3284 21 18.5 21H5.5C4.67157 21 4 20.3284 4 19.5Z" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M8 7H16" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M8 11H14" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M8 15H12" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <IconBook size={24} />
             <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: '#F8FAFC' }}>学习日志</span>
           </div>
           <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', fontWeight: 500, border: '1px solid rgba(56, 189, 248, 0.2)' }}>时间线</span>
@@ -166,18 +162,12 @@ export default function Home() {
         }}>
         {loading && entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px', color: '#475569' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 12px' }}>
-              <path d="M5 3H19M5 21H19M6 3V8L12 12L6 16V21M18 3V8L12 12L18 16V21" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <IconHourglass size={32} />
             正在加载学习记录...
           </div>
         ) : entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '100px 20px', color: '#475569' }}>
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 16px', opacity: 0.3 }}>
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <IconEmpty size={64} />
             <p>暂无灵感记录</p>
           </div>
         ) : (
@@ -185,9 +175,7 @@ export default function Home() {
             <TimelineView entries={filteredEntries} onSelect={setSelected} />
             {loadingMore && (
               <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', animation: 'spin 1s linear infinite', verticalAlign: 'middle' }}>
-                  <path d="M12 2V4M12 20V22M4 12H2M22 12H20M6.34 6.34L4.93 4.93M19.07 19.07L17.66 17.66M6.34 17.66L4.93 19.07M19.07 4.93L17.66 6.34" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <IconLoader size={20} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
                 {' '}加载中...
               </div>
             )}

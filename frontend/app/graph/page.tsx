@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 import Navigation from '@/components/layout/Navigation';
+import { IconNetwork, IconHourglass } from '@/components/ui/Icons';
 import type { GraphData } from '@/types';
 
 export default function GraphPage() {
@@ -95,17 +96,7 @@ export default function GraphPage() {
     <div style={{ height: '100vh', background: '#0F172A', color: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
       <header style={{ borderBottom: '1px solid #1E293B', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="3" stroke="#38bdf8" strokeWidth="1.5"/>
-            <circle cx="5" cy="6" r="2" stroke="#38bdf8" strokeWidth="1.5"/>
-            <circle cx="19" cy="6" r="2" stroke="#38bdf8" strokeWidth="1.5"/>
-            <circle cx="5" cy="18" r="2" stroke="#38bdf8" strokeWidth="1.5"/>
-            <circle cx="19" cy="18" r="2" stroke="#38bdf8" strokeWidth="1.5"/>
-            <path d="M7 7L10 10" stroke="#38bdf8" strokeWidth="1.5"/>
-            <path d="M17 7L14 10" stroke="#38bdf8" strokeWidth="1.5"/>
-            <path d="M7 17L10 14" stroke="#38bdf8" strokeWidth="1.5"/>
-            <path d="M17 17L14 14" stroke="#38bdf8" strokeWidth="1.5"/>
-          </svg>
+          <IconNetwork size={24} />
           <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: '#F8FAFC' }}>知识图谱</span>
         </div>
         <Navigation />
@@ -114,9 +105,7 @@ export default function GraphPage() {
       <main style={{ flex: 1, position: 'relative' }}>
         {!graphData ? (
           <div style={{ textAlign: 'center', padding: '80px', color: '#475569' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 12px' }}>
-              <path d="M5 3H19M5 21H19M6 3V8L12 12L6 16V21M18 3V8L12 12L18 16V21" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <IconHourglass size={32} />
             正在加载图谱数据...
           </div>
         ) : (

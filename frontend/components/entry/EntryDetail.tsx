@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import Tag from '@/components/ui/Tag';
 import MarkdownRenderer from '@/components/renderers/MarkdownRenderer';
 import EntryForm from '@/components/entry/EntryForm';
+import { IconLightbulb, IconTag } from '@/components/ui/Icons';
 import { api } from '@/lib/api';
 import type { Entry, LearningEntryCreate } from '@/types';
 
@@ -106,9 +107,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
               {entry.research_type && <Tag label={rType.label} color={rType.color} />}
               <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? '#34d399' : '#fb7185'} />
               {entry.aha_moment === 1 && (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 18H15M10 22H14M12 2C8.13 2 5 5.13 5 9C5 11.38 6.19 13.47 8 14.74V17H16V14.74C17.81 13.47 19 11.38 19 9C19 5.13 15.87 2 12 2Z" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <IconLightbulb size={16} />
               )}
             </div>
             <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 600, color: '#F8FAFC', lineHeight: '1.3' }}>
@@ -186,9 +185,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
           {entry.custom_tags && entry.custom_tags.length > 0 && (
             <div>
               <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                  <path d="M7 7H7.01M7 3H5C4.46957 3 3.96086 3.21071 3.58579 3.58579C3.21071 3.96086 3 4.46957 3 5V7M17 7H17.01M7 17H7.01M17 17H17.01M17 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V17M12 12H12.01M7 12H7.01M17 12H17.01M12 7H12.01M12 17H12.01" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <IconTag size={12} />
                 标签
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>

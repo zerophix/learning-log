@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { IconLightbulb } from '@/components/ui/Icons';
 import type { Entry, LearningEntryCreate } from '@/types';
 
 export default function EntryForm({ 
@@ -191,9 +192,7 @@ export default function EntryForm({
                   style={{ width: '18px', height: '18px' }}
                 />
                 <span style={{ color: '#CBD5E1', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 18H15M10 22H14M12 2C8.13 2 5 5.13 5 9C5 11.38 6.19 13.47 8 14.74V17H16V14.74C17.81 13.47 19 11.38 19 9C19 5.13 15.87 2 12 2Z" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <IconLightbulb size={16} />
                   有顿悟
                 </span>
               </label>
