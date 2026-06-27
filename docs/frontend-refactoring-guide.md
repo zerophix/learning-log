@@ -77,16 +77,16 @@ frontend/
 | 2 | **4 处缺失 `.catch()`**: API 失败对用户不可见 | 🔴 高 | `page.tsx`, `feed/page.tsx`, `graph/page.tsx`, `StatsPanel.tsx` | ✅ 已修复 |
 | 3 | **无 Error Boundary**: 渲染崩溃导致白屏 | 🔴 高 | 全项目 | ✅ 已修复 |
 | 4 | **无 Toast 通知**: 创建/编辑/删除无反馈 | 🟡 中 | `EntryDetail.tsx`, `EntryForm.tsx`, `DeleteConfirm.tsx` | ✅ 已修复 |
-| 5 | **无键盘可访问性**: 无 tabIndex/keyDown/aria | 🟡 中 | 全部交互组件 | ⏳ P7.1 |
+| 5 | **无键盘可访问性**: 无 tabIndex/keyDown/aria | 🟡 中 | 全部交互组件 | ✅ 已修复 |
 | 6 | **~20 处残余硬编码色值**: 主要是 accent 色在 JS 中 | 🟡 中 | 7 个组件 | ✅ 已修复 |
 | 7 | **未使用的导入/状态**: 死代码残留 | 🟡 中 | `page.tsx:8`(FilterBar), `page.tsx:23`(offset), `MarkdownRenderer.tsx:5`(CopyButton) | ✅ 已修复 |
 | 8 | **重复标签行模式**: 3 处重复 `topic_tag_id`+`project_tag_id`+`research_type` JSX | 🟡 中 | `EntryCard.tsx`, `EntryDetail.tsx`, `feed/page.tsx` | ✅ 已修复 |
 | 9 | **重复页面头部**: 3 页重复 header JSX | 🟡 中 | `page.tsx`, `graph/page.tsx`, `feed/page.tsx` | ✅ 已修复 |
 | 10 | **EntryDetail/EntryForm 超 200 行** | 🟡 中 | `EntryDetail.tsx(179)`, `EntryForm.tsx(165)` | ✅ 已修复 |
 | 11 | **Feed 页面内联 FilterBar**: 未使用 `FilterBar` 组件 | 🟢 低 | `feed/page.tsx` | ✅ 已修复 |
-| 12 | **Graph 页无空状态**: 无数据时静默失败 | 🟢 低 | `graph/page.tsx` | ⏳ P7.2 |
+| 12 | **Graph 页无空状态**: 无数据时静默失败 | 🟢 低 | `graph/page.tsx` | ✅ 已修复 |
 | 13 | **`echarts-for-react` 未使用**: package.json 残留 | 🟢 低 | `package.json` | ✅ 已修复 |
-| 14 | **无请求取消/超时**: fetch 无止等待 | 🟢 低 | `lib/api.ts` | ⏳ P7.3 |
+| 14 | **无请求取消/超时**: fetch 无止等待 | 🟢 低 | `lib/api.ts` | ✅ 已修复 |
 
 ---
 
@@ -128,7 +128,7 @@ P7.3 请求增强 ───────────── 可独立（取消/超
 ### 执行顺序
 
 ```
-P6.1 → P6.2 → P6.3 → P6.4 → P6.5 → P6.6 → P6.7 → P6.8 → P7.1 → P7.2 → P7.3
+P6.1 → P6.2 → P6.3 → P6.4 → P6.5 → P6.6 → P6.7 → P6.8 → P7.1 → P7.2 → P7.3 ✅
 ```
 
 ---
