@@ -28,6 +28,7 @@
 | P6.5 | 清理死代码 — 移除未用 FilterBar 导入、echarts-for-react 包 | ✅ 完成 |
 | P6.6 | 消除重复 JSX — 创建 `EntryTags` + `PageHeader`，替换 5 处重复模式 | ✅ 完成 |
 | P6.7 | 组件瘦身 — EntryDetail(214→179) + EntryForm(227→165)，提取 `EntryDetailContent` + `FormField` | ✅ 完成 |
+| P6.8 | Feed 页面统一 FilterBar — 内联筛选按钮 → `<FilterBar>` 组件 | ✅ 完成 |
 
 ### 1.2 当前文件清单
 
@@ -82,7 +83,7 @@ frontend/
 | 8 | **重复标签行模式**: 3 处重复 `topic_tag_id`+`project_tag_id`+`research_type` JSX | 🟡 中 | `EntryCard.tsx`, `EntryDetail.tsx`, `feed/page.tsx` | ✅ 已修复 |
 | 9 | **重复页面头部**: 3 页重复 header JSX | 🟡 中 | `page.tsx`, `graph/page.tsx`, `feed/page.tsx` | ✅ 已修复 |
 | 10 | **EntryDetail/EntryForm 超 200 行** | 🟡 中 | `EntryDetail.tsx(179)`, `EntryForm.tsx(165)` | ✅ 已修复 |
-| 11 | **Feed 页面内联 FilterBar**: 未使用 `FilterBar` 组件 | 🟢 低 | `feed/page.tsx` | ⏳ P6.8 |
+| 11 | **Feed 页面内联 FilterBar**: 未使用 `FilterBar` 组件 | 🟢 低 | `feed/page.tsx` | ✅ 已修复 |
 | 12 | **Graph 页无空状态**: 无数据时静默失败 | 🟢 低 | `graph/page.tsx` | ⏳ P7.2 |
 | 13 | **`echarts-for-react` 未使用**: package.json 残留 | 🟢 低 | `package.json` | ✅ 已修复 |
 | 14 | **无请求取消/超时**: fetch 无止等待 | 🟢 低 | `lib/api.ts` | ⏳ P7.3 |

@@ -3,21 +3,21 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import Navigation from '@/components/layout/Navigation';
 import PageHeader from '@/components/layout/PageHeader';
+import FilterBar from '@/components/layout/FilterBar';
 import EntryTags from '@/components/entry/EntryTags';
 import { IconList, IconHourglass, IconEmpty } from '@/components/ui/Icons';
-import { RESEARCH_TYPES } from '@/lib/constants';
 import type { Entry } from '@/types';
 
 export default function FeedPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<{ type: string; id: string } | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const params = activeFilter ? { research_type: activeFilter } : {};
+    const params = activeFilter ? { research_type: activeFilter.id } : {};
     api.entries.feed(params)
       .then(data => {
         setEntries(Array.isArray(data) ? data : []);
@@ -36,26 +36,8 @@ export default function FeedPage() {
       </PageHeader>
 
       <main style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
-        {/* 过滤器 */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-          {Object.entries(RESEARCH_TYPES).map(([id, type]) => (
-            <button
-              key={id}
-              onClick={() => setActiveFilter(activeFilter === id ? null : id)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '16px',
-                border: activeFilter === id ? 'none' : '1px solid var(--border-color)',
-                background: activeFilter === id ? type.color : 'transparent',
-                color: activeFilter === id ? 'var(--bg-primary)' : 'var(--text-muted)',
-                fontSize: '12px',
-                fontWeight: activeFilter === id ? 600 : 400,
-                cursor: 'pointer'
-              }}
-            >
-              {type.label}
-            </button>
-          ))}
+        <div style={{ marginBottom: '24px' }}>
+          <FilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
         </div>
 
         {error ? (
