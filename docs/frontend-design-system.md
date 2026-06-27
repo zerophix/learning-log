@@ -11,7 +11,7 @@
 | 框架 | **Next.js** (App Router) | 14.1.0 | 页面路由 + SSR 框架 |
 | UI 库 | **React** | ^18 | 组件渲染（全部 `'use client'`） |
 | 语言 | **TypeScript** | ^5 | 类型安全 |
-| 图表 | **ECharts** + echarts-for-react | 5.4.3 | 力导向知识图谱 |
+| 图表 | **ECharts** | 5.4.3 | 力导向知识图谱 |
 | 架构图 | **Mermaid** | 10.9.0 | Markdown 内嵌流程图渲染 |
 | Markdown | **react-markdown** + remark-gfm + rehype-raw | 10.1.0 | 富文本洞察内容渲染 |
 | 代码高亮 | **react-syntax-highlighter** | 16.1.1 | 代码块语法高亮（vscDarkPlus 主题） |
@@ -34,7 +34,6 @@
   "dependencies": {
     "@types/react-syntax-highlighter": "^15.5.13",
     "echarts": "^5.4.3",
-    "echarts-for-react": "^3.0.2",
     "mermaid": "^10.9.0",
     "next": "14.1.0",
     "react": "^18",
@@ -330,7 +329,11 @@ transition: all 0.3s;   /* 较慢（图表预览展开） */
 | **编辑** | `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 20V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M18.5 2.50001C18.8978 2.10219 18.8978 1.45782 18.5 1.06001L16.9393 -0.500686C16.5415 -0.898505 15.8971 -0.898505 15.4993 -0.500686L7 7.99933V11H10L18.5 2.50001Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` | 编辑按钮 |
 | **删除** | `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6M19 6V20C19 20.5523 18.5523 21 18 21H6C5.44772 21 5 20.5523 5 20V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` | 删除按钮 |
 | **沙漏** | `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 3H19M5 21H19M6 3V8L12 12L6 16V21M18 3V8L12 12L18 16V21" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` | 加载中 |
-
+| **标签** | `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 7H7.01M7 3H5C4.46957 3 3.96086 3.21071 3.58579 3.58579C3.21071 3.96086 3 4.46957 3 5V7M17 7H17.01M7 17H7.01M17 17H17.01M17 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V17M12 12H12.01M7 12H7.01M17 12H17.01M12 7H12.01M12 17H12.01" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` | 标签徽章装饰 |
+| **警告** | `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18C1.64 18.3 1.55 18.64 1.55 18.98C1.55 19.32 1.64 19.66 1.82 19.96C2 20.26 2.26 20.51 2.57 20.69C2.88 20.87 3.23 20.97 3.59 20.97H20.41C20.77 20.97 21.12 20.87 21.43 20.69C21.74 20.51 22 20.26 22.18 19.96C22.36 19.66 22.45 19.32 22.45 18.98C22.45 18.64 22.36 18.3 22.18 18L13.71 3.86C13.53 3.56 13.27 3.32 12.96 3.14C12.65 2.96 12.3 2.86 11.94 2.86C11.58 2.86 11.23 2.96 10.92 3.14C10.61 3.32 10.35 3.56 10.17 3.86L10.29 3.86Z" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` | 错误/警告提示 |
+| **加载** | `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2V4M12 20V22M4 12H2M22 12H20M6.34 6.34L4.93 4.93M19.07 19.07L17.66 17.66M6.34 17.66L4.93 19.07M19.07 4.93L17.66 6.34" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/></svg>` | 加载旋转变换 |
+| **空状态** | `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" style="opacity:0.3"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` | 空状态占位 |
+ 
 ### 10.3 使用示例
 
 ```tsx
@@ -383,7 +386,7 @@ transition: all 0.3s;   /* 较慢（图表预览展开） */
 frontend/
 ├── app/                              # Next.js App Router 页面路由
 │   ├── layout.tsx                    # 根布局（metadata + globals.css 引入）
-│   ├── page.tsx                      # 首页 — 时间线视图（~185 行）
+│   ├── page.tsx                      # 首页 — 时间线视图（~197 行）
 │   ├── globals.css                   # 全局 CSS 变量 + 重置 + 滚动条 + Markdown 样式
 │   ├── graph/
 │   │   └── page.tsx                  # 知识图谱页（ECharts 力导向图）
@@ -394,18 +397,20 @@ frontend/
 │   │   ├── Icons.tsx                 # 统一 SVG 图标库（14 个图标组件）
 │   │   ├── Tag.tsx                   # 标签徽章
 │   │   ├── CopyButton.tsx           # 复制按钮
-│   │   ├── DeleteConfirm.tsx        # 删除确认弹窗
 │   │   ├── SearchBar.tsx            # 搜索栏
-│   │   └── ErrorBoundary.tsx        # 错误边界组件（P6.3 新增）
+│   │   └── ErrorBoundary.tsx        # 错误边界组件
 │   ├── entry/                        # 条目相关组件
 │   │   ├── EntryCard.tsx            # 时间线卡片
 │   │   ├── EntryDetail.tsx          # 详情弹窗（含编辑/删除）
+│   │   ├── EntryDetailContent.tsx   # 详情内容面板（P6.7 提取）
 │   │   ├── EntryForm.tsx            # 新建/编辑表单
-│   │   ├── EntryTags.tsx            # 标签行组件（P6.6 新增）
+│   │   ├── EntryTags.tsx            # 标签行组件
+│   │   ├── DeleteConfirm.tsx        # 删除确认弹窗
+│   │   ├── FormField.tsx            # 表单字段原子组件（P6.7 提取）
 │   │   └── InsightPreview.tsx       # 洞察预览文本
 │   ├── layout/                       # 布局组件
 │   │   ├── Navigation.tsx           # 页面导航栏
-│   │   ├── PageHeader.tsx           # 统一页面头部（P6.6 新增）
+│   │   ├── PageHeader.tsx           # 统一页面头部
 │   │   ├── FilterBar.tsx            # 研究类型过滤器
 │   │   └── StatsPanel.tsx           # 统计面板
 │   ├── renderers/                    # 渲染器
@@ -414,7 +419,7 @@ frontend/
 │   │   └── MermaidDiagram.tsx       # Mermaid 图表渲染
 │   └── timeline/
 │       └── TimelineView.tsx         # 时间线视图（日期分组 + 交错布局）
-├── hooks/                            # 自定义 Hooks（P6.2 新增）
+├── hooks/                            # 自定义 Hooks
 │   └── useToast.tsx                  # Toast 通知 Context → Provider + Hook + 渲染
 ├── lib/                              # 工具库
 │   ├── api.ts                        # 统一 API 客户端（所有 fetch 调用）
@@ -480,7 +485,7 @@ frontend/
 
 ## 十二、组件详细规格
 
-### 12.1 Header.tsx — 顶部胶囊导航栏
+### 12.1 Navigation.tsx — 顶部胶囊导航栏
 
 ```
 位置: fixed, top: 16px, 水平居中 (left: 50%, transform: translateX(-50%))
@@ -488,115 +493,62 @@ frontend/
 背景: rgba(15, 23, 42, 0.9) + backdrop-filter: blur(12px)
 边框: 1px solid rgba(71, 85, 105, 0.5)
 内边距: 6px 8px
-布局: flex, gap: 12px
+布局: flex, gap: 4px
 
 包含元素:
-  [➕ 新建按钮] — accent-emerald, hover 时背景变淡绿
-  [面包屑导航] — › 分隔的路径，最后一项为 accent-sky 激活态
-  [图形|时间线 视图切换] — 胶囊内嵌的 segmented control
+  [时间线] [图谱] [Feed] — 路由链接，激活态 accent-sky
+```
+
+### 12.2 PageHeader.tsx — 统一页面头部
+
+```
+布局: flex, align-items: center, gap: 10px, padding: 14px 28px
+底部边框: 1px solid var(--bg-secondary)
+
+结构:
+  [图标 (24px)] [标题 (17px, 600)] [badge (可选, 11px, text-muted)]
+  [Navigation 组件 (flex: 1, 居右)]
+  [children (额外的操作按钮)]
 ```
 
 **Props:**
 ```typescript
-interface HeaderProps {
-  breadcrumb: NavItem[];
-  onNavigate: (index: number) => void;
-  onNewEntry: () => void;
-  activeView: 'timeline' | 'graph';
-  setActiveView: (view: 'timeline' | 'graph') => void;
-  hideToggle?: boolean;
+interface PageHeaderProps {
+  icon: ReactNode;
+  title: string;
+  badge?: string;
+  children?: ReactNode;
 }
 ```
 
-### 12.2 Sidebar.tsx — 浮动侧边栏
+### 12.3 StatsPanel.tsx — 统计面板
 
 ```
-位置: fixed, left: 16px, top: 16px
-宽度: 240px
-背景: rgba(30, 41, 59, 0.6) + backdrop-filter: blur(12px)
-边框: 1px solid rgba(71, 85, 105, 0.4)
-圆角: 12px
-内边距: 16px
+布局: flex, gap: 16px, padding: 12px 0
 
-包含元素:
-  标题 "知识透视" (accent-sky, 带靶心 SVG 图标)
-  ───────────────── (divider)
-  节点类型筛选 — 带颜色圆点 + 计数
-  ─────────────────
-  精力过滤滑块 — range input, min=1 max=5, 翡翠绿滑块
-  ─────────────────
-  项目维度筛选 — 仅计科学科下显示 (业务/源码/组件)
-  ─────────────────
-  统计: Nodes: N | Edges: N
+3 个统计卡片（flex: 1）:
+  - 条目总数 — 24px 700, accent-sky
+  - 标签总数 — 24px 700, accent-emerald
+  - 关联总数 — 24px 700, accent-purple
+  描述文字: 11px, text-muted
+
+加载态: 3 块骨架脉冲动画 (skeletonPulse 1.5s), 每块延迟 0.15s
+错误态: 12px, #ef4444
 ```
 
-**Props:**
-```typescript
-interface SidebarProps {
-  categories: FilterCategory[];
-  onFilterChange: (minEnergy: number) => void;
-  onCategoryToggle: (category: string | null) => void;
-  activeCategory: string | null;
-  totalNodes: number;
-  totalEdges: number;
-  activeProject: string | null;
-  onProjectSelect: (projectId: string | null) => void;
-  currentNodeId: string | null;
-}
-```
-
-### 12.3 FeedCard.tsx — Feed 流卡片
+### 12.4 FilterBar.tsx — 研究类型过滤器
 
 ```
-背景: rgba(255,255,255,0.04)
-边框: 1px solid rgba(255,255,255,0.08)
-圆角: 12px
-内边距: 20px
-hover: 背景→rgba(255,255,255,0.07), 边框→rgba(255,255,255,0.15)
+布局: flex, gap: 8px, flex-wrap: wrap
 
-结构:
-  [顶部元信息行]
-    [学科 pill] — 绿底绿字, border-radius: 20px, padding: 4px 10px
-    [项目 pill] — 紫底紫字 (可选)
-    [研究类型] — text-muted
-    [相对时间] — text-muted, 右对齐
+按钮样式:
+  padding: 6px 14px, border-radius: 6px
+  border: 1px solid var(--border-color)
+  background: transparent (默认) / var(--accent-amber) (激活)
+  color: var(--text-secondary) (默认) / var(--bg-primary) (激活)
+  font-size: 12px, font-weight: 500
 
-  [标题 h3] — 18px, font-weight: 600
-
-  [洞察摘要 p] — 14px, 默认 3 行截断 (-webkit-line-clamp: 3)
-    ├─ 超过 150 字显示 "展开更多" 按钮 (accent-sky)
-    └─ 展开后完整显示
-
-  [Mermaid 图表预览] (可选)
-    └─ 深色背景代码块, max-height: 100px / expanded: 300px
-
-  [底部指标栏]
-    ├─ 精力值 (energy_level >= 4 → #34d399, 否则 → #fbbf24)
-    └─ [灯泡 SVG 图标] 顿悟时刻 (仅 aha_moment=1 时显示)
-```
-
-### 12.4 FeedFilterBar.tsx — Feed 过滤器栏
-
-```
-背景: rgba(255,255,255,0.03)
-边框: 底部 1px solid rgba(255,255,255,0.06)
-内边距: 12px 20px
-布局: flex, gap: 12px, flex-wrap: wrap
-
-结构:
-  [视图切换]  📋 Feed  |  🕸️ 图谱
-  │ (segmented buttons, 激活态 accent-sky)
-  │
-  [项目筛选]  ●业务项目  ●源码项目  ●组件项目
-  │ (pill 按钮组, 各自颜色, 激活态有背景色)
-  │
-  [学科筛选]  计科 数学 物理 金融 法学
-  │ (pill 按钮组, 激活态 emerald)
-  │
-  [视角筛选]  小题深研 专题探索 领域映射
-  │ (pill 按钮组, 激活态 purple)
-  │
-  [清空]  仅在有筛选时显示
+点击: toggle 激活态, activeFilter={type, id} | null
 ```
 
 ### 12.5 TimelineView.tsx — 时间线视图
@@ -604,11 +556,6 @@ hover: 背景→rgba(255,255,255,0.07), 边框→rgba(255,255,255,0.15)
 ```
 最大宽度: 900px, 水平居中
 padding: 40px 20px
-
-头部:
-  标题 "📚 学习日志时间线" — 32px, font-weight: 700
-  渐变色: linear-gradient(135deg, #38bdf8, #a78bfa)
-  (使用 background-clip: text 实现渐变文字)
 
 时间线轴:
   中轴线 — 2px 宽, 渐变色 rgba(56,189,248,0.3) → transparent
@@ -621,132 +568,105 @@ padding: 40px 20px
   每个条目:
     ├─ 时间线圆点 (16px, 翡翠绿/琥珀黄, 3px 外发光)
     ├─ 连接横线 (30px, rgba(56,189,248,0.3))
-    └─ FeedCard 组件
+    └─ EntryCard 组件
 ```
 
-### 12.6 GraphView.tsx — ECharts 力导向图
-
-```typescript
-// ECharts 配置
-{
-  backgroundColor: 'transparent',
-  series: [{
-    type: 'graph',
-    layout: 'force',
-    roam: true,                // 支持缩放拖拽
-    draggable: true,           // 节点可拖拽
-    force: {
-      repulsion: 500,          // 节点斥力
-      edgeLength: 150,         // 边理想长度
-      gravity: 0.05            // 重力
-    },
-    emphasis: { focus: 'adjacency' }  // hover 高亮邻接节点
-  }]
-}
-```
-
-**节点样式:**
-- 大小: `30 + energy * 5` px（能量越高节点越大）
-- 颜色按类别: design=`#34d399`, visual=`#38bdf8`, arch=`#a78bfa`, tech=`#fbbf24`
-- 标签在节点下方 (position: 'bottom')
-
-**边样式:**
-- 颜色: `rgba(148, 163, 184, 0.2)`
-- 曲线: `curveness: 0.1`
-
-**交互:**
-- 单击 → `onNodeClick(nodeId)` — 选中/筛选
-- 双击 → `onNodeDoubleClick(nodeId, nodeName)` — 下钻
-
-### 12.7 DataTable.tsx — 数据表格
+### 12.6 EntryCard.tsx — 时间线卡片
 
 ```
-列: 主题 | 标签 | 精力 | 顿悟 | 操作
+背景: var(--bg-secondary)
+边框: 1px solid var(--border-color), 圆角: 12px
+padding: 20px
+hover: border-color → var(--text-muted), box-shadow: 0 4px 20px rgba(0,0,0,0.3)
+cursor: pointer
 
-表头样式:
-  - position: sticky, top: 0
-  - 背景: rgba(11, 17, 32, 0.95) + backdrop-filter: blur(8px)
-  - 文字: 10px, uppercase, text-muted
-  - padding: 12px 24px
+结构:
+  [EntryTags — 标签行]
+  [标题 h3] — 16px, 600
+  [洞察预览] — 13px, 3 行截断 (-webkit-line-clamp: 3)
+  [时间] — 11px, text-muted
 
-行样式:
-  - border-bottom: 1px solid rgba(71, 85, 105, 0.2)
-  - hover: background rgba(51, 65, 85, 0.3)
-  - padding: 16px 24px
-
-标签徽章: 10px, 彩色边框 + 半透明背景
-精力徽章: 24px 圆形, 等宽数字
-顿悟列: ✓ (#34d399) 或 — (text-muted, opacity: 0.3)
+可访问性: role="button", tabIndex={0}, onKeyDown Enter/Space
 ```
 
-### 12.8 DetailModal.tsx / page.tsx 内联弹窗 — 详情弹窗
+### 12.7 EntryDetail.tsx — 详情弹窗
 
 ```
 遮罩:
   position: fixed, inset: 0
-  背景: rgba(15, 23, 42, 0.92) / rgba(0,0,0,0.8)
+  背景: rgba(15, 23, 42, 0.92)
   backdrop-filter: blur(8px)
   z-index: 1000
 
 弹窗主体:
-  最大宽度: 900px / 1000px
-  最大高度: 85vh / 90vh
-  背景: #1E293B 或 linear-gradient(135deg, #1e293b, #0f172a)
-  圆角: 16px
-  边框: 1px solid rgba(255,255,255,0.1)
-  布局: flex column (头部固定 + 内容滚动)
+  max-width: 1000px, max-height: 90vh
+  background: var(--bg-secondary), 圆角: 16px
+  border: 1px solid var(--border-color)
+  flex column (头部固定 + 内容滚动)
 
 头部:
   padding: 20px 24px
-  底部边框: 1px solid #334155
-  包含: 标题 h2 (20px/24px) + 标签行 + 关闭按钮 (×)
+  底部边框: 1px solid var(--border-color)
+  包含: topic (标题) + EntryTags + 关闭按钮 (×, aria-label="关闭")
 
 内容区:
   flex: 1, overflow: auto, padding: 28px
-  Markdown 渲染 (见下文 §13)
+  → EntryDetailContent 组件（Markdown 渲染 + Mermaid + 代码片段 + STAR）
 
-自定义标签区:
-  顶部边框分隔
-  pill 标签: 6px 14px, border-radius: 20px, accent-sky 色调
+操作按钮: [编辑] [删除] (底部, 点击触发 EntryForm / DeleteConfirm)
+
+可访问性: role="dialog", aria-modal, useEffect Escape 关闭
 ```
 
-### 12.9 EntryForm.tsx — 新建记录表单
+### 12.8 DeleteConfirm.tsx — 删除确认弹窗
 
 ```
-弹窗结构 (同上述弹窗规格, 宽度 600px)
+遮罩: fixed, inset: 0, background: rgba(15,23,42,0.95), z-index: 1100
 
-表单字段:
+弹窗: 居中, 300px, 圆角 12px
+  文字: "确认删除此条目？"
+  按钮: [取消] [确认删除 (红色, autoFocus)]
+
+可访问性: role="dialog", aria-modal, useEffect Escape 取消
+```
+
+### 12.9 EntryForm.tsx — 新建/编辑表单
+
+```
+弹窗结构 (同弹窗规格, 宽度 600px)
+
+表单字段 (FormField 原子组件):
   ┌─ 核心主题 (input, required)
   ├─ 关键洞察 (textarea, required)
-  ├─ [生活类比] [可迁移模式] (双列)
-  ├─ 精力消耗 (range slider 1-5, 实时显示值)
-  ├─ 架构图 Mermaid (textarea, 等宽字体, 默认流程图模板)
-  └─ [取消] [保存并内化] (btn-secondary / btn-primary)
+  ├─ STAR 情境 (textarea)
+  ├─ STAR 任务 (textarea)
+  ├─ STAR 行动 (textarea)
+  ├─ STAR 结果 (textarea)
+  ├─ [生活类比] [可迁移模式] (双列, textarea)
+  ├─ 精力消耗 (range 1-5)
+  ├─ 架构图 Mermaid (textarea, 等宽字体)
+  └─ [取消] [保存] (按钮)
 
 表单元素样式:
-  input/textarea:
-    背景: rgba(15, 23, 42, 0.6)
-    边框: 1px solid var(--border-color)
-    圆角: 6px
-    内边距: 10px 12px
-    focus: border-color → var(--accent-sky), box-shadow → 蓝色光晕
+  背景: rgba(15, 23, 42, 0.6)
+  边框: 1px solid var(--border-color)
+  圆角: 6px
+  focus: border-color → var(--accent-sky)
+
+可访问性: role="dialog", aria-modal, useEffect Escape 取消
 ```
 
-### 12.10 DetailPanel.tsx — 侧边详情面板
+### 12.10 EntryTags.tsx — 标签行组件
 
 ```
-全宽全高, padding-top: 80px (避开顶部胶囊)
-padding-left: 280px (避开侧边栏)
+布局: flex, gap: 6px, flex-wrap: wrap
 
-包含:
-  类型徽章 (detail-type-badge) — 按 design/visual/arch/tech 着色
-  标题 h2 — 20px, font-weight: 600
-  路径 (等宽字体, text-muted)
-  指标行:
-    精力徽章 (圆形, 琥珀/灰色)
-    顿悟标记 (✓ 或 —)
-  关联知识点列表:
-    可点击的标签, hover 背景变亮
+渲染:
+  topic_tag_id → Tag 组件 (accent-sky)
+  project_tag_id → Tag 组件 (accent-purple)
+  research_type → 颜色按类型 (amber/emerald/purple)
+  energy_level → 数字徽章 (energy>=4 → green, else → amber)
+  aha_moment → 灯泡图标 (仅 aha_moment=1)
 ```
 
 ---
@@ -859,12 +779,35 @@ const BACKEND_URL = 'http://localhost:8002';
 ### 14.3 数据获取模式
 
 ```typescript
-// 无限滚动加载
+// api.ts — fetchWithTimeout (10s, AbortSignal 支持)
+export function fetchWithTimeout(url: string, timeout = 10000, signal?: AbortSignal): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  if (signal) signal.addEventListener('abort', () => controller.abort());
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
+// 统一 API 客户端（所有 GET 方法使用 fetchWithTimeout）
+export const api = {
+  entries: {
+    list:    (limit = 50, offset = 0, signal?: AbortSignal) =>
+      fetchWithTimeout(`${BASE_URL}/api/entries?limit=${limit}&offset=${offset}`).then(checkResponse<Entry[]>),
+    feed:    (params?: FeedParams, signal?: AbortSignal) => ...,
+    get:     (id: number, signal?: AbortSignal) => ...,
+    create:  (data: LearningEntryCreate) => ...,          // POST
+    update:  (id: number, data: LearningEntryUpdate) => ..., // PUT
+    delete:  (id: number) => ...,                          // DELETE
+  },
+  graph:  (signal?: AbortSignal) => ...,
+  stats:  (signal?: AbortSignal) => ...,
+  tags:   { list, tree, entries },
+  projects: { list, entries },
+};
+
+// 无限滚动加载 (page.tsx)
 const limit = 30;
-fetch(`${BACKEND_URL}/api/entries?limit=${limit}&offset=${currentOffset}`)
-  .then(res => res.json())
+api.entries.list(limit, currentOffset, signal)
   .then(data => {
-    // 去重合并到已有列表
     setEntries(prev => {
       const filtered = prev.filter(e => !newIds.has(e.id));
       return reset ? newEntries : [...filtered, ...newEntries];
@@ -882,46 +825,108 @@ scrollHeight - scrollTop - clientHeight < 400
 ```typescript
 // types/index.ts
 
-export interface LearningEntry {
-  id: number;
-  topic: string;
-  path: string;
-  tags: Tag[];
-  energy: number;
-  ahaMoment: boolean;
-}
-
+// --- Tag 类型 ---
 export interface Tag {
-  label: string;
-  type: 'design' | 'visual' | 'arch' | 'tech';
+  tag_id: string;
+  tag_name: string;
+  tag_category: string;
+  tag_description?: string;
+  parent_tag_id?: string;
+  energy_level: number;
+  is_active?: number;
 }
 
-export interface FilterCategory {
-  label: string;
-  color: string;
-  count: number;
+export interface TagNode extends Tag {
+  children: TagNode[];
 }
 
-// app/page.tsx 中使用的 Entry 接口 (更完整)
-interface Entry {
+export interface TagLink {
+  source_tag_id: string;
+  target_tag_id: string;
+  link_type: string;
+  link_description?: string;
+}
+
+// --- Learning Entry 类型 ---
+export interface LearningEntryCreate {
+  topic: string;
+  insight: string;
+  diagram?: string;
+  code_snippet?: string;
+  star_situation: string;
+  star_task: string;
+  star_action: string;
+  star_result: string;
+  topic_tag_id?: string;
+  project_tag_id?: string;
+  research_type?: string;
+  related_tag_ids?: string[];
+  custom_tags?: string[];
+  analogy?: string;
+  transfer_pattern?: string;
+  energy_level?: number;
+  aha_moment?: boolean;
+  source?: string;
+  confidence_rating?: number;
+}
+
+export type LearningEntryUpdate = Partial<LearningEntryCreate>;
+
+// 前端展示用 Entry（GET 返回）
+export interface Entry {
   id: number;
   topic: string;
   insight: string;
   diagram?: string;
   code_snippet?: string;
-  topic_tag_id?: string;
-  project_tag_id?: string;
-  research_type?: string;
-  energy_level: number;
-  aha_moment?: number;
-  timestamp: string;
   star_situation?: string;
   star_task?: string;
   star_action?: string;
   star_result?: string;
-  custom_tags?: string[];
-  related_tag_ids?: string[];
+  topic_tag_id?: string;
+  project_tag_id?: string;
+  research_type?: string;
+  related_tag_ids: string[];
+  custom_tags: string[];
+  analogy?: string;
+  transfer_pattern?: string;
+  energy_level: number;
+  aha_moment: number;       // 0/1 (非 boolean)
+  source: string;
+  confidence_rating?: number;
+  timestamp: string;
+  content_hash?: string;
 }
+
+// --- Graph 类型 ---
+export interface GraphNode {
+  id: string;
+  label: string;
+  category: string;
+  degree?: number;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  label?: string;
+}
+
+export interface GraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+// --- Stats 类型 ---
+export interface Stats {
+  entries: number;
+  tags: number;
+  links: number;
+}
+
+// --- 辅助类型 ---
+export type ResearchType = keyof typeof import('@/lib/constants').RESEARCH_TYPES;
+export type EntryFilter = { type: 'research' | 'project' | 'tag'; id: string } | null;
 ```
 
 ---
