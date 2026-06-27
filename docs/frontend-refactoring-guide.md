@@ -25,6 +25,8 @@
 | P6.2 | Toast 通知系统 — `useToast` hook + Context Provider + 3 处集成 | ✅ 完成 |
 | P6.3 | 错误边界 — `ErrorBoundary` 组件 + 3 层包裹（全局/Markdown/图谱） | ✅ 完成 |
 | P6.4 | 残余硬编码色值 → CSS 变量 — 18 处替换（accent/border/bg 全量覆盖） | ✅ 完成 |
+| P6.5 | 清理死代码 — 移除未用 FilterBar 导入、echarts-for-react 包 | ✅ 完成 |
+| P6.6 | 消除重复 JSX — 创建 `EntryTags` + `PageHeader`，替换 5 处重复模式 | ✅ 完成 |
 
 ### 1.2 当前文件清单
 
@@ -75,13 +77,13 @@ frontend/
 | 4 | **无 Toast 通知**: 创建/编辑/删除无反馈 | 🟡 中 | `EntryDetail.tsx`, `EntryForm.tsx`, `DeleteConfirm.tsx` | ✅ 已修复 |
 | 5 | **无键盘可访问性**: 无 tabIndex/keyDown/aria | 🟡 中 | 全部交互组件 | ⏳ P7.1 |
 | 6 | **~20 处残余硬编码色值**: 主要是 accent 色在 JS 中 | 🟡 中 | 7 个组件 | ✅ 已修复 |
-| 7 | **未使用的导入/状态**: 死代码残留 | 🟡 中 | `page.tsx:8`(FilterBar), `page.tsx:23`(offset), `MarkdownRenderer.tsx:5`(CopyButton) | ⏳ P6.5 |
-| 8 | **重复标签行模式**: 3 处重复 `topic_tag_id`+`project_tag_id`+`research_type` JSX | 🟡 中 | `EntryCard.tsx`, `EntryDetail.tsx`, `feed/page.tsx` | ⏳ P6.6 |
-| 9 | **重复页面头部**: 3 页重复 header JSX | 🟡 中 | `page.tsx`, `graph/page.tsx`, `feed/page.tsx` | ⏳ P6.6 |
+| 7 | **未使用的导入/状态**: 死代码残留 | 🟡 中 | `page.tsx:8`(FilterBar), `page.tsx:23`(offset), `MarkdownRenderer.tsx:5`(CopyButton) | ✅ 已修复 |
+| 8 | **重复标签行模式**: 3 处重复 `topic_tag_id`+`project_tag_id`+`research_type` JSX | 🟡 中 | `EntryCard.tsx`, `EntryDetail.tsx`, `feed/page.tsx` | ✅ 已修复 |
+| 9 | **重复页面头部**: 3 页重复 header JSX | 🟡 中 | `page.tsx`, `graph/page.tsx`, `feed/page.tsx` | ✅ 已修复 |
 | 10 | **EntryDetail/EntryForm 超 200 行** | 🟡 中 | `EntryDetail.tsx(217)`, `EntryForm.tsx(227)` | ⏳ P6.7 |
 | 11 | **Feed 页面内联 FilterBar**: 未使用 `FilterBar` 组件 | 🟢 低 | `feed/page.tsx` | ⏳ P6.8 |
 | 12 | **Graph 页无空状态**: 无数据时静默失败 | 🟢 低 | `graph/page.tsx` | ⏳ P7.2 |
-| 13 | **`echarts-for-react` 未使用**: package.json 残留 | 🟢 低 | `package.json` | ⏳ P6.5 |
+| 13 | **`echarts-for-react` 未使用**: package.json 残留 | 🟢 低 | `package.json` | ✅ 已修复 |
 | 14 | **无请求取消/超时**: fetch 无止等待 | 🟢 低 | `lib/api.ts` | ⏳ P7.3 |
 
 ---

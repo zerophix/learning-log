@@ -1,14 +1,11 @@
-import Tag from '@/components/ui/Tag';
+import EntryTags from '@/components/entry/EntryTags';
 import InsightPreview from '@/components/entry/InsightPreview';
 import { IconLightbulb } from '@/components/ui/Icons';
-import { getResearchTypeInfo } from '@/lib/constants';
 import type { Entry } from '@/types';
 
 export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (e: Entry) => void }) {
   const date = new Date(entry.timestamp);
   const timeStr = `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
-  const rType = getResearchTypeInfo(entry.research_type || '');
-
   return (
     <div
       onClick={() => onClick(entry)}
@@ -78,12 +75,7 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
         (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
       }}
       >
-        {/* 标签行 */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-          {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="var(--accent-sky)" />}
-          {entry.project_tag_id && <Tag label={entry.project_tag_id.split('.').pop() || ''} color="#818cf8" />}
-          {entry.research_type && <Tag label={rType.label} color={rType.color} />}
-        </div>
+        <EntryTags entry={entry} showProject />
 
         {/* 标题 */}
         <h3 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: '1.4' }}>

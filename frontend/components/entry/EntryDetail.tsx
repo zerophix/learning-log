@@ -1,13 +1,12 @@
 'use client';
 import { useState, useMemo } from 'react';
-import Tag from '@/components/ui/Tag';
+import EntryTags from '@/components/entry/EntryTags';
 import MarkdownRenderer from '@/components/renderers/MarkdownRenderer';
 import MermaidDiagram from '@/components/renderers/MermaidDiagram';
 import EntryForm from '@/components/entry/EntryForm';
 import DeleteConfirm from '@/components/entry/DeleteConfirm';
-import { IconLightbulb, IconTag } from '@/components/ui/Icons';
+import { IconTag } from '@/components/ui/Icons';
 import { api } from '@/lib/api';
-import { getResearchTypeInfo } from '@/lib/constants';
 import { useToast } from '@/hooks/useToast';
 import type { Entry, LearningEntryCreate } from '@/types';
 
@@ -28,7 +27,6 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
 
   if (!entry) return null;
 
-  const rType = getResearchTypeInfo(entry.research_type || '');
   const dateTime = new Date(entry.timestamp);
   const dateStr = `${dateTime.getFullYear()}/${dateTime.getMonth()+1}/${dateTime.getDate()}`;
   const timeStr = `${String(dateTime.getHours()).padStart(2,'0')}:${String(dateTime.getMinutes()).padStart(2,'0')}:${String(dateTime.getSeconds()).padStart(2,'0')}`;
@@ -104,14 +102,7 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
           flexShrink: 0
         }}>
           <div>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
-              {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="var(--accent-sky)" />}
-              {entry.research_type && <Tag label={rType.label} color={rType.color} />}
-              <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? 'var(--accent-emerald)' : '#fb7185'} />
-              {entry.aha_moment === 1 && (
-                <IconLightbulb size={16} />
-              )}
-            </div>
+            <EntryTags entry={entry} showEnergy />
             <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: '1.3' }}>
               {entry.topic}
             </h2>

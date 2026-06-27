@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import Navigation from '@/components/layout/Navigation';
-import Tag from '@/components/ui/Tag';
-import { IconList, IconHourglass, IconEmpty, IconLightbulb } from '@/components/ui/Icons';
-import { getResearchTypeInfo, RESEARCH_TYPES } from '@/lib/constants';
+import PageHeader from '@/components/layout/PageHeader';
+import EntryTags from '@/components/entry/EntryTags';
+import { IconList, IconHourglass, IconEmpty } from '@/components/ui/Icons';
+import { RESEARCH_TYPES } from '@/lib/constants';
 import type { Entry } from '@/types';
 
 export default function FeedPage() {
@@ -30,13 +31,9 @@ export default function FeedPage() {
 
   return (
     <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ borderBottom: '1px solid var(--bg-secondary)', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-primary)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <IconList size={24} />
-          <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>Feed 流</span>
-        </div>
+      <PageHeader icon={<IconList size={24} />} title="Feed 流">
         <Navigation />
-      </header>
+      </PageHeader>
 
       <main style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
         {/* 过滤器 */}
@@ -78,7 +75,6 @@ export default function FeedPage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
             {entries.map(entry => {
-              const rType = getResearchTypeInfo(entry.research_type || '');
               return (
                 <div
                   key={entry.id}
@@ -99,15 +95,7 @@ export default function FeedPage() {
                     (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
                   }}
                 >
-                  {/* 标签 */}
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                    {entry.topic_tag_id && <Tag label={entry.topic_tag_id.split('.').pop() || ''} color="var(--accent-sky)" />}
-                    {entry.research_type && <Tag label={rType.label} color={rType.color} />}
-                    <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? 'var(--accent-emerald)' : '#fb7185'} />
-                    {entry.aha_moment === 1 && (
-                      <IconLightbulb size={16} />
-                    )}
-                  </div>
+                  <EntryTags entry={entry} showEnergy />
 
                   {/* 标题 */}
                   <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>

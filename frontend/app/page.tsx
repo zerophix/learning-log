@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { api } from '@/lib/api';
 import SearchBar from '@/components/ui/SearchBar';
 import Navigation from '@/components/layout/Navigation';
+import PageHeader from '@/components/layout/PageHeader';
 import StatsPanel from '@/components/layout/StatsPanel';
 import TimelineView from '@/components/timeline/TimelineView';
 import EntryDetail from '@/components/entry/EntryDetail';
@@ -118,38 +119,28 @@ export default function Home() {
 
   return (
     <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* 顶部导航栏 */}
-      <header style={{ borderBottom: '1px solid var(--bg-secondary)', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-primary)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <IconBook size={24} />
-            <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>学习日志</span>
-          </div>
-          <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--accent-sky)', fontWeight: 500, border: '1px solid rgba(56, 189, 248, 0.2)' }}>时间线</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <SearchBar onSearch={setSearchQuery} />
-          <Navigation />
-          <button
-            onClick={() => setIsCreating(true)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: 'var(--accent-sky)',
-              color: 'var(--bg-primary)',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#7dd3fc'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent-sky)'; }}
-          >
-            + 新建
-          </button>
-        </div>
-      </header>
+      <PageHeader icon={<IconBook size={24} />} title="学习日志" badge="时间线">
+        <SearchBar onSearch={setSearchQuery} />
+        <Navigation />
+        <button
+          onClick={() => setIsCreating(true)}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: 'var(--accent-sky)',
+            color: 'var(--bg-primary)',
+            fontSize: '13px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#7dd3fc'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent-sky)'; }}
+        >
+          + 新建
+        </button>
+      </PageHeader>
 
       {/* 统计面板 */}
       <div style={{ padding: '12px 28px 0', borderBottom: '1px solid var(--bg-secondary)', flexShrink: 0 }}>

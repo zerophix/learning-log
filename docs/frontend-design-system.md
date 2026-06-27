@@ -401,9 +401,11 @@ frontend/
 │   │   ├── EntryCard.tsx            # 时间线卡片
 │   │   ├── EntryDetail.tsx          # 详情弹窗（含编辑/删除）
 │   │   ├── EntryForm.tsx            # 新建/编辑表单
+│   │   ├── EntryTags.tsx            # 标签行组件（P6.6 新增）
 │   │   └── InsightPreview.tsx       # 洞察预览文本
 │   ├── layout/                       # 布局组件
 │   │   ├── Navigation.tsx           # 页面导航栏
+│   │   ├── PageHeader.tsx           # 统一页面头部（P6.6 新增）
 │   │   ├── FilterBar.tsx            # 研究类型过滤器
 │   │   └── StatsPanel.tsx           # 统计面板
 │   ├── renderers/                    # 渲染器

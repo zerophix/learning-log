@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 import Navigation from '@/components/layout/Navigation';
+import PageHeader from '@/components/layout/PageHeader';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { IconNetwork, IconHourglass } from '@/components/ui/Icons';
 import type { GraphData } from '@/types';
@@ -99,13 +100,9 @@ export default function GraphPage() {
 
   return (
     <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ borderBottom: '1px solid var(--bg-secondary)', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-primary)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <IconNetwork size={24} />
-          <span style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>知识图谱</span>
-        </div>
+      <PageHeader icon={<IconNetwork size={24} />} title="知识图谱">
         <Navigation />
-      </header>
+      </PageHeader>
 
       <main style={{ flex: 1, position: 'relative' }}>
         {error ? (
