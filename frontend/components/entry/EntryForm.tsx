@@ -1,17 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { IconLightbulb } from '@/components/ui/Icons';
+import FormField, { FormInput, FormTextarea, FormSelect, FormNumber, FormCheckbox } from '@/components/entry/FormField';
 import type { Entry, LearningEntryCreate } from '@/types';
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 12px',
-  borderRadius: '8px',
-  border: '1px solid var(--border-color)',
-  background: 'var(--bg-primary)',
-  color: 'var(--text-secondary)',
-  fontSize: '14px',
-} as const;
 
 export default function EntryForm({ 
   entry, 
@@ -106,86 +96,34 @@ export default function EntryForm({
         </h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* 主题 */}
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>主题 *</label>
-            <input
-              type="text"
-              required
-              value={formData.topic}
-              onChange={e => handleChange('topic', e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          {/* 核心洞察 */}
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>核心洞察 (Markdown) *</label>
-            <textarea
-              required
-              value={formData.insight}
-              onChange={e => handleChange('insight', e.target.value)}
-              rows={8}
-              style={{ ...inputStyle, fontFamily: 'monospace', resize: 'vertical' }}
-            />
-          </div>
-
-          {/* 研究类型 */}
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>研究类型</label>
-            <select
-              value={formData.research_type}
-              onChange={e => handleChange('research_type', e.target.value)}
-              style={inputStyle}
-            >
-              <option value="">请选择</option>
-              <option value="deep-research">深度研究</option>
-              <option value="topic-exploration">主题探索</option>
-              <option value="domain-mapping">领域映射</option>
-            </select>
-          </div>
-
-          {/* 能量等级 + 顿悟 */}
+          <FormField label="主题 *">
+            <FormInput value={formData.topic} onChange={v => handleChange('topic', v)} required />
+          </FormField>
+          <FormField label="核心洞察 (Markdown) *">
+            <FormTextarea value={formData.insight} onChange={v => handleChange('insight', v)} required />
+          </FormField>
+          <FormField label="研究类型">
+            <FormSelect value={formData.research_type} onChange={v => handleChange('research_type', v)} options={[
+              { value: 'deep-research', label: '深度研究' },
+              { value: 'topic-exploration', label: '主题探索' },
+              { value: 'domain-mapping', label: '领域映射' }
+            ]} />
+          </FormField>
           <div style={{ display: 'flex', gap: '16px' }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>能量等级 (1-5)</label>
-              <input
-                type="number"
-                min="1"
-                max="5"
-                value={formData.energy_level}
-                onChange={e => handleChange('energy_level', parseInt(e.target.value))}
-                style={inputStyle}
-              />
+              <FormField label="能量等级 (1-5)">
+                <FormNumber value={formData.energy_level} onChange={v => handleChange('energy_level', v)} min={1} max={5} />
+              </FormField>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>顿悟时刻</label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={formData.aha_moment}
-                  onChange={e => handleChange('aha_moment', e.target.checked)}
-                  style={{ width: '18px', height: '18px' }}
-                />
-                <span style={{ color: 'var(--text-secondary)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <IconLightbulb size={16} />
-                  有顿悟
-                </span>
-              </label>
+              <FormField label="顿悟时刻">
+                <FormCheckbox checked={formData.aha_moment} onChange={v => handleChange('aha_moment', v)} label="有顿悟" />
+              </FormField>
             </div>
           </div>
-
-          {/* 自定义标签 */}
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>自定义标签 (逗号分隔)</label>
-            <input
-              type="text"
-              value={formData.custom_tags?.join(', ') || ''}
-              onChange={e => handleChange('custom_tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
-              placeholder="例如: React, Hooks, 状态管理"
-              style={inputStyle}
-            />
-          </div>
+          <FormField label="自定义标签 (逗号分隔)">
+            <FormInput value={formData.custom_tags?.join(', ') || ''} onChange={v => handleChange('custom_tags', v.split(',').map(t => t.trim()).filter(Boolean))} placeholder="例如: React, Hooks, 状态管理" />
+          </FormField>
         </div>
 
         {/* 按钮 */}
