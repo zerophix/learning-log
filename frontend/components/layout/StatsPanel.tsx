@@ -18,35 +18,30 @@ export default function StatsPanel() {
 
   if (error) return <div style={{ padding: '12px 0', fontSize: '12px', color: '#ef4444' }}>{error}</div>;
   if (!stats) return (
-    <>
-      <style>{`@keyframes skeletonPulse { 0%,100% { opacity: 0.3 } 50% { opacity: 0.6 } }`}</style>
-      <div style={{ display: 'flex', gap: '16px', padding: '12px 0' }}>
-        {[1,2,3].map(i => (
-          <div key={i} style={{
-            flex: 1,
-            background: 'var(--border-color)',
-            borderRadius: '8px',
-            height: '64px',
-            animation: 'skeletonPulse 1.5s ease-in-out infinite',
-            animationDelay: `${i * 0.15}s`
-          }} />
-        ))}
-      </div>
-    </>
+    <div style={{ display: 'flex', gap: '16px', padding: '12px 16px' }}>
+      {[1,2,3].map(i => (
+        <div key={i} className="skeleton-line" style={{
+          flex: 1, height: '64px', borderRadius: 'var(--radius-md)',
+          animationDelay: `${i * 0.15}s`
+        }} />
+      ))}
+    </div>
   );
 
   return (
     <div style={{
       display: 'flex',
       gap: '16px',
-      padding: '12px 0'
+      padding: '12px 16px',
+      minWidth: 0,
     }}>
       <div style={{
         flex: 1,
+        minWidth: '100px',
         background: 'var(--bg-secondary)',
         border: '1px solid var(--border-color)',
         borderRadius: '8px',
-        padding: '12px 16px',
+        padding: '12px 10px',
         textAlign: 'center'
       }}>
         <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--accent-sky)' }}>{stats.entries}</div>

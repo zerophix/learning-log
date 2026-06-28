@@ -13,7 +13,7 @@ export default function EntryTags({ entry, showProject, showEnergy }: { entry: E
       {showEnergy && (
         <>
           <Tag label={`能量 ${entry.energy_level}`} color={entry.energy_level >= 4 ? 'var(--accent-emerald)' : '#fb7185'} />
-          {entry.aha_moment === 1 && <IconLightbulb size={16} />}
+          {entry.aha_moment && <IconLightbulb size={16} />}
         </>
       )}
     </div>

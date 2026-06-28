@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { IconBook, IconNetwork, IconTag } from '@/components/ui/Icons';
+import { IconBook, IconNetwork, IconCluster } from '@/components/ui/Icons';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -15,7 +15,7 @@ export default function Navigation() {
     { 
       path: '/tags', 
       label: '语义聚类',
-      icon: <IconTag size={16} color="currentColor" />
+      icon: <IconCluster size={16} color="currentColor" />
     },
     { 
       path: '/graph', 
@@ -30,20 +30,7 @@ export default function Navigation() {
         <Link
           key={item.path}
           href={item.path}
-          style={{
-            padding: '6px 14px',
-            borderRadius: '16px',
-            background: pathname === item.path ? 'var(--accent-sky)' : 'transparent',
-            color: pathname === item.path ? 'var(--bg-primary)' : 'var(--text-muted)',
-            fontSize: '12px',
-            fontWeight: pathname === item.path ? 600 : 400,
-            textDecoration: 'none',
-            transition: 'all 0.2s',
-            border: pathname === item.path ? 'none' : '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
+          className={pathname === item.path ? 'nav-link nav-link-active' : 'nav-link nav-link-inactive'}
         >
           {item.icon}
           {item.label}

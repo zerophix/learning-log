@@ -41,11 +41,8 @@ export default function TimelineView({
       <div style={{ textAlign: 'center', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
           <button onClick={onPrevWeek} disabled={!hasPrev} aria-label="上一周"
-            style={{
-              background: 'var(--border-color)', border: 'none', borderRadius: '6px',
-              color: hasPrev ? 'var(--text-secondary)' : 'var(--text-muted)',
-              cursor: hasPrev ? 'pointer' : 'not-allowed', padding: '6px 14px', fontSize: '13px'
-            }}>
+            className="week-nav-btn"
+            style={{ color: hasPrev ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
             ← {weekIndex[currentIdx + 1] ? `W${weekIndex[currentIdx + 1].week}` : ''}
           </button>
 
@@ -61,11 +58,8 @@ export default function TimelineView({
           </div>
 
           <button onClick={onNextWeek} disabled={!hasNext} aria-label="下一周"
-            style={{
-              background: 'var(--border-color)', border: 'none', borderRadius: '6px',
-              color: hasNext ? 'var(--text-secondary)' : 'var(--text-muted)',
-              cursor: hasNext ? 'pointer' : 'not-allowed', padding: '6px 14px', fontSize: '13px'
-            }}>
+            className="week-nav-btn"
+            style={{ color: hasNext ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
             {weekIndex[currentIdx - 1] ? `W${weekIndex[currentIdx - 1].week}` : ''} →
           </button>
         </div>

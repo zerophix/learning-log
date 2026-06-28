@@ -68,22 +68,26 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export default function MermaidDiagram({ chart }: { chart: string }) {
-  if (!chart) return null;
+export default function MermaidDiagram({ chart }: { chart?: string }) {
+  const trimmed = (chart ?? '').trim();
+  if (!trimmed) return null;
 
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    if (!chart) return;
+    setSvg('');
+    setError('');
+    if (!trimmed) return;
 
     let cancelled = false;
     const renderDiagram = async () => {
       try {
         const id = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
-        const { svg: renderedSvg } = await mermaid.render(id, chart);
+        const result = await mermaid.render(id, trimmed);
+        const renderedSvg = (result as { svg?: string }).svg;
         if (!cancelled) {
-          setSvg(renderedSvg);
+          setSvg(renderedSvg || '');
           setError('');
         }
       } catch (err: unknown) {
@@ -96,7 +100,7 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
 
     renderDiagram();
     return () => { cancelled = true; };
-  }, [chart]);
+  }, [trimmed]);
 
   if (error) {
     return (

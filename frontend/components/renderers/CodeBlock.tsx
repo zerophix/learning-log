@@ -6,20 +6,13 @@ import CopyButton from '@/components/ui/CopyButton';
 export default function CodeBlock({ code, language }: { code: string; language: string }) {
   return (
     <div
+      className="code-block-wrapper"
       style={{
         position: 'relative',
         borderRadius: '8px',
         overflow: 'hidden',
         margin: '16px 0',
         boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-      }}
-      onMouseEnter={e => {
-        const btn = (e.currentTarget as HTMLDivElement).querySelector('[data-copy-btn]');
-        if (btn) (btn as HTMLElement).style.opacity = '1';
-      }}
-      onMouseLeave={e => {
-        const btn = (e.currentTarget as HTMLDivElement).querySelector('[data-copy-btn]');
-        if (btn) (btn as HTMLElement).style.opacity = '0';
       }}
     >
       <div style={{
@@ -41,7 +34,7 @@ export default function CodeBlock({ code, language }: { code: string; language: 
         PreTag="div"
         customStyle={{ margin: 0, borderRadius: '0 0 8px 8px', background: '#0d1117', fontSize: '13px', lineHeight: '1.6' }}
       >{code}</SyntaxHighlighter>
-      <div data-copy-btn style={{ opacity: 0, transition: 'opacity 0.2s' }}>
+      <div className="copy-btn-container">
         <CopyButton text={code} />
       </div>
     </div>

@@ -4,6 +4,7 @@ FastAPI backend with auto-growing tag system + attention graph
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_mcp import FastApiMCP
 from pydantic import BaseModel
 from typing import Optional, List
 import re
@@ -1250,6 +1251,10 @@ def list_nl_commands(limit: int = 50, offset: int = 0, intent_category: Optional
     commands = [row_to_dict(row) for row in cursor.fetchall()]
     conn.close()
     return commands
+
+# Mount MCP server - exposes all FastAPI routes as MCP tools
+mcp = FastApiMCP(app)
+mcp.mount_http()
 
 if __name__ == '__main__':
     import uvicorn

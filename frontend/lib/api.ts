@@ -3,7 +3,7 @@
  * Base URL: http://localhost:8002
  */
 
-const BASE_URL = 'http://localhost:8002';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';
 
 import type {
   Entry,
@@ -18,6 +18,11 @@ import type {
   WeekResponse,
   AutoTag,
   AttentionGraph,
+  CreateEntryResponse,
+  UpdateEntryResponse,
+  DeleteEntryResponse,
+  NeighborsData,
+  FeedParams,
 } from '@/types';
 
 export function fetchWithTimeout(url: string, timeout = 10000, signal?: AbortSignal): Promise<Response> {
@@ -31,16 +36,23 @@ function checkResponse<T>(r: Response): Promise<T> {
   if (!r.ok) {
     return r.json().then(e => Promise.reject(new Error(e.detail || `HTTP ${r.status}`)));
   }
-  return r.json() as Promise<T>;
+  return r.json().then(transformEntry as any) as Promise<T>;
 }
 
-// --- Types for Feed Params ---
-export interface FeedParams {
-  limit?: number;
-  offset?: number;
-  project_type?: string;
-  discipline?: string;
-  research_type?: string;
+function transformEntry(data: unknown): unknown {
+  if (Array.isArray(data)) {
+    return data.map(transformEntry);
+  }
+  if (data && typeof data === 'object' && 'aha_moment' in data) {
+    const entry = data as Record<string, unknown>;
+    if (typeof entry.aha_moment === 'number') {
+      entry.aha_moment = entry.aha_moment === 1;
+    }
+    if ('neighbors' in entry) {
+      transformEntry(entry.neighbors);
+    }
+  }
+  return data;
 }
 
 export const api = {
@@ -52,24 +64,24 @@ export const api = {
       fetchWithTimeout(`${BASE_URL}/api/entries/${id}`, 10000, signal).then(r => checkResponse<Entry>(r)),
 
     neighbors: (id: number, signal?: AbortSignal) =>
-      fetchWithTimeout(`${BASE_URL}/api/entries/${id}/neighbors`, 15000, signal).then(r => checkResponse<any>(r)),
+      fetchWithTimeout(`${BASE_URL}/api/entries/${id}/neighbors`, 15000, signal).then(r => checkResponse<NeighborsData>(r)),
 
     create: (data: LearningEntryCreate) =>
       fetch(`${BASE_URL}/api/entries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(r => checkResponse<any>(r)),
+      }).then(r => checkResponse<CreateEntryResponse>(r)),
 
     update: (id: number, data: LearningEntryUpdate) =>
       fetch(`${BASE_URL}/api/entries/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(r => checkResponse<any>(r)),
+      }).then(r => checkResponse<UpdateEntryResponse>(r)),
 
     delete: (id: number) =>
-      fetch(`${BASE_URL}/api/entries/${id}`, { method: 'DELETE' }).then(r => checkResponse<any>(r)),
+      fetch(`${BASE_URL}/api/entries/${id}`, { method: 'DELETE' }).then(r => checkResponse<DeleteEntryResponse>(r)),
 
     byWeek: (year: number, week: number, limit = 50) =>
       fetchWithTimeout(`${BASE_URL}/api/entries/week?year=${year}&week=${week}&limit=${limit}`)

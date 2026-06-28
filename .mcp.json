@@ -1,3 +1,25 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "learning-log-api": {
+      "type": "sse",
+      "url": "http://localhost:8002/mcp"
+    },
+    "playwright": {
+      "command": "playwright-mcp",
+      "args": ["--headless"],
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "~/.cache/ms-playwright"
+      }
+    },
+    "learning-log": {
+      "command": "/Users/mingxilv/PycharmProjects/learning-log/venv/bin/python3",
+      "args": ["/Users/mingxilv/PycharmProjects/learning-log/backend/mcp_server.py"],
+      "env": {
+        "LEARNLOG_PROJECT_DIR": "/Users/mingxilv/PycharmProjects/learning-log",
+        "BACKEND_URL": "http://localhost:8002",
+        "AI_API_URL": "http://localhost:11434/api/generate",
+        "AI_MODEL": "qwen2.5"
+      }
+    }
+  }
 }

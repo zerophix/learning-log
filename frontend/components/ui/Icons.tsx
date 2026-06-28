@@ -174,12 +174,29 @@ export function IconLoader({ size = 20, color = '#64748b', style }: IconProps) {
   );
 }
 
+// ==================== 聚类图标 ====================
+
+export function IconCluster({ size = 24, color = DEFAULT_COLOR }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="4" width="11" height="10" rx="5.5" stroke={color} strokeWidth="1.5" strokeDasharray="3 2" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="6.5" cy="7.5" r="1.5" stroke={color} strokeWidth="1.5"/>
+      <circle cx="10.5" cy="7.5" r="1.5" stroke={color} strokeWidth="1.5"/>
+      <circle cx="8.5" cy="11" r="1.5" stroke={color} strokeWidth="1.5"/>
+      <rect x="13" y="12" width="9" height="9" rx="4.5" stroke={color} strokeWidth="1.5" strokeDasharray="3 2" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="15.5" cy="15" r="1.5" stroke={color} strokeWidth="1.5"/>
+      <circle cx="19.5" cy="16.5" r="1.5" stroke={color} strokeWidth="1.5"/>
+    </svg>
+  );
+}
+
 // ==================== 图标映射表 ====================
 
 export const ICONS = {
   book: IconBook,
   network: IconNetwork,
   list: IconList,
+  cluster: IconCluster,
   lightbulb: IconLightbulb,
   hourglass: IconHourglass,
   empty: IconEmpty,

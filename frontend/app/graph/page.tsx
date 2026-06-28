@@ -6,7 +6,8 @@ import PageHeader from '@/components/layout/PageHeader';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import EntryDetail from '@/components/entry/EntryDetail';
 import { IconNetwork, IconHourglass, IconEmpty, IconRefresh } from '@/components/ui/Icons';
-import type { AttentionGraph, AttentionNode, AttentionEdge } from '@/types';
+import type { AttentionGraph, AttentionNode, AttentionEdge, Entry } from '@/types';
+import type { EChartsType } from 'echarts';
 
 const CLUSTER_COLORS = ['#34d399', '#38bdf8', '#f59e0b', '#818cf8', '#fb923c', '#f472b6', '#2dd4bf', '#a78bfa', '#f87171', '#10b981'];
 
@@ -16,9 +17,11 @@ export default function GraphPage() {
   const [selectedNode, setSelectedNode] = useState<AttentionNode | null>(null);
   const [similarEntries, setSimilarEntries] = useState<{ node: AttentionNode; weight: number }[]>([]);
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
-  const [entryDetail, setEntryDetail] = useState<any>(null);
+  const [entryDetail, setEntryDetail] = useState<Entry | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
-  const echartsRef = useRef<any>(null);
+  const echartsRef = useRef<EChartsType | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const chartReadyRef = useRef(false);
 
   const loadGraph = useCallback((signal: AbortSignal) => {
     api.attention({ top_k: 5 }, signal)
@@ -37,8 +40,11 @@ export default function GraphPage() {
 
   useEffect(() => {
     if (!graphData || !chartRef.current || graphData.nodes.length === 0) return;
+    if (chartReadyRef.current) return;
+    chartReadyRef.current = true;
+
     import('echarts').then(echarts => {
-      if (!chartRef.current) return;
+      if (!chartRef.current) { chartReadyRef.current = false; return; }
       if (echartsRef.current) echartsRef.current.dispose();
       const chart = echarts.init(chartRef.current, 'dark');
       echartsRef.current = chart;
@@ -120,11 +126,18 @@ export default function GraphPage() {
 
       const handleResize = () => chart.resize();
       window.addEventListener('resize', handleResize);
-      return () => {
+      cleanupRef.current = () => {
         window.removeEventListener('resize', handleResize);
         chart.dispose();
+        echartsRef.current = null;
       };
     });
+
+    return () => {
+      cleanupRef.current?.();
+      cleanupRef.current = null;
+      chartReadyRef.current = false;
+    };
   }, [graphData]);
 
   const resetZoom = () => {

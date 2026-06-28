@@ -58,7 +58,7 @@ export default function EntryForm({
         analogy: entry.analogy || '',
         transfer_pattern: entry.transfer_pattern || '',
         energy_level: entry.energy_level || 3,
-        aha_moment: entry.aha_moment === 1,
+        aha_moment: entry.aha_moment,
         source: entry.source || '',
         confidence_rating: entry.confidence_rating || 3
       });

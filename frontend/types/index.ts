@@ -74,7 +74,7 @@ export interface Entry {
   analogy?: string;
   transfer_pattern?: string;
   energy_level: number;
-  aha_moment: number;  // 注意：后端返回 0/1，非 boolean
+  aha_moment: boolean;
   source: string;
   confidence_rating?: number;
   timestamp: string;
@@ -142,6 +142,53 @@ export interface AttentionGraph {
   entry_count: number;
 }
 
+// --- Mutation Response 类型 ---
+
+export interface CreateEntryResponse {
+  id: number;
+  message: string;
+  session_id: string;
+  tags_added: number;
+}
+
+export interface UpdateEntryResponse {
+  id: number;
+  message: string;
+  fields_updated: string[];
+}
+
+export interface DeleteEntryResponse {
+  id: number;
+  message: string;
+}
+
+export interface NeighborItem {
+  id: number;
+  topic: string;
+  energy: number;
+  timestamp: string;
+  score: number;
+  reasons: string[];
+}
+
+export interface EnergyShift {
+  direction: string;
+  type: string;
+  from_entry: { id: number; topic: string };
+  to_entry: { id: number; topic: string };
+}
+
+export interface NeighborsData {
+  entry_id: number;
+  topic: string;
+  neighbors: {
+    content: NeighborItem[];
+    temporal: NeighborItem[];
+    tags: NeighborItem[];
+    energy_context: EnergyShift[];
+  };
+}
+
 // --- Stats 类型 ---
 
 export interface Stats {
@@ -166,11 +213,21 @@ export interface WeekResponse {
   has_more: boolean;
 }
 
+// --- API 参数类型 ---
+
+export interface FeedParams {
+  limit?: number;
+  offset?: number;
+  project_type?: string;
+  discipline?: string;
+  research_type?: string;
+}
+
 // --- 辅助类型 ---
 
 export type ViewLevel = 'tags' | 'entries' | 'detail';
 
-export type ResearchType = keyof typeof import('@/lib/constants').RESEARCH_TYPES;
+export type ResearchType = 'deep-research' | 'topic-exploration' | 'domain-mapping';
 
 export type EntryFilter = {
   type: 'research' | 'project' | 'tag';

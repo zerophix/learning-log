@@ -7,9 +7,10 @@ import EntryForm from '@/components/entry/EntryForm';
 import DeleteConfirm from '@/components/entry/DeleteConfirm';
 import { api } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { IconEdit, IconDelete, IconClose } from '@/components/ui/Icons';
 import type { Entry, LearningEntryCreate } from '@/types';
 
-export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entry | null; onClose: () => void; onRefresh?: () => void }) {
+export default function EntryDetail({ entry, onClose, onRefresh, showNeighborsPanel = true }: { entry: Entry | null; onClose: () => void; onRefresh?: () => void; showNeighborsPanel?: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [navigateId, setNavigateId] = useState<number | null>(null);
@@ -99,126 +100,88 @@ export default function EntryDetail({ entry, onClose, onRefresh }: { entry: Entr
         aria-modal="true"
         aria-label={activeEntry.topic}
         style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(15, 23, 42, 0.92)',
-          backdropFilter: 'blur(8px)',
+          width: '540px',
+          maxWidth: '540px',
+          minWidth: '360px',
+          marginLeft: '24px',
+          background: 'var(--bg-secondary)',
+          borderLeft: '1px solid var(--border-color)',
+          height: '100vh',
+          overflow: 'hidden',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
+          flexDirection: 'column',
+          flexShrink: 0,
+          boxShadow: '-8px 0 24px rgba(0,0,0,0.3)',
+          animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          borderRadius: '12px 0 0 12px',
+          padding: '0 16px',
         }}
-        onClick={() => { if (navigateEntry) { setNavigateEntry(null); setNavigateId(null); } else onClose(); }}
+        onClick={e => e.stopPropagation()}
       >
-        <div
-          style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '16px',
-            maxWidth: '1000px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.5)'
-          }}
-          onClick={e => e.stopPropagation()}
-        >
         {/* 顶部栏 */}
         <div style={{
-          padding: '20px 28px',
+          padding: '12px 28px',
           borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          flexShrink: 0
+          alignItems: 'center',
+          flexShrink: 0,
+          gap: '16px',
         }}>
-          <div>
-            <EntryTags entry={activeEntry} showEnergy />
-            <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: '1.3' }}>
+          <div style={{ minWidth: 0, flex: 1, marginRight: '8px' }}>
+            <h2 style={{
+              margin: '0 0 4px 0',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              lineHeight: '1.3',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
               {activeEntry.topic}
             </h2>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', display: 'flex', gap: '12px' }}>
-              <span>{dateStr} {timeStr}</span>
-              {navigateEntry && (
-                <button onClick={(e) => { e.preventDefault(); setNavigateEntry(null); setNavigateId(null); }} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '12px', padding: 0 }}>
-                  ← 返回 {entry.topic.slice(0, 24)}
-                </button>
-              )}
-            </div>
-          </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                {dateStr} {timeStr}
+              </span>
+              <span style={{ color: 'var(--border-color)', fontSize: '10px' }}>·</span>
               <button
-                onClick={() => setIsEditing(true)}
-                style={{
-                  background: 'var(--border-color)',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                className="btn btn-ghost"
+                style={{ fontSize: '11px', padding: '1px 6px', lineHeight: 1, background: 'none', border: 'none' }}
               >
                 编辑
               </button>
+              <span style={{ color: 'var(--border-color)', fontSize: '10px' }}>·</span>
               <button
-                onClick={() => setShowDeleteConfirm(true)}
-                style={{
-                  background: '#7f1d1d',
-                  border: 'none',
-                  color: '#fca5a5',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#991b1b'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#7f1d1d'; }}
+                onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
+                className="btn btn-danger"
+                style={{ fontSize: '11px', padding: '1px 6px', lineHeight: 1, background: 'none', border: 'none' }}
               >
                 删除
               </button>
-              <button
-                onClick={() => { if (navigateEntry) { setNavigateEntry(null); setNavigateId(null); } else onClose(); }}
-                aria-label="关闭"
-                style={{
-                  background: 'var(--border-color)',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-              >
-                ×
-              </button>
             </div>
+          </div>
+
+          <button
+            onClick={() => { if (navigateEntry) { setNavigateEntry(null); setNavigateId(null); } else onClose(); }}
+            aria-label="关闭"
+            className="icon-btn"
+          >
+            <IconClose size={12} />
+          </button>
+
         </div>
 
-        <div style={{ overflow: 'auto', flex: 1 }}>
+        <div style={{ overflow: 'auto', flex: 1, padding: '16px 0', height: '100%' }}>
           <EntryDetailContent entry={activeEntry} markdownContent={markdownContent} />
-          <EntryNeighbors entryId={activeEntry.id} onNavigate={navigateTo} />
+          {showNeighborsPanel && <EntryNeighbors entryId={activeEntry.id} onNavigate={navigateTo} />}
         </div>
 
         {showDeleteConfirm && (
           <DeleteConfirm onConfirm={handleDelete} onCancel={() => setShowDeleteConfirm(false)} />
         )}
       </div>
-    </div>
   );
 }

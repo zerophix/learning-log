@@ -25,6 +25,7 @@ venv/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+frontend/tsconfig.tsbuildinfo
 
 # ── 个人数据 ────────────────────
 data/batch_records.json       # 个人学习记录

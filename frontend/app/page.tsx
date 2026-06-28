@@ -13,10 +13,10 @@ import { IconBook, IconHourglass, IconEmpty } from '@/components/ui/Icons';
 import { useWeekNavigation } from '@/hooks/useWeekNavigation';
 import { useEntryFilter } from '@/hooks/useEntryFilter';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import type { LearningEntryCreate } from '@/types';
+import type { Entry, LearningEntryCreate } from '@/types';
 
 export default function Home() {
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selected, setSelected] = useState<Entry | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const mainRef = useRef<HTMLDivElement>(null);
@@ -78,23 +78,8 @@ export default function Home() {
         <Navigation />
         <button
           onClick={() => setIsCreating(true)}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '8px',
-            border: 'none',
-            background: 'var(--accent-sky)',
-            color: 'var(--bg-primary)',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#7dd3fc';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--accent-sky)';
-          }}
+          className="btn btn-primary"
+          style={{ padding: '8px 16px' }}
         >
           + 新建
         </button>
@@ -143,7 +128,7 @@ export default function Home() {
         </main>
 
         {selected && (
-          <EntryDetail entry={selected} onClose={() => setSelected(null)} onRefresh={refreshCurrentWeek} showTagBridge={false} showNeighbors={false} />
+          <EntryDetail entry={selected} onClose={() => setSelected(null)} onRefresh={refreshCurrentWeek} />
         )}
       </div>
       {isCreating && <EntryForm onSave={handleCreate} onCancel={() => setIsCreating(false)} />}

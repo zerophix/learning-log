@@ -4,18 +4,19 @@ import { api } from '@/lib/api';
 import Navigation from '@/components/layout/Navigation';
 import PageHeader from '@/components/layout/PageHeader';
 import EntryDetail from '@/components/entry/EntryDetail';
-import { IconTag, IconHourglass, IconEmpty, IconNetwork } from '@/components/ui/Icons';
+import { IconCluster, IconHourglass, IconEmpty, IconNetwork } from '@/components/ui/Icons';
 import type { AttentionGraph, AttentionNode, Entry } from '@/types';
-import { RESEARCH_TYPE_COLORS, RESEARCH_TYPE_LABELS, getResearchTypeInfo } from '@/lib/constants';
+import { RESEARCH_TYPE_COLORS, RESEARCH_TYPE_LABELS, RESEARCH_TYPES } from '@/lib/constants';
 
 const CLUSTER_COLORS = ['#34d399', '#38bdf8', '#f59e0b', '#818cf8', '#fb923c', '#f472b6', '#2dd4bf', '#a78bfa', '#f87171', '#10b981'];
 const CLUSTER_BG = ['#064e3b', '#0c4a6e', '#78350f', '#312e81', '#7c2d12', '#831843', '#134e4a', '#4c1d95', '#7f1d1d', '#064e3b'];
 
 const RESEARCH_MODES = [
-  { id: null as string | null, label: '全部', desc: '所有类型的语义聚类分析' },
-  { id: 'deep-research', label: '深度研究', color: RESEARCH_TYPE_COLORS['deep-research'], desc: '单一主题纵深挖掘' },
-  { id: 'topic-exploration', label: '主题探索', color: RESEARCH_TYPE_COLORS['topic-exploration'], desc: '发散式探索与连接' },
-  { id: 'domain-mapping', label: '领域映射', color: RESEARCH_TYPE_COLORS['domain-mapping'], desc: '领域间相关性映射' },
+  { id: null as string | null, label: '全部', color: '#64748b', desc: '所有类型的语义聚类分析' },
+  ...Object.entries(RESEARCH_TYPES).map(([id, info]) => ({
+    id, label: info.label, color: info.color,
+    desc: id === 'deep-research' ? '单一主题纵深挖掘' : id === 'topic-exploration' ? '发散式探索与连接' : '领域间相关性映射',
+  })),
 ];
 
 export default function ClusterPage() {
@@ -38,7 +39,10 @@ export default function ClusterPage() {
         setEntriesMap(map);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(err => {
+        console.error('Failed to load attention data:', err);
+        setLoading(false);
+      });
   }, []);
 
   const clusters = useMemo(() => {
@@ -90,12 +94,13 @@ export default function ClusterPage() {
 
   return (
     <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
-      <PageHeader icon={<IconTag size={24} />} title="语义聚类">
+      <PageHeader icon={<IconCluster size={24} />} title="语义聚类">
         <Navigation />
       </PageHeader>
 
-      <main style={{ flex: 1, overflow: 'auto', padding: '24px 32px' }}>
-        {loading ? (
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <main style={{ flex: 1, overflow: 'auto', padding: '24px 32px' }}>
+          {loading ? (
           <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
             <IconHourglass size={32} /> 计算聚类中...
           </div>
@@ -122,9 +127,10 @@ export default function ClusterPage() {
                 const typeColor = entry?.research_type ? (RESEARCH_TYPE_COLORS[entry.research_type] || '#64748b') : '#64748b';
                 return (
                   <div key={n.id} onClick={() => entry && setSelectedEntry(entry)}
-                    style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderRadius: '10px', border: '1px solid var(--border-color)', cursor: 'pointer', borderLeft: `3px solid ${selectedClusterData.color}`, transition: 'all 0.2s' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = selectedClusterData.color; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; }}>
+                    className="card-cluster"
+                    style={{ padding: '16px 20px', borderLeft: `3px solid ${selectedClusterData.color}` }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = selectedClusterData.color; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-color)'; }}>
                     <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>{n.topic}</div>
                     {entry && (
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -177,9 +183,10 @@ export default function ClusterPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px', marginBottom: '32px' }}>
                   {clusters.map(c => (
                     <div key={c.index} onClick={() => setSelectedCluster(c.index)}
-                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s', borderLeft: `3px solid ${c.color}` }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = c.color; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                      className="card-cluster"
+                      style={{ padding: '20px', borderLeft: `3px solid ${c.color}` }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = c.color; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-color)'; }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                         <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: c.color }} />
                         <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name.length > 28 ? c.name.slice(0, 26) + '…' : c.name}</span>
@@ -219,7 +226,10 @@ export default function ClusterPage() {
         )}
       </main>
 
-      <EntryDetail entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
+      {selectedEntry && (
+        <EntryDetail entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
+      )}
     </div>
+  </div>
   );
 }

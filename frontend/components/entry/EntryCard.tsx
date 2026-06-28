@@ -54,30 +54,13 @@ export default function EntryCard({ entry, onClick }: { entry: Entry; onClick: (
           flexShrink: 0,
           zIndex: 2
         }} />
-        {entry.aha_moment === 1 && (
+        {entry.aha_moment && (
           <IconLightbulb size={16} />
         )}
       </div>
 
       {/* 右侧：卡片内容 */}
-      <div style={{
-        flex: 1,
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '12px',
-        padding: '20px',
-        transition: 'all 0.2s',
-        minWidth: 0
-      }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--text-muted)';
-        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-color)';
-        (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
-      }}
-      >
+      <div className="card" style={{ flex: 1, padding: '20px', minWidth: 0 }}>
         <EntryTags entry={entry} showProject />
 
         {/* 标题 */}
