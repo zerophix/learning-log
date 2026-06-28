@@ -15,7 +15,7 @@
 | 架构图 | **Mermaid** | 10.9.0 | Markdown 内嵌流程图渲染 |
 | Markdown | **react-markdown** + remark-gfm + rehype-raw | 10.1.0 | 富文本洞察内容渲染 |
 | 代码高亮 | **react-syntax-highlighter** | 16.1.1 | 代码块语法高亮（vscDarkPlus 主题） |
-| 样式方案 | **纯内联 style + CSS 变量** | — | 无 CSS-in-JS，无 Tailwind，无独立 CSS 文件 |
+| 样式方案 | **纯内联 style + CSS 变量** | — | 无 CSS-in-JS，无 Tailwind，全局样式统一在 `styles/index.css` |
 | 后端通信 | **fetch API** | 原生 | RESTful JSON → `http://localhost:8002` |
 
 ### 完整的 `package.json`
@@ -58,7 +58,7 @@
 
 ## 二、设计令牌 (Design Tokens)
 
-### 2.1 CSS 变量 (`globals.css`)
+### 2.1 CSS 变量 (`styles/index.css`)
 
 ```css
 :root {
@@ -377,7 +377,7 @@ transition: all 0.3s;   /* 较慢（图表预览展开） */
 | **禁止 emoji 图标** | 所有图标使用统一 SVG 图标组件（`components/ui/Icons.tsx`），禁止在代码中使用 emoji 作为图标 |
 | **禁止死代码** | 未被任何文件引用的组件、数据文件、CSS 文件必须及时删除 |
 | **禁止空目录** | 不存在的功能不留空目录占位 |
-| **样式方案** | 组件使用内联 `style={{}}`，全局样式仅在 `app/globals.css` 中定义 CSS 变量和重置 |
+| **样式方案** | 组件使用内联 `style={{}}`，全局样式统一在 `styles/index.css` 中定义 CSS 变量和重置 |
 | **第三方库通过 npm** | 禁止手动放置 `.min.js` 文件（如 `echarts.min.js`），统一通过 `package.json` 管理 |
 
 ### 10.1 目录结构
@@ -385,13 +385,16 @@ transition: all 0.3s;   /* 较慢（图表预览展开） */
 ```
 frontend/
 ├── app/                              # Next.js App Router 页面路由
-│   ├── layout.tsx                    # 根布局（metadata + globals.css 引入）
+│   ├── layout.tsx                    # 根布局（metadata + styles/index.css 引入）
 │   ├── page.tsx                      # 首页 — 时间线视图（按周分页，~186 行）
-│   ├── globals.css                   # 全局 CSS 变量 + 重置 + 滚动条 + Markdown 样式
 │   ├── graph/
 │   │   └── page.tsx                  # 知识图谱页（ECharts 力导向图）
-│   └── feed/
-│       └── page.tsx                  # Feed 卡片流页（网格布局）
+│   ├── feed/
+│   │   └── page.tsx                  # Feed 卡片流页（网格布局）
+│   └── tags/
+│       └── page.tsx                  # 标签页
+├── styles/                           # 全局样式
+│   └── index.css                     # CSS 变量 + 重置 + 滚动条 + Markdown 样式
 ├── components/                       # 可复用组件（按职责分组）
 │   ├── ui/                           # 通用 UI 原子组件
 │   │   ├── Icons.tsx                 # 统一 SVG 图标库（14 个图标组件）
@@ -436,6 +439,7 @@ frontend/
 | 目录 | 职责 | 文件数量上限 |
 |------|------|------------|
 | `app/` | 页面路由入口，仅做组件组装和数据获取 | 每路由 1 个 `page.tsx` |
+| `styles/` | 全局样式（CSS 变量 + 重置 + 滚动条 + Markdown 样式） | 1（`index.css`） |
 | `components/ui/` | 通用原子组件，无业务逻辑 | ≤ 10 |
 | `components/entry/` | 条目 CRUD 相关组件 | ≤ 8 |
 | `components/layout/` | 页面级布局/导航/统计组件 | ≤ 6 |
@@ -1049,8 +1053,8 @@ module.exports = nextConfig;
 
 1. **初始化项目**: `npx create-next-app@14.1.0 frontend --typescript`
 2. **安装依赖**: 复制上方 package.json 的 dependencies 并 `npm install`
-3. **创建目录**: `components/ui/`, `components/entry/`, `components/layout/`, `components/renderers/`, `components/timeline/`, `lib/`, `types/`, `app/graph/`, `app/feed/`
-4. **全局样式**: 编写 `app/globals.css`（CSS 变量 + 重置 + 滚动条 + Markdown 样式）
+3. **创建目录**: `styles/`, `components/ui/`, `components/entry/`, `components/layout/`, `components/renderers/`, `components/timeline/`, `lib/`, `types/`, `app/graph/`, `app/feed/`
+4. **全局样式**: 编写 `styles/index.css`（CSS 变量 + 重置 + 滚动条 + Markdown 样式）
 5. **类型定义**: 创建 `types/index.ts`
 6. **常量与 API**: 创建 `lib/constants.ts` + `lib/api.ts`
 7. **图标库**: 创建 `components/ui/Icons.tsx`（统一 SVG 图标）
@@ -1058,8 +1062,8 @@ module.exports = nextConfig;
 9. **渲染器**: MarkdownRenderer → CodeBlock → MermaidDiagram
 10. **表单原子组件**: FormField (FormInput/FormTextarea/FormSelect/FormNumber/FormCheckbox)
 11. **业务组件**: EntryCard → EntryDetail → EntryDetailContent → EntryForm → EntryTags → DeleteConfirm → FilterBar → StatsPanel → PageHeader → Navigation → TimelineView
-11. **页面组装**: `app/layout.tsx` → `app/page.tsx` → `app/graph/page.tsx` → `app/feed/page.tsx`
-12. **启动（生产模式）**: `npm run build && npm start -p 3000`，确保后端在 `localhost:8002` 运行
+12. **页面组装**: `app/layout.tsx` → `app/page.tsx` → `app/graph/page.tsx` → `app/feed/page.tsx`
+13. **启动（生产模式）**: `npm run build && npm start -p 3000`，确保后端在 `localhost:8002` 运行
 
 ---
 
@@ -1070,7 +1074,7 @@ module.exports = nextConfig;
 | **暗色主题统一** | 所有背景从 `#0F172A` 到 `#1E293B` 深色梯度，无任何亮色模式 |
 | **毛玻璃层次** | 浮动元素（导航、弹窗）统一 backdrop-filter |
 | **语义色编码** | 4 种 accent 色对应不同维度（蓝=交互、绿=高能/通过、黄=中能/研究、紫=架构） |
-| **内联样式优先** | 所有组件使用 inline `style={{}}`，全局 CSS 仅定义变量和重置 |
+| **内联样式优先** | 所有组件使用 inline `style={{}}`，全局 CSS 统一在 `styles/index.css` 定义 |
 | **无外部 UI 库** | 不依赖 Material UI / Ant Design / Chakra 等，纯手工组件 |
 | **TypeScript 全量覆盖** | 所有组件 Props 有显式接口定义，禁止 `any` |
 | **客户端渲染** | `'use client'` 指令在所有交互组件中显式声明 |

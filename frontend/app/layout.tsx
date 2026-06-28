@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import './globals.css'
+import '@/styles/index.css'
 import { ToastProvider } from '@/hooks/useToast'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 
