@@ -43,3 +43,6 @@ Thumbs.db
 # ── MCP / Runtime ──────────────
 .claude/settings.local.json
 .lingma/
+.proxyai/
+PROXYAI.md
+cline.json
