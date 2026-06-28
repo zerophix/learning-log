@@ -83,6 +83,36 @@ export default function GraphPage() {
   // 星系图中心节点
   const [galaxyCenterId, setGalaxyCenterId] = useState<number | null>(null);
 
+  // 性能优化状态
+  const [topK, setTopK] = useState(80);           // 节点数量
+  const [edgeThreshold, setEdgeThreshold] = useState(0.05); // 边权重阈值
+  const [showFps, setShowFps] = useState(false);   // FPS 监控
+  const fpsRef = useRef({ frames: 0, lastTime: performance.now(), fps: 0 });
+  const animFrameRef = useRef<number>(0);
+  const [currentFps, setCurrentFps] = useState(0);
+
+  // FPS 监控逻辑
+  useEffect(() => {
+    if (!showFps) {
+      setCurrentFps(0);
+      cancelAnimationFrame(animFrameRef.current);
+      return;
+    }
+    const tick = () => {
+      fpsRef.current.frames++;
+      const now = performance.now();
+      if (now - fpsRef.current.lastTime >= 1000) {
+        fpsRef.current.fps = Math.round(fpsRef.current.frames * 1000 / (now - fpsRef.current.lastTime));
+        fpsRef.current.frames = 0;
+        fpsRef.current.lastTime = now;
+        setCurrentFps(fpsRef.current.fps);
+      }
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, [showFps]);
+
   // 统计信息
   const [stats, setStats] = useState({
     nodeCount: 0,
@@ -131,9 +161,10 @@ export default function GraphPage() {
 
   // ==================== 数据加载 ====================
 
-  const loadGraph = useCallback((signal: AbortSignal) => {
+  const loadGraph = useCallback((signal: AbortSignal, customTopK?: number) => {
     setLoading(true);
-    api.attention({ top_k: 100 }, signal)
+    const k = customTopK || topK;
+    api.attention({ top_k: k }, signal)
       .then(data => {
         setRawGraphData(data);
         const transformed = transformAttentionGraph(data);
@@ -145,7 +176,7 @@ export default function GraphPage() {
         setError(err.message || '加载图谱失败');
         setLoading(false);
       });
-  }, []);
+  }, [topK]);
 
   useEffect(() => {
     setRawGraphData(null);
