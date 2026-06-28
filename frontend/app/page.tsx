@@ -60,6 +60,12 @@ export default function Home() {
 
   const displayEntries = filteredEntries(entries);
 
+  const handleSelect = (entry: Entry) => {
+    setSelected(prev => prev?.id === entry.id ? null : entry);
+  };
+
+  const handleCloseDetail = () => setSelected(null);
+
   return (
     <div
       className="page-shell"
@@ -85,7 +91,7 @@ export default function Home() {
         <main
           ref={mainRef}
           className="main-scroll"
-          style={{ padding: '24px 0 40px', display: 'flex', flexDirection: 'column' }}
+          style={{ padding: '24px 16px 40px', display: 'flex', flexDirection: 'column' }}
         >
           {error ? (
             <div style={{ textAlign: 'center', padding: '80px', color: '#ef4444' }}>
@@ -112,13 +118,15 @@ export default function Home() {
               onPrevWeek={goToPrevWeek}
               onNextWeek={goToNextWeek}
               onSelectWeek={navigateToWeek}
-              onSelect={setSelected}
+              onSelect={handleSelect}
             />
           )}
         </main>
 
         {selected && (
-          <EntryDetail entry={selected} onClose={() => setSelected(null)} onRefresh={refreshCurrentWeek} />
+          <div onClick={handleCloseDetail} style={{ display: 'flex' }}>
+            <EntryDetail entry={selected} onClose={handleCloseDetail} onRefresh={refreshCurrentWeek} />
+          </div>
         )}
       </div>
       {isCreating && <EntryForm onSave={handleCreate} onCancel={() => setIsCreating(false)} />}

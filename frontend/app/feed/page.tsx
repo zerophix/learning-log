@@ -201,12 +201,15 @@ export default function FeedPage() {
       </main>
 
       {selectedEntry && (
-        <div style={{
-          position: 'fixed', top: 0, right: 0, zIndex: 100,
-          width: '540px', height: '100dvh'
-        }}>
-          <EntryDetail entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
-        </div>
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setSelectedEntry(null)} />
+          <div style={{
+            position: 'fixed', top: 0, right: 0, zIndex: 100,
+            width: '540px', height: '100dvh'
+          }}>
+            <EntryDetail entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
+          </div>
+        </>
       )}
     </div>
   );
