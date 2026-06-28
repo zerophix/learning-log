@@ -120,7 +120,11 @@ export default function MarkdownRenderer({ content }: { content: string }) {
                 ),
                 code: ({ node, inline, className, children, ...props }: { node?: any; inline?: boolean; className?: string; children?: React.ReactNode }) => {
                   const match = /language-(\w+)/.exec(className || '');
-                  const isTextDiagram = typeof children === 'string' && (children.includes('┌') || children.includes('──'));
+                  const text = typeof children === 'string' ? children : '';
+                  const isTextDiagram = text.length > 10 && (
+                    text.includes('┌') || text.includes('─') || text.includes('┐') ||
+                    text.includes('│') || text.includes('└') || text.includes('┘')
+                  );
                   if (!inline && match) {
                     if (match[1] === 'mermaid') return null;
                     if (isTextDiagram) {
@@ -138,6 +142,20 @@ export default function MarkdownRenderer({ content }: { content: string }) {
                       );
                     }
                     return <CodeBlock code={String(children).replace(/\n$/, '')} language={match[1]} />;
+                  }
+                  if (!inline && isTextDiagram) {
+                    return (
+                      <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                        <pre style={{
+                          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                          border: '2px solid #e94560', borderRadius: '12px', padding: '24px',
+                          overflow: 'auto', fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+                          fontSize: '13px', lineHeight: '1.8', color: '#00d9ff',
+                          boxShadow: '0 8px 32px rgba(233, 69, 96, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                          maxWidth: '100%', textAlign: 'left'
+                        }}><code>{children}</code></pre>
+                      </div>
+                    );
                   }
                   return <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'Menlo, Monaco, monospace', fontSize: '0.9em', color: 'var(--accent-sky)' }} {...props}>{children}</code>;
                 }

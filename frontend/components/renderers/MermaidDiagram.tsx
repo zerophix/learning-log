@@ -3,10 +3,9 @@ import { useState, useEffect } from 'react';
 import mermaid from 'mermaid';
 import { IconWarning } from '@/components/ui/Icons';
 
-// 配置 Mermaid
 if (typeof window !== 'undefined') {
-  mermaid.initialize({ 
-    startOnLoad: false, 
+  mermaid.initialize({
+    startOnLoad: false,
     securityLevel: 'loose',
     fontSize: 11,
     flowchart: {
@@ -14,7 +13,7 @@ if (typeof window !== 'undefined') {
       nodeSpacing: 60,
       rankSpacing: 100,
       curve: 'basis',
-      defaultRenderer: 'dagre-d3'
+      defaultRenderer: 'dagre-wrapper'
     },
     theme: 'base',
     themeVariables: {
@@ -22,7 +21,7 @@ if (typeof window !== 'undefined') {
       arrowMarkerColor: '#8b95a8',
       primaryColor: '#1e293b',
       primaryTextColor: '#e8e8e8',
-      primaryBorderColor: 'var(--text-muted)',
+      primaryBorderColor: '#64748b',
       textColor: '#c8d1dc'
     },
     themeCSS: `
