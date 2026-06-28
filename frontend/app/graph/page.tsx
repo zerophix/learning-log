@@ -158,12 +158,12 @@ export default function GraphPage() {
   };
 
   return (
-    <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
+    <div className="page-shell">
       <PageHeader icon={<IconNetwork size={24} />} title="Attention Graph">
         <Navigation />
       </PageHeader>
 
-      <main style={{ flex: 1, display: 'flex', position: 'relative' }}>
+      <main className="content-area" style={{ position: 'relative' }}>
         {error ? (
           <div style={{ margin: 'auto', padding: '80px', color: '#ef4444' }}><p>{error}</p></div>
         ) : !graphData ? (
@@ -176,7 +176,7 @@ export default function GraphPage() {
           </div>
         ) : (
           <ErrorBoundary fallback={<div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>图谱渲染异常<button onClick={() => window.location.reload()} style={{ marginLeft: '12px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer' }}>重试</button></div>}>
-            <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 10, background: 'rgba(15,23,42,0.85)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px 16px', fontSize: '12px', maxWidth: '240px' }}>
+            <div className="graph-legend" style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 10, background: 'rgba(15,23,42,0.85)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px 16px', fontSize: '12px', maxWidth: '240px' }}>
               <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>聚类（共 {graphData.entry_count} 条）</div>
               {graphData.clusters.map((name, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', color: 'var(--text-secondary)' }}>
@@ -192,7 +192,7 @@ export default function GraphPage() {
             <div ref={chartRef} style={{ flex: 1 }} />
 
             {selectedNode && (
-              <div style={{ width: '320px', borderLeft: '1px solid var(--border-color)', overflow: 'auto', background: 'var(--bg-secondary)' }}>
+              <div className="graph-neighbors-panel" style={{ width: '320px', borderLeft: '1px solid var(--border-color)', overflow: 'auto', background: 'var(--bg-secondary)' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '4px' }}>{selectedNode.topic}</div>

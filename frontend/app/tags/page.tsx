@@ -31,11 +31,11 @@ export default function ClusterPage() {
     api.attention({ top_k: 5 })
       .then(async data => {
         setAttention(data);
-        const entries = await Promise.all(
-          data.nodes.map(n => api.entries.get(n.id).catch(() => null))
-        );
+        const ids = data.nodes.map(n => n.id);
+        if (ids.length === 0) { setLoading(false); return; }
+        const entries = await api.entries.batch(ids);
         const map = new Map<number, Entry>();
-        entries.forEach(e => { if (e) map.set(e.id, e); });
+        entries.forEach(e => map.set(e.id, e));
         setEntriesMap(map);
         setLoading(false);
       })
@@ -93,13 +93,13 @@ export default function ClusterPage() {
   const currentMode = RESEARCH_MODES.find(m => m.id === researchMode) || RESEARCH_MODES[0];
 
   return (
-    <div style={{ height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
+    <div className="page-shell">
       <PageHeader icon={<IconCluster size={24} />} title="语义聚类">
         <Navigation />
       </PageHeader>
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <main style={{ flex: 1, overflow: 'auto', padding: '24px 32px' }}>
+      <div className="content-area">
+        <main className="main-scroll tags-content">
           {loading ? (
           <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
             <IconHourglass size={32} /> 计算聚类中...
@@ -151,8 +151,8 @@ export default function ClusterPage() {
           // ── Cluster overview with research tabs ──
           <>
             {/* Research type tabs */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ marginBottom: '20px' }}>
+              <div className="research-tabs" style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                 {RESEARCH_MODES.map(mode => (
                   <button key={mode.id || 'all'}
                     onClick={() => setResearchMode(mode.id)}

@@ -148,7 +148,7 @@ docs/           设计文档
 ## 约束
 
 - 后端由 launchd 持久化运行（`learnlog service install`），关闭 IDE/终端不影响
-- MCP Server 首次调用时也会自动保活后端（双重保障）
+- MCP Server 通过 `mcp_server.py` 独占提供（已移除旧 FastApiMCP 自动挂载）
 - 数据库在 `data/learning-log.db`，不要手动修改
 - 标签遵循反向域名: `cn.dolphinmind.learning.log.tag.{category}.{name}`
 - API 文档: http://localhost:8002/docs

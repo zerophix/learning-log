@@ -69,11 +69,9 @@ if (typeof window !== 'undefined') {
 }
 
 export default function MermaidDiagram({ chart }: { chart?: string }) {
-  const trimmed = (chart ?? '').trim();
-  if (!trimmed) return null;
-
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const trimmed = (chart ?? '').trim();
 
   useEffect(() => {
     setSvg('');

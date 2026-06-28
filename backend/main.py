@@ -4,7 +4,6 @@ FastAPI backend with auto-growing tag system + attention graph
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_mcp import FastApiMCP
 from pydantic import BaseModel
 from typing import Optional, List
 import re
@@ -14,6 +13,7 @@ import hashlib
 import uuid
 from datetime import datetime, date, timedelta
 from collections import Counter
+from contextlib import contextmanager
 from db import DB_PATH, init_db
 
 try:
@@ -23,18 +23,16 @@ except ImportError:
     jieba = None
     pseg = None
 
-init_db()
-
-# Soft-delete pre-seeded tags — they were seed data, not user-grown
-_conn = sqlite3.connect(DB_PATH)
-_conn.execute("UPDATE tags SET is_active = 0 WHERE is_auto = 0 AND is_active = 1")
-_conn.commit()
-_conn.close()
-
 app = FastAPI(title="Learning Log API", version="2.0.0")
 
 @app.on_event("startup")
-def warmup():
+def startup():
+    init_db()
+    # Soft-delete pre-seeded tags on first run only
+    _conn = sqlite3.connect(DB_PATH)
+    _conn.execute("UPDATE tags SET is_active = 0 WHERE is_auto = 0 AND is_active = 1")
+    _conn.commit()
+    _conn.close()
     _get_embedding_model()
 
 app.add_middleware(
@@ -102,6 +100,18 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+@contextmanager
+def db_session():
+    conn = get_db()
+    try:
+        yield conn
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
 def row_to_dict(row):
     if row is None:
         return None
@@ -165,7 +175,7 @@ def _clean_for_extraction(text: str) -> str:
     text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
     text = re.sub(r'#{1,6}\s+', '', text)
     text = re.sub(r'[*_~`]', '', text)
-    text = re.sub(r'[—\-–·•→⇒,.;:!?。，；：！？、""''（）()【】\[\]{}《》<>/\\|]', ' ', text)
+    text = re.sub(r'[\u2014\u2013\u00b7\u2022\u2192\u21d2,.;:!?\u3002\uff0c\uff1b\uff1a\uff01\uff1f\u3001\u201c\u201d\u2018\u2019\uff08\uff09()\u3010\u3011{}\u300a\u300b<>/|\[\]]', ' ', text)
     text = re.sub(r'\d+\.\s*', ' ', text)
     text = re.sub(r'\s+', ' ', text)
     return text.strip()
@@ -294,39 +304,38 @@ def create_tag(tag: TagCreate):
 def list_tags(category: Optional[str] = None):
     """List all tags, optionally filtered by category"""
     conn = get_db()
-    cursor = conn.cursor()
-    
-    if category:
-        cursor.execute("SELECT * FROM tags WHERE tag_category = ? AND is_active = 1 ORDER BY tag_name", (category,))
-    else:
-        cursor.execute("SELECT * FROM tags WHERE is_active = 1 ORDER BY tag_category, tag_name")
-    
-    tags = [row_to_dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return tags
+    try:
+        cursor = conn.cursor()
+        if category:
+            cursor.execute("SELECT * FROM tags WHERE tag_category = ? AND is_active = 1 ORDER BY tag_name", (category,))
+        else:
+            cursor.execute("SELECT * FROM tags WHERE is_active = 1 ORDER BY tag_category, tag_name")
+        return [row_to_dict(row) for row in cursor.fetchall()]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 @app.get("/api/tags/tree")
 def get_tag_tree():
     """Get tag hierarchy as a tree structure"""
     conn = get_db()
-    cursor = conn.cursor()
-    
-    # Get all tags
-    cursor.execute("SELECT * FROM tags WHERE is_active = 1 ORDER BY tag_category, tag_name")
-    all_tags = [row_to_dict(row) for row in cursor.fetchall()]
-    
-    # Build tree
-    tree = []
-    tag_map = {t['tag_id']: {**t, 'children': []} for t in all_tags}
-    
-    for tag in all_tags:
-        if tag['parent_tag_id'] and tag['parent_tag_id'] in tag_map:
-            tag_map[tag['parent_tag_id']]['children'].append(tag_map[tag['tag_id']])
-        elif not tag['parent_tag_id']:
-            tree.append(tag_map[tag['tag_id']])
-    
-    conn.close()
-    return tree
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM tags WHERE is_active = 1 ORDER BY tag_category, tag_name")
+        all_tags = [row_to_dict(row) for row in cursor.fetchall()]
+        tree = []
+        tag_map = {t['tag_id']: {**t, 'children': []} for t in all_tags}
+        for tag in all_tags:
+            if tag['parent_tag_id'] and tag['parent_tag_id'] in tag_map:
+                tag_map[tag['parent_tag_id']]['children'].append(tag_map[tag['tag_id']])
+            elif not tag['parent_tag_id']:
+                tree.append(tag_map[tag['tag_id']])
+        return tree
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 @app.post("/api/tag-links")
 def create_tag_link(link: TagLinkCreate):
@@ -355,16 +364,17 @@ def create_tag_link(link: TagLinkCreate):
 def list_tag_links(source_tag_id: Optional[str] = None):
     """List all tag links, optionally filtered by source tag"""
     conn = get_db()
-    cursor = conn.cursor()
-    
-    if source_tag_id:
-        cursor.execute("SELECT * FROM tag_links WHERE source_tag_id = ?", (source_tag_id,))
-    else:
-        cursor.execute("SELECT * FROM tag_links")
-    
-    links = [row_to_dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return links
+    try:
+        cursor = conn.cursor()
+        if source_tag_id:
+            cursor.execute("SELECT * FROM tag_links WHERE source_tag_id = ?", (source_tag_id,))
+        else:
+            cursor.execute("SELECT * FROM tag_links")
+        return [row_to_dict(row) for row in cursor.fetchall()]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 # --- Learning Entry Endpoints ---
 
@@ -390,17 +400,18 @@ def create_entry(entry: LearningEntryCreate):
 
         cursor.execute('''
             INSERT INTO learning_entries 
-            (session_id, topic, insight, summary, diagram, 
+            (session_id, topic, insight, summary, diagram, code_snippet,
              star_situation, star_task, star_action, star_result,
              topic_tag_id, project_tag_id, research_type, related_tag_ids, custom_tags,
              analogy, transfer_pattern, energy_level, aha_moment, source, confidence_rating, content_hash, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             session_id,
             entry.topic,
             entry.insight,
             entry.summary or _extract_summary(entry.insight),
             entry.diagram,
+            entry.code_snippet,
             entry.star_situation,
             entry.star_task,
             entry.star_action,
@@ -438,80 +449,76 @@ def create_entry(entry: LearningEntryCreate):
 def list_entries(limit: int = 50, offset: int = 0):
     """List all learning entries"""
     conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM learning_entries ORDER BY timestamp DESC LIMIT ? OFFSET ?", (limit, offset))
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM learning_entries ORDER BY timestamp DESC LIMIT ? OFFSET ?", (limit, offset))
+        entries = _parse_entry_rows(cursor.fetchall())
+        return entries
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+def _parse_entry_rows(rows: list) -> list:
+    """Helper: convert raw DB rows to API response dicts"""
     entries = []
-    
-    for row in cursor.fetchall():
+    for row in rows:
         entry = row_to_dict(row)
         entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
         entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
         entries.append(entry)
-    
-    conn.close()
     return entries
 
 @app.get("/api/entries/week-index")
 def get_week_index():
     """List all weeks that have entries, with counts and date ranges."""
     conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT strftime('%Y', timestamp) as year,
-               CAST(strftime('%W', timestamp) AS INTEGER) as week,
-               COUNT(*) as count
-        FROM learning_entries
-        GROUP BY strftime('%Y-%W', timestamp)
-        ORDER BY year DESC, week DESC
-    """)
-
-    weeks = []
-    for row in cursor.fetchall():
-        y, w, c = int(row['year']), row['week'], row['count']
-        start_date, end_date = get_week_dates(y, w)
-        weeks.append({
-            "year": y,
-            "week": w,
-            "start": start_date.isoformat(),
-            "end": end_date.isoformat(),
-            "count": c
-        })
-
-    conn.close()
-    return weeks
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT strftime('%Y', timestamp) as year,
+                   CAST(strftime('%W', timestamp) AS INTEGER) as week,
+                   COUNT(*) as count
+            FROM learning_entries
+            GROUP BY strftime('%Y-%W', timestamp)
+            ORDER BY year DESC, week DESC
+        """)
+        weeks = []
+        for row in cursor.fetchall():
+            y, w, c = int(row['year']), row['week'], row['count']
+            start_date, end_date = get_week_dates(y, w)
+            weeks.append({
+                "year": y,
+                "week": w,
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat(),
+                "count": c
+            })
+        return weeks
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 
 @app.get("/api/entries/week")
 def get_entries_by_week(year: int, week: int, limit: int = 50):
     """Get all entries for a specific week (Monday-Sunday)."""
-    conn = get_db()
-    cursor = conn.cursor()
-
-    start_date, end_date = get_week_dates(year, week)
-    end_plus_one = (end_date + timedelta(days=1)).isoformat()
-
-    cursor.execute("""
-        SELECT * FROM learning_entries
-        WHERE timestamp >= ? AND timestamp < ?
-        ORDER BY timestamp DESC LIMIT ?
-    """, (start_date.isoformat(), end_plus_one, limit))
-
-    entries = []
-    for row in cursor.fetchall():
-        entry = row_to_dict(row)
-        entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
-        entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
-        entries.append(entry)
-
-    conn.close()
-
-    return {
-        "data": entries,
-        "week": {"year": year, "week": week, "start": start_date.isoformat(), "end": end_date.isoformat()},
-        "has_more": len(entries) == limit
-    }
+    with db_session() as conn:
+        cursor = conn.cursor()
+        start_date, end_date = get_week_dates(year, week)
+        end_plus_one = (end_date + timedelta(days=1)).isoformat()
+        cursor.execute("""
+            SELECT * FROM learning_entries
+            WHERE timestamp >= ? AND timestamp < ?
+            ORDER BY timestamp DESC LIMIT ?
+        """, (start_date.isoformat(), end_plus_one, limit))
+        entries = _parse_entry_rows(cursor.fetchall())
+        return {
+            "data": entries,
+            "week": {"year": year, "week": week, "start": start_date.isoformat(), "end": end_date.isoformat()},
+            "has_more": len(entries) == limit
+        }
 
 
 @app.post("/api/tags/backfill")
@@ -542,24 +549,20 @@ def backfill_tags():
 @app.get("/api/graph")
 def get_graph_data():
     """Legacy tag-based graph"""
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT tag_id as id, tag_name as name, tag_category as category, usage_count as value
-        FROM tags WHERE is_active = 1 AND is_auto = 1
-        ORDER BY usage_count DESC
-    """)
-    nodes = [row_to_dict(row) for row in cursor.fetchall()]
-    
-    cursor.execute("""
-        SELECT source_tag_id as source, target_tag_id as target, link_type as label
-        FROM tag_links
-    """)
-    links = [row_to_dict(row) for row in cursor.fetchall()]
-    
-    conn.close()
-    return {"nodes": nodes, "links": links}
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT tag_id as id, tag_name as name, tag_category as category, usage_count as value
+            FROM tags WHERE is_active = 1 AND is_auto = 1
+            ORDER BY usage_count DESC
+        """)
+        nodes = [row_to_dict(row) for row in cursor.fetchall()]
+        cursor.execute("""
+            SELECT source_tag_id as source, target_tag_id as target, link_type as label
+            FROM tag_links
+        """)
+        links = [row_to_dict(row) for row in cursor.fetchall()]
+        return {"nodes": nodes, "links": links}
 
 # --- Attention Graph (自生长图谱) ---
 
@@ -624,9 +627,8 @@ def get_attention_graph(
     top_k: int = 5,
 ):
     """3-head attention graph — nodes = entries, edges = weighted similarity"""
-    conn = get_db()
-    entries = _entries_for_attention(conn)
-    conn.close()
+    with db_session() as conn:
+        entries = _entries_for_attention(conn)
     
     if len(entries) < 2:
         return {"nodes": [], "edges": [], "clusters": [], "weights": {"content": w_content, "tags": w_tags, "temporal": w_temporal}}
@@ -754,9 +756,8 @@ def get_entry_neighbors(
     w_temporal: float = 0.15,
 ):
     """Return 3-head neighbors for a given entry — content / tags / temporal"""
-    conn = get_db()
-    entries = _entries_for_attention(conn)
-    conn.close()
+    with db_session() as conn:
+        entries = _entries_for_attention(conn)
 
     target = None
     for e in entries:
@@ -892,42 +893,49 @@ def get_entry_neighbors(
 @app.get("/api/stats")
 def get_stats():
     """Get basic statistics for health check and dashboard"""
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT COUNT(*) FROM learning_entries")
-    entry_count = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM tags WHERE is_active = 1")
-    tag_count = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM tag_links")
-    link_count = cursor.fetchone()[0]
-    
-    conn.close()
-    return {
-        "entries": entry_count,
-        "tags": tag_count,
-        "links": link_count
-    }
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM learning_entries")
+        entry_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM tags WHERE is_active = 1")
+        tag_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM tag_links")
+        link_count = cursor.fetchone()[0]
+        return {"entries": entry_count, "tags": tag_count, "links": link_count}
 
 @app.get("/api/entries/{entry_id}")
 def get_entry_detail(entry_id: int):
     """Get a single learning entry by ID"""
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM learning_entries WHERE id = ?", (entry_id,))
-    row = cursor.fetchone()
-    conn.close()
-    
-    if not row:
-        raise HTTPException(status_code=404, detail="Entry not found")
-    
-    entry = row_to_dict(row)
-    entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
-    entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
-    return entry
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM learning_entries WHERE id = ?", (entry_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Entry not found")
+        entry = row_to_dict(row)
+        entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
+        entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
+        return entry
+
+
+class BatchEntryRequest(BaseModel):
+    ids: List[int]
+
+
+@app.post("/api/entries/batch")
+def batch_get_entries(req: BatchEntryRequest):
+    """批量获取 Entry — 解决前端 N+1 查询"""
+    with db_session() as conn:
+        cursor = conn.cursor()
+        placeholders = ",".join("?" for _ in req.ids)
+        cursor.execute(f"SELECT * FROM learning_entries WHERE id IN ({placeholders})", req.ids)
+        entries = []
+        for row in cursor.fetchall():
+            entry = row_to_dict(row)
+            entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
+            entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
+            entries.append(entry)
+        return entries
 
 
 class LearningEntryUpdate(BaseModel):
@@ -1050,174 +1058,122 @@ def get_feed_entries(
     - discipline: 学科领域 (cs/math/physics/finance/law)
     - research_type: 研究类型 (deep-research/topic-exploration/domain-mapping)
     """
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    # 构建动态查询
-    conditions = []
-    params = []
-    
-    if project_type:
-        prefix = f"cn.dolphinmind.learning.log.tag.project.{project_type}."
-        conditions.append("project_tag_id LIKE ?")
-        params.append(f"{prefix}%")
-    
-    if discipline:
-        conditions.append("topic_tag_id LIKE ?")
-        params.append(f"%.discipline.{discipline}.%")
-    
-    if research_type:
-        conditions.append("research_type = ?")
-        params.append(research_type)
-    
-    where_clause = " AND ".join(conditions) if conditions else "1=1"
-    
-    cursor.execute(
-        f"SELECT * FROM learning_entries WHERE {where_clause} ORDER BY timestamp DESC LIMIT ? OFFSET ?",
-        params + [limit, offset]
-    )
-    
-    entries = []
-    for row in cursor.fetchall():
-        entry = row_to_dict(row)
-        entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
-        entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
-        entries.append(entry)
-    
-    conn.close()
-    return entries
+    with db_session() as conn:
+        cursor = conn.cursor()
+        conditions = []
+        params = []
+        if project_type:
+            conditions.append("project_tag_id LIKE ?")
+            params.append(f"cn.dolphinmind.learning.log.tag.project.{project_type}.%")
+        if discipline:
+            conditions.append("topic_tag_id LIKE ?")
+            params.append(f"%.discipline.{discipline}.%")
+        if research_type:
+            conditions.append("research_type = ?")
+            params.append(research_type)
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        cursor.execute(
+            f"SELECT * FROM learning_entries WHERE {where_clause} ORDER BY timestamp DESC LIMIT ? OFFSET ?",
+            params + [limit, offset]
+        )
+        entries = []
+        for row in cursor.fetchall():
+            entry = row_to_dict(row)
+            entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
+            entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
+            entries.append(entry)
+        return entries
 
 @app.get("/api/projects")
 def list_projects(project_type: Optional[str] = None):
     """List all projects, optionally filtered by type (business/source-code/component)"""
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    if project_type:
-        parent_id = f"cn.dolphinmind.learning.log.tag.project.{project_type}"
-        cursor.execute("SELECT * FROM tags WHERE parent_tag_id = ? AND is_active = 1 ORDER BY tag_name", (parent_id,))
-    else:
-        cursor.execute("SELECT * FROM tags WHERE tag_category = 'project' AND is_active = 1 ORDER BY tag_name")
-    
-    projects = [row_to_dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return projects
+    with db_session() as conn:
+        cursor = conn.cursor()
+        if project_type:
+            parent_id = f"cn.dolphinmind.learning.log.tag.project.{project_type}"
+            cursor.execute("SELECT * FROM tags WHERE parent_tag_id = ? AND is_active = 1 ORDER BY tag_name", (parent_id,))
+        else:
+            cursor.execute("SELECT * FROM tags WHERE tag_category = 'project' AND is_active = 1 ORDER BY tag_name")
+        return [row_to_dict(row) for row in cursor.fetchall()]
 
 @app.get("/api/projects/{project_id}/entries")
 def get_entries_by_project(project_id: str, research_type: Optional[str] = None):
-    """Get all learning entries for a specific project or project type
-    
-    project_id 可以是：
-    - 完整项目标签 ID（精确匹配）
-    - 项目类型前缀（如 'component'，会匹配所有 cn.dolphinmind.learning.log.tag.project.component.*）
-    """
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    # 判断是项目类型还是完整项目 ID
-    if project_id in ['business', 'source-code', 'component']:
-        # 项目类型：使用前缀匹配
-        prefix = f"cn.dolphinmind.learning.log.tag.project.{project_id}."
-        if research_type:
-            cursor.execute(
-                "SELECT * FROM learning_entries WHERE project_tag_id LIKE ? AND research_type = ? ORDER BY timestamp DESC",
-                (f"{prefix}%", research_type)
-            )
+    """Get all learning entries for a specific project or project type"""
+    with db_session() as conn:
+        cursor = conn.cursor()
+        if project_id in ['business', 'source-code', 'component']:
+            prefix = f"cn.dolphinmind.learning.log.tag.project.{project_id}."
+            if research_type:
+                cursor.execute(
+                    "SELECT * FROM learning_entries WHERE project_tag_id LIKE ? AND research_type = ? ORDER BY timestamp DESC",
+                    (f"{prefix}%", research_type)
+                )
+            else:
+                cursor.execute(
+                    "SELECT * FROM learning_entries WHERE project_tag_id LIKE ? ORDER BY timestamp DESC",
+                    (f"{prefix}%",)
+                )
         else:
-            cursor.execute(
-                "SELECT * FROM learning_entries WHERE project_tag_id LIKE ? ORDER BY timestamp DESC",
-                (f"{prefix}%",)
-            )
-    else:
-        # 完整项目 ID：精确匹配
-        if research_type:
-            cursor.execute(
-                "SELECT * FROM learning_entries WHERE project_tag_id = ? AND research_type = ? ORDER BY timestamp DESC",
-                (project_id, research_type)
-            )
-        else:
-            cursor.execute(
-                "SELECT * FROM learning_entries WHERE project_tag_id = ? ORDER BY timestamp DESC",
-                (project_id,)
-            )
-    
-    entries = []
-    for row in cursor.fetchall():
-        entry = row_to_dict(row)
-        entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
-        entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
-        entries.append(entry)
-    
-    conn.close()
-    return entries
+            if research_type:
+                cursor.execute(
+                    "SELECT * FROM learning_entries WHERE project_tag_id = ? AND research_type = ? ORDER BY timestamp DESC",
+                    (project_id, research_type)
+                )
+            else:
+                cursor.execute(
+                    "SELECT * FROM learning_entries WHERE project_tag_id = ? ORDER BY timestamp DESC",
+                    (project_id,)
+                )
+        return _parse_entry_rows(cursor.fetchall())
 
 @app.get("/api/tags/cloud")
 def get_tag_cloud(min_usage: int = 1):
     """Tag cloud: auto-grown tags ordered by usage_count"""
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT tag_id, tag_name, usage_count, created_at
-        FROM tags
-        WHERE is_auto = 1 AND is_active = 1 AND usage_count >= ?
-        ORDER BY usage_count DESC, tag_name ASC
-    ''', (min_usage,))
-    tags = [row_to_dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return tags
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT tag_id, tag_name, usage_count, created_at
+            FROM tags
+            WHERE is_auto = 1 AND is_active = 1 AND usage_count >= ?
+            ORDER BY usage_count DESC, tag_name ASC
+        ''', (min_usage,))
+        return [row_to_dict(row) for row in cursor.fetchall()]
 
 @app.get("/api/tags/auto")
 def list_auto_tags(prefix: str = ''):
     """Auto-complete: search auto-grown tags by prefix"""
-    conn = get_db()
-    cursor = conn.cursor()
-    if prefix:
-        cursor.execute('''
-            SELECT tag_id, tag_name, usage_count
-            FROM tags WHERE is_auto = 1 AND is_active = 1 AND tag_name LIKE ?
-            ORDER BY usage_count DESC LIMIT 20
-        ''', (f'{prefix}%',))
-    else:
-        cursor.execute('''
-            SELECT tag_id, tag_name, usage_count
-            FROM tags WHERE is_auto = 1 AND is_active = 1
-            ORDER BY usage_count DESC LIMIT 50
-        ''',)
-    tags = [row_to_dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return tags
+    with db_session() as conn:
+        cursor = conn.cursor()
+        if prefix:
+            cursor.execute('''
+                SELECT tag_id, tag_name, usage_count
+                FROM tags WHERE is_auto = 1 AND is_active = 1 AND tag_name LIKE ?
+                ORDER BY usage_count DESC LIMIT 20
+            ''', (f'{prefix}%',))
+        else:
+            cursor.execute('''
+                SELECT tag_id, tag_name, usage_count
+                FROM tags WHERE is_auto = 1 AND is_active = 1
+                ORDER BY usage_count DESC LIMIT 50
+            ''',)
+        return [row_to_dict(row) for row in cursor.fetchall()]
 
 @app.get("/api/tags/{tag_id}/entries")
 def get_entries_by_tag(tag_id: str, research_type: str = None):
-    """Get all learning entries for a specific topic tag, optionally filtered by research type
-    
-    参数：
-    - tag_id: 主题标签 ID
-    - research_type: 研究类型 (可选)，deep-research / topic-exploration / domain-mapping
-    """
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    if research_type:
-        cursor.execute(
-            "SELECT * FROM learning_entries WHERE topic_tag_id = ? AND research_type = ? ORDER BY timestamp DESC",
-            (tag_id, research_type)
-        )
-    else:
-        cursor.execute(
-            "SELECT * FROM learning_entries WHERE topic_tag_id = ? ORDER BY timestamp DESC",
-            (tag_id,)
-        )
-    
-    entries = []
-    for row in cursor.fetchall():
-        entry = row_to_dict(row)
-        entry['related_tag_ids'] = json.loads(entry['related_tag_ids']) if entry['related_tag_ids'] else []
-        entry['custom_tags'] = json.loads(entry['custom_tags']) if entry['custom_tags'] else []
-        entries.append(entry)
-    
-    conn.close()
-    return entries
+    """Get all learning entries for a specific topic tag, optionally filtered by research type"""
+    with db_session() as conn:
+        cursor = conn.cursor()
+        if research_type:
+            cursor.execute(
+                "SELECT * FROM learning_entries WHERE topic_tag_id = ? AND research_type = ? ORDER BY timestamp DESC",
+                (tag_id, research_type)
+            )
+        else:
+            cursor.execute(
+                "SELECT * FROM learning_entries WHERE topic_tag_id = ? ORDER BY timestamp DESC",
+                (tag_id,)
+            )
+        return _parse_entry_rows(cursor.fetchall())
 
 @app.post("/api/nl-commands")
 def create_nl_command(cmd: NLCommandCreate):
@@ -1251,10 +1207,6 @@ def list_nl_commands(limit: int = 50, offset: int = 0, intent_category: Optional
     commands = [row_to_dict(row) for row in cursor.fetchall()]
     conn.close()
     return commands
-
-# Mount MCP server - exposes all FastAPI routes as MCP tools
-mcp = FastApiMCP(app)
-mcp.mount_http()
 
 if __name__ == '__main__':
     import uvicorn

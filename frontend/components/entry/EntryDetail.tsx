@@ -99,23 +99,8 @@ export default function EntryDetail({ entry, onClose, onRefresh, showNeighborsPa
         role="dialog"
         aria-modal="true"
         aria-label={activeEntry.topic}
-        style={{
-          width: '540px',
-          maxWidth: '540px',
-          minWidth: '360px',
-          marginLeft: '24px',
-          background: 'var(--bg-secondary)',
-          borderLeft: '1px solid var(--border-color)',
-          height: '100vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-          boxShadow: '-8px 0 24px rgba(0,0,0,0.3)',
-          animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          borderRadius: '12px 0 0 12px',
-          padding: '0 16px',
-        }}
+        className="sidebar-detail"
+        style={{ padding: '0 16px' }}
         onClick={e => e.stopPropagation()}
       >
         {/* 顶部栏 */}

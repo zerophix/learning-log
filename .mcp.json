@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "learning-log-api": {
-      "type": "sse",
-      "url": "http://localhost:8002/mcp"
-    },
     "playwright": {
       "command": "playwright-mcp",
       "args": ["--headless"],

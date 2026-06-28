@@ -55,83 +55,162 @@ function transformEntry(data: unknown): unknown {
   return data;
 }
 
+// ── 轻量内存缓存 ──
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+const cache = new Map<string, CacheEntry<unknown>>();
+const CACHE_TTL = 30_000; // 30s
+
+function getCached<T>(key: string): T | null {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) { cache.delete(key); return null; }
+  return entry.data as T;
+}
+
+function setCache<T>(key: string, data: T): void {
+  cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL });
+}
+
+function cacheKey(url: string, params?: Record<string, unknown>): string {
+  return params ? `${url}?${JSON.stringify(params)}` : url;
+}
+
+function cachedFetch<T>(url: string, key: string, timeout = 10000, signal?: AbortSignal): Promise<T> {
+  const cached = getCached<T>(key);
+  if (cached) return Promise.resolve(cached);
+  return fetchWithTimeout(url, timeout, signal).then(r => checkResponse<T>(r)).then(data => {
+    setCache(key, data);
+    return data;
+  });
+}
+
+function invalidateCache(prefix: string): void {
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) cache.delete(key);
+  }
+}
+
+// ── API 客户端 ──
+
 export const api = {
   entries: {
-    list: (limit = 50, offset = 0, signal?: AbortSignal) =>
-      fetchWithTimeout(`${BASE_URL}/api/entries?limit=${limit}&offset=${offset}`, 10000, signal).then(r => checkResponse<Entry[]>(r)),
+    list: (limit = 50, offset = 0, signal?: AbortSignal) => {
+      const url = `${BASE_URL}/api/entries?limit=${limit}&offset=${offset}`;
+      return cachedFetch<Entry[]>(url, cacheKey(url), 10000, signal);
+    },
 
-    get: (id: number, signal?: AbortSignal) =>
-      fetchWithTimeout(`${BASE_URL}/api/entries/${id}`, 10000, signal).then(r => checkResponse<Entry>(r)),
+    get: (id: number, signal?: AbortSignal) => {
+      const url = `${BASE_URL}/api/entries/${id}`;
+      return cachedFetch<Entry>(url, cacheKey(url), 10000, signal);
+    },
 
-    neighbors: (id: number, signal?: AbortSignal) =>
-      fetchWithTimeout(`${BASE_URL}/api/entries/${id}/neighbors`, 15000, signal).then(r => checkResponse<NeighborsData>(r)),
+    neighbors: (id: number, signal?: AbortSignal) => {
+      const url = `${BASE_URL}/api/entries/${id}/neighbors`;
+      return cachedFetch<NeighborsData>(url, cacheKey(url), 15000, signal);
+    },
 
     create: (data: LearningEntryCreate) =>
       fetch(`${BASE_URL}/api/entries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(r => checkResponse<CreateEntryResponse>(r)),
+      }).then(r => checkResponse<CreateEntryResponse>(r)).then(res => {
+        invalidateCache('/api/entries');
+        invalidateCache('/api/stats');
+        return res;
+      }),
 
     update: (id: number, data: LearningEntryUpdate) =>
       fetch(`${BASE_URL}/api/entries/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(r => checkResponse<UpdateEntryResponse>(r)),
+      }).then(r => checkResponse<UpdateEntryResponse>(r)).then(res => {
+        invalidateCache('/api/entries');
+        invalidateCache('/api/graph');
+        return res;
+      }),
 
     delete: (id: number) =>
-      fetch(`${BASE_URL}/api/entries/${id}`, { method: 'DELETE' }).then(r => checkResponse<DeleteEntryResponse>(r)),
+      fetch(`${BASE_URL}/api/entries/${id}`, { method: 'DELETE' }).then(r => checkResponse<DeleteEntryResponse>(r)).then(res => {
+        invalidateCache('/api/entries');
+        invalidateCache('/api/stats');
+        invalidateCache('/api/graph');
+        return res;
+      }),
 
-    byWeek: (year: number, week: number, limit = 50) =>
-      fetchWithTimeout(`${BASE_URL}/api/entries/week?year=${year}&week=${week}&limit=${limit}`)
-        .then(r => checkResponse<WeekResponse>(r)),
+    batch: (ids: number[]) =>
+      fetch(`${BASE_URL}/api/entries/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      }).then(r => checkResponse<Entry[]>(r)),
 
-    weekIndex: () =>
-      fetchWithTimeout(`${BASE_URL}/api/entries/week-index`)
-        .then(r => checkResponse<WeekInfo[]>(r)),
+    byWeek: (year: number, week: number, limit = 50) => {
+      const url = `${BASE_URL}/api/entries/week?year=${year}&week=${week}&limit=${limit}`;
+      return cachedFetch<WeekResponse>(url, cacheKey(url));
+    },
+
+    weekIndex: () => {
+      const url = `${BASE_URL}/api/entries/week-index`;
+      return cachedFetch<WeekInfo[]>(url, cacheKey(url));
+    },
 
     feed: (params?: FeedParams, signal?: AbortSignal) => {
-      if (!params || Object.keys(params).length === 0) {
-        return fetchWithTimeout(`${BASE_URL}/api/entries/feed`, 10000, signal).then(r => checkResponse<Entry[]>(r));
-      }
-      const qs = new URLSearchParams(
-        Object.entries(params).filter(([, v]) => v !== undefined && v !== null)
-      ).toString();
-      return fetchWithTimeout(`${BASE_URL}/api/entries/feed?${qs}`, 10000, signal).then(r => checkResponse<Entry[]>(r));
+      const url = !params || Object.keys(params).length === 0
+        ? `${BASE_URL}/api/entries/feed`
+        : `${BASE_URL}/api/entries/feed?${new URLSearchParams(
+            Object.entries(params).filter(([, v]) => v !== undefined && v !== null)
+          ).toString()}`;
+      return cachedFetch<Entry[]>(url, cacheKey(url), 10000, signal);
     },
   },
 
   tags: {
     list: (category?: string, signal?: AbortSignal) => {
-      const qs = category ? `?category=${category}` : '';
-      return fetchWithTimeout(`${BASE_URL}/api/tags${qs}`, 10000, signal).then(r => checkResponse<Tag[]>(r));
+      const url = `${BASE_URL}/api/tags${category ? `?category=${category}` : ''}`;
+      return cachedFetch<Tag[]>(url, cacheKey(url), 10000, signal);
     },
 
-    tree: (signal?: AbortSignal) =>
-      fetchWithTimeout(`${BASE_URL}/api/tags/tree`, 10000, signal).then(r => checkResponse<TagNode[]>(r)),
+    tree: (signal?: AbortSignal) => {
+      const url = `${BASE_URL}/api/tags/tree`;
+      return cachedFetch<TagNode[]>(url, cacheKey(url), 10000, signal);
+    },
 
-    cloud: (signal?: AbortSignal) =>
-      fetchWithTimeout(`${BASE_URL}/api/tags/cloud`, 10000, signal).then(r => checkResponse<AutoTag[]>(r)),
+    cloud: (signal?: AbortSignal) => {
+      const url = `${BASE_URL}/api/tags/cloud`;
+      return cachedFetch<AutoTag[]>(url, cacheKey(url), 10000, signal);
+    },
 
-    autoComplete: (prefix: string, signal?: AbortSignal) =>
-      fetchWithTimeout(`${BASE_URL}/api/tags/auto?prefix=${encodeURIComponent(prefix)}`, 10000, signal).then(r => checkResponse<AutoTag[]>(r)),
+    autoComplete: (prefix: string, signal?: AbortSignal) => {
+      const url = `${BASE_URL}/api/tags/auto?prefix=${encodeURIComponent(prefix)}`;
+      return cachedFetch<AutoTag[]>(url, cacheKey(url), 10000, signal);
+    },
 
     entries: (tagId: string, researchType?: string, signal?: AbortSignal) => {
       const qs = researchType ? `?research_type=${researchType}` : '';
-      return fetchWithTimeout(`${BASE_URL}/api/tags/${tagId}/entries${qs}`, 10000, signal).then(r => checkResponse<Entry[]>(r));
+      const url = `${BASE_URL}/api/tags/${tagId}/entries${qs}`;
+      return cachedFetch<Entry[]>(url, cacheKey(url), 10000, signal);
     },
   },
 
   tagLinks: {
     list: (sourceTagId?: string, signal?: AbortSignal) => {
       const qs = sourceTagId ? `?source_tag_id=${sourceTagId}` : '';
-      return fetchWithTimeout(`${BASE_URL}/api/tag-links${qs}`, 10000, signal).then(r => checkResponse<TagLink[]>(r));
+      const url = `${BASE_URL}/api/tag-links${qs}`;
+      return cachedFetch<TagLink[]>(url, cacheKey(url), 10000, signal);
     },
   },
 
-  graph: (signal?: AbortSignal) =>
-    fetchWithTimeout(`${BASE_URL}/api/graph`, 10000, signal).then(r => checkResponse<GraphData>(r)),
+  graph: (signal?: AbortSignal) => {
+    const url = `${BASE_URL}/api/graph`;
+    return cachedFetch<GraphData>(url, cacheKey(url), 10000, signal);
+  },
 
   attention: (params?: { w_content?: number; w_tags?: number; w_temporal?: number; top_k?: number }, signal?: AbortSignal) => {
     const query = new URLSearchParams();
@@ -140,21 +219,26 @@ export const api = {
     if (params?.w_temporal != null) query.set('w_temporal', String(params.w_temporal));
     if (params?.top_k != null) query.set('top_k', String(params.top_k));
     const qs = query.toString();
-    return fetchWithTimeout(`${BASE_URL}/api/graph/attention${qs ? '?' + qs : ''}`, 60000, signal).then(r => checkResponse<AttentionGraph>(r));
+    const url = `${BASE_URL}/api/graph/attention${qs ? '?' + qs : ''}`;
+    return cachedFetch<AttentionGraph>(url, cacheKey(url, params as Record<string, unknown>), 60000, signal);
   },
 
-  stats: (signal?: AbortSignal) =>
-    fetchWithTimeout(`${BASE_URL}/api/stats`, 10000, signal).then(r => checkResponse<Stats>(r)),
+  stats: (signal?: AbortSignal) => {
+    const url = `${BASE_URL}/api/stats`;
+    return cachedFetch<Stats>(url, cacheKey(url), 10000, signal);
+  },
 
   projects: {
     list: (projectType?: string, signal?: AbortSignal) => {
       const qs = projectType ? `?project_type=${projectType}` : '';
-      return fetchWithTimeout(`${BASE_URL}/api/projects${qs}`, 10000, signal).then(r => checkResponse<Tag[]>(r));
+      const url = `${BASE_URL}/api/projects${qs}`;
+      return cachedFetch<Tag[]>(url, cacheKey(url), 10000, signal);
     },
 
     entries: (projectId: string, researchType?: string, signal?: AbortSignal) => {
       const qs = researchType ? `?research_type=${researchType}` : '';
-      return fetchWithTimeout(`${BASE_URL}/api/projects/${projectId}/entries${qs}`, 10000, signal).then(r => checkResponse<Entry[]>(r));
+      const url = `${BASE_URL}/api/projects/${projectId}/entries${qs}`;
+      return cachedFetch<Entry[]>(url, cacheKey(url), 10000, signal);
     },
   },
 };

@@ -62,16 +62,8 @@ export default function Home() {
 
   return (
     <div
-      style={{
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        minHeight: '100vh',
-        maxWidth: '100%',
-        margin: '0 auto',
-        padding: '0 16px',
-      }}
+      className="page-shell"
+      style={{ padding: '0 16px' }}
     >
       <PageHeader icon={<IconBook size={24} />} title="学习日志" badge="时间线">
         <SearchBar onSearch={setSearchQuery} />
@@ -89,13 +81,11 @@ export default function Home() {
         <StatsPanel />
       </div>
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="content-area">
         <main
           ref={mainRef}
-          style={{
-            flex: 1, overflowY: 'auto', overflowX: 'auto',
-            padding: '24px 0 40px', minHeight: 0, display: 'flex', flexDirection: 'column'
-          }}
+          className="main-scroll"
+          style={{ padding: '24px 0 40px', display: 'flex', flexDirection: 'column' }}
         >
           {error ? (
             <div style={{ textAlign: 'center', padding: '80px', color: '#ef4444' }}>
