@@ -1,8 +1,8 @@
 # 前端重构指南 v4.0
 
 > **目标读者**: 任何 AI 代理（Claude Code / Cline / Cursor 等）
-> **最后更新**: 2026-06-27（P10 按周分页）
-> **状态**: 执行中
+> **最后更新**: 2026-06-28（一致性检验 + 侧边栏行为锁定）
+> **状态**: 已完成
 > **前置**: P1-P5 已完成（所有阶段代码已落地）
 
 ---
@@ -44,11 +44,11 @@
 ```
 frontend/
 ├── app/
-│   ├── page.tsx              (186 行) — 主页时间线（按周分页）
+│   ├── page.tsx              (133 行) — 主页时间线（按周分页 + sidebar 侧边栏）
 │   ├── layout.tsx             (19 行) — 根布局
-│   ├── globals.css            (89 行) — 全局样式
-│   ├── graph/page.tsx        (116 行) — 知识图谱
-│   └── feed/page.tsx         (124 行) — Feed 卡片流
+│   ├── feed/page.tsx         (216 行) — Feed 卡片流（backdrop 覆盖模式）
+│   ├── graph/page.tsx        (237 行) — 知识图谱
+│   └── tags/page.tsx         (235 行) — 语义聚类
 ├── components/
 │   ├── ui/
 │   │   ├── Icons.tsx         (180 行) — SVG 图标库
@@ -57,15 +57,13 @@ frontend/
 │   │   ├── DeleteConfirm.tsx  (61 行)
 │   │   └── ErrorBoundary.tsx  (43 行)
 │   ├── entry/
-│   │   ├── EntryDetail.tsx   (189 行)
-│   │   ├── EntryForm.tsx     (190 行)
-│   │   ├── EntryCard.tsx     (93 行)
+│   │   ├── EntryDetail.tsx   (172 行) — 详情侧边栏（stopPropagation, toggle close）
+│   │   ├── EntryForm.tsx     (195 行) — 新建/编辑表单
+│   │   ├── EntryCard.tsx     (76 行)
 │   │   ├── InsightPreview.tsx (79 行)
 │   │   ├── EntryTags.tsx     (28 行)
 │   │   ├── EntryDetailContent.tsx (42 行)
-│   │   ├── EntryDetailContent.tsx (42 行)
-│   │   ├── FormField.tsx     (54 行)
-│   │   └── DeleteConfirm.tsx (61 行)
+│   │   └── FormField.tsx     (54 行)
 │   ├── layout/
 │   │   ├── PageHeader.tsx     (46 行)
 │   │   ├── StatsPanel.tsx     (62 行)
@@ -76,14 +74,19 @@ frontend/
 │   │   ├── CodeBlock.tsx       (49 行)
 │   │   └── MermaidDiagram.tsx  (103 行)
 │   └── timeline/
-│       └── TimelineView.tsx    (114 行) — 周导航 + 日分组
+│       └── TimelineView.tsx    (108 行) — 周导航 + 日分组
 ├── hooks/
-│   └── useToast.tsx           (93 行)
+│   ├── useToast.tsx           (93 行)
+│   ├── useWeekNavigation.ts   — 周导航状态管理
+│   ├── useEntryFilter.ts      — 搜索/过滤逻辑
+│   └── useErrorHandler.ts     — 统一错误处理
 ├── lib/
-│   ├── api.ts                (142 行)
+│   ├── api.ts                (244 行) — API 客户端 + 缓存层
 │   └── constants.ts           (57 行)
+├── styles/
+│   └── index.css             (518 行) — 全局样式 + sidebar-detail + 响应式
 └── types/
-    └── index.ts              (119 行)
+    └── index.ts              (235 行)
 ```
 
 ### 1.3 当前问题清单
@@ -157,10 +160,26 @@ P10.4 page.tsx 移除无限滚动 ── 依赖 P10.2
 P10.5 文档一致性检查 ────── 依赖 P10.1-10.4
 ```
 
+### B 系列 — 后端/基础设置 & C 系列 — 一致性
+
+| 任务 | 说明 | 依赖 | 状态 |
+|------|------|------|------|
+| B1 | 后端 — POST insert `code_snippet` 列 | 独立 | ✅ |
+| B2 | 后端 — 消除模块级副作用 `init_db()` 移至 startup | 独立 | ✅ |
+| B4 | 重复 MCP Server — 移除 `fastapi-mcp` 依赖 | 独立 | ✅ |
+| B5 | Feed 页面全量实现 — 卡片网格 + 分页 + 聚类筛选 | 独立 | ✅ |
+| B6 | 后端 `db_session()` 上下文管理器 | 独立 | ✅ |
+| C1 | 侧边栏行为锁定 — 移除 click-to-close，恢复 `stopPropagation` | 独立 | ✅ |
+| C2 | 项目一致性检验 — 4 页 EntryDetail 布局统一 + 文档同步 | 独立 | ✅ |
+| B3 | 测试套件 | 独立 | ⏳ |
+| B7 | deploy.sh 部署脚本 | 独立 | ⏳ |
+| B8 | 后端类型提示补齐 | 独立 | ⏳ |
+```
+
 ### 执行顺序
 
 ```
-P6.1 → P6.2 → P6.3 → P6.4 → P6.5 → P6.6 → P6.7 → P6.8 → P7.1 → P7.2 → P7.3 → P8.1 → P8.2 → P8.3 → P8.4 → P9.1 → P9.2 → P9.3 → P9.4 → P9.5 → P9.6 → P10.1 → P10.2 → P10.3 → P10.4 → P10.5 ✅
+P6.1 → P6.2 → P6.3 → P6.4 → P6.5 → P6.6 → P6.7 → P6.8 → P7.1 → P7.2 → P7.3 → P8.1 → P8.2 → P8.3 → P8.4 → P9.1 → P9.2 → P9.3 → P9.4 → P9.5 → P9.6 → P10.1 → P10.2 → P10.3 → P10.4 → P10.5 → B1/B2/B4 → B5 → B6 → C1 → C2 ✅
 ```
 
 ## 3. 详细任务规格
@@ -890,6 +909,14 @@ feat(frontend): P10.2 前端类型 + API — WeekInfo + byWeek/weekIndex
 feat(frontend): P10.3 TimelineView 重构 — 周导航 + 日分组
 refactor(frontend): P10.4 page.tsx 移除无限滚动 — 改用周加载
 docs: P10.5 文档同步 — 按周分页规格 + 完成标记
+fix(backend): POST /api/entries INSERT code_snippet 列缺失
+fix(backend): 模块级副作用 init_db() 移至 startup event
+refactor(backend): B4 移除 fastapi-mcp 依赖 — 单一 MCP 入口
+feat(frontend): B5 Feed 页面 — 卡片网格 + 分页 + 聚类筛选
+refactor(backend): B6 db_session() 上下文管理器 + _parse_entry_rows
+fix(frontend): C1 侧边栏行为锁定 — stopPropagation + toggle close
+fix(frontend): C2 一致性检验 — graph 页 sidebar 布局 + feed 页 mobile 响应式
+docs: C2 文档同步 — sidebar 规格 + 文件清单 + 完成标记
 ```
 
 ---

@@ -456,36 +456,31 @@ frontend/
 
 | 路由 | 组件 | 视图 | 说明 |
 |------|------|------|------|
-| `/` | `app/page.tsx` | 时间线 | 按日期分组、无限滚动、搜索过滤、研究类型筛选、CRUD |
+| `/` | `app/page.tsx` | 时间线 | 按周分页、日分组、搜索过滤、研究类型筛选、CRUD |
 | `/graph` | `app/graph/page.tsx` | 知识图谱 | ECharts 力导向图，可拖拽/缩放 |
-| `/feed` | `app/feed/page.tsx` | Feed 流 | 卡片网格布局，研究类型过滤 |
+| `/feed` | `app/feed/page.tsx` | Feed 流 | 卡片网格布局，研究类型 + 聚类过滤 |
+| `/tags` | `app/tags/page.tsx` | 语义聚类 | Attention 聚类 + 研究模式筛选 |
 
 ### 11.2 首页 (`/`) 布局结构
 
 ```
-┌──────────────────────────────────────────────────────┐
-│  Navigation（顶部导航栏）                               │
-│  [📖 学习日志]          [时间线] [图谱] [Feed]          │
-├──────────────────────────────────────────────────────┤
-│  SearchBar（搜索框）                                    │
-│  StatsPanel（统计卡片：entries / tags / links）         │
-│  FilterBar（研究类型过滤）                                │
-├──────────────────────────────────────────────────────┤
-│                                                      │
-│  TimelineView（按周分页时间线）                          │
-│  ┌────────────────────────────────────────────────┐  │
-│  │  ← W14    第 25 周 · 2026    W26 →              │  │
-│  │  6/22 ~ 6/28 · 16 条     [下拉选择周 ▾]           │  │
-│  │  ──────────────────────────────────────────────│  │
-│  │  2026/4/8                        3 条记录 ─────│  │
-│  │  ├─ 14:30 ●───────── [EntryCard]                │  │
-│  │  ├─ 11:20 ●───────── [EntryCard]                │  │
-│  │  └─ 09:15 ●───────── [EntryCard]                │  │
-│  └────────────────────────────────────────────────┘  │
-│                                                      │
-│  EntryDetail (点击卡片弹出详情弹窗)                      │
-│  EntryForm (新建/编辑表单弹窗)                           │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  Navigation                                                     │
+│  [📖 学习日志]          [时间线] [图谱] [Feed] [标签]            │
+├──────────────────────────────────────────────────────────────────┤
+│  SearchBar / StatsPanel / FilterBar                              │
+├───────────────────────────────────────┬──────────────────────────┤
+│                                       │                          │
+│  TimelineView（按周分页）              │  EntryDetail（侧边栏）   │
+│  ← W14   第25周    W26 →              │  540px, sidebar-detail   │
+│  2026/4/8        3条                  │  [标题 + 时间]           │
+│  ├─ 14:30 ●── [EntryCard]            │  [标签行 + 编辑/删除]    │
+│  ├─ 11:20 ●── [EntryCard]            │  [Markdown 内容]         │
+│  └─ 09:15 ●── [EntryCard]            │  [关联索引]              │
+│                                       │                          │
+├───────────────────────────────────────┴──────────────────────────┤
+│  EntryForm (新建/编辑弹窗，fixed 遮罩覆盖全屏)                      │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -605,32 +600,38 @@ cursor: pointer
 可访问性: role="button", tabIndex={0}, onKeyDown Enter/Space
 ```
 
-### 12.7 EntryDetail.tsx — 详情弹窗
+### 12.7 EntryDetail.tsx — 详情侧边栏
 
 ```
-遮罩:
-  position: fixed, inset: 0
-  背景: rgba(15, 23, 42, 0.92)
-  backdrop-filter: blur(8px)
-  z-index: 1000
+定位: `.content-area` flex 布局的子项，与 `main` 并列
+类名: sidebar-detail (540px, border-left, flex-shrink: 0)
+背景: var(--bg-secondary)
+圆角: 12px 0 0 12px, box-shadow: -8px 0 24px rgba(0,0,0,0.3)
 
-弹窗主体:
-  max-width: 1000px, max-height: 90vh
-  background: var(--bg-secondary), 圆角: 16px
-  border: 1px solid var(--border-color)
-  flex column (头部固定 + 内容滚动)
+桌面端:
+  width: 540px / min-width: 360px
+  margin-left: 24px, margin-right: 16px
+  height: 100% (填满 content-area)
 
-头部:
-  padding: 20px 24px
-  底部边框: 1px solid var(--border-color)
-  包含: topic (标题) + EntryTags + 关闭按钮 (×, aria-label="关闭")
+移动端 (≤768px):
+  position: fixed, top: 0, left: 0, right: 0, bottom: 0
+  width: 100%, z-index: 100
+  border-radius: 0
+  animation: slideInUp
 
-内容区:
-  flex: 1, overflow: auto, padding: 28px
-  → EntryDetailContent 组件（摘要? + Markdown 渲染 + Mermaid + 代码片段 + STAR）
-  summary 非空时在核心洞察前插入 `### 摘要` 区段
+关闭行为:
+  - 点 × 按钮 → onClose()
+  - Escape 键 → onClose()
+  - 保存/删除后自动关闭
+  - 同一条目再次点击 → handleSelect toggle → null
+  - ❌ 点击侧边栏内容不会关闭 (e.stopPropagation() 在根 div)
+  - ❌ Feed 页有 backdrop 遮罩 (click → close)，仅限 Feed 页
 
-操作按钮: [编辑] [删除] (底部, 点击触发 EntryForm / DeleteConfirm)
+结构:
+  头部: topic + 时间 + 编辑/删除按钮 + 关闭 ×
+  内容区: overflow auto
+    → EntryDetailContent (摘要? + Markdown + Mermaid + STAR)
+    → EntryNeighbors (关联索引，可点击导航)
 
 可访问性: role="dialog", aria-modal, useEffect Escape 关闭
 ```
@@ -990,13 +991,16 @@ export type EntryFilter = { type: 'research' | 'project' | 'tag'; id: string } |
   - hasNext = currentIdx > 0
 ```
 
-### 16.3 弹窗交互
+### 16.3 侧边栏交互
 
 ```
-点击卡片 → setSelected(entry) → EntryDetail 渲染
-点击遮罩 → setSelected(null) → 关闭
-点击内容区 → e.stopPropagation() → 不关闭
-按 × 按钮 → onClose() → 关闭
+点击卡片 → handleSelect(entry) → setSelected(prev => prev?.id === entry.id ? null : entry)
+同一条目再次点击 → setSelected(null) → 关闭（toggle）
+点击侧边栏根 div → e.stopPropagation() → 不关闭
+点击 × 按钮 → onClose() → 关闭
+Escape 键 → onClose() → 关闭（handleKeyDown useEffect）
+保存/删除成功 → onClose() → 关闭
+Feed 页: backdrop (position: fixed, inset: 0, zIndex: 99) → click → close
 ```
 
 ### 16.4 Mermaid 渲染时机

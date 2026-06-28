@@ -203,7 +203,7 @@ export default function FeedPage() {
       {selectedEntry && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setSelectedEntry(null)} />
-          <div style={{
+          <div className="feed-sidebar" style={{
             position: 'fixed', top: 0, right: 0, zIndex: 100,
             width: '540px', height: '100dvh'
           }}>

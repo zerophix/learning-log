@@ -455,6 +455,12 @@ body {
   }
 }
 
+@media (max-width: 768px) {
+  .feed-sidebar {
+    width: 100% !important;
+  }
+}
+
 @keyframes slideInUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }

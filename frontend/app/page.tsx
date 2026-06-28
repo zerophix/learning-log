@@ -124,9 +124,7 @@ export default function Home() {
         </main>
 
         {selected && (
-          <div onClick={handleCloseDetail} style={{ display: 'flex' }}>
-            <EntryDetail entry={selected} onClose={handleCloseDetail} onRefresh={refreshCurrentWeek} />
-          </div>
+          <EntryDetail entry={selected} onClose={handleCloseDetail} onRefresh={refreshCurrentWeek} />
         )}
       </div>
       {isCreating && <EntryForm onSave={handleCreate} onCancel={() => setIsCreating(false)} />}

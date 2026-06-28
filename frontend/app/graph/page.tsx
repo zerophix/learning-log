@@ -163,71 +163,75 @@ export default function GraphPage() {
         <Navigation />
       </PageHeader>
 
-      <main className="content-area" style={{ position: 'relative' }}>
-        {error ? (
-          <div style={{ margin: 'auto', padding: '80px', color: '#ef4444' }}><p>{error}</p></div>
-        ) : !graphData ? (
-          <div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>
-            <IconHourglass size={32} /> 计算 attention matrix...
-          </div>
-        ) : graphData.nodes.length < 2 ? (
-          <div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>
-            <IconEmpty size={64} /><p>至少需要 2 条记录才能生成图谱</p>
-          </div>
-        ) : (
-          <ErrorBoundary fallback={<div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>图谱渲染异常<button onClick={() => window.location.reload()} style={{ marginLeft: '12px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer' }}>重试</button></div>}>
-            <div className="graph-legend" style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 10, background: 'rgba(15,23,42,0.85)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px 16px', fontSize: '12px', maxWidth: '240px' }}>
-              <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>聚类（共 {graphData.entry_count} 条）</div>
-              {graphData.clusters.map((name, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: CLUSTER_COLORS[i % CLUSTER_COLORS.length], flexShrink: 0 }} />
-                  <span style={{ fontSize: '11px', lineHeight: 1.3 }}>{name.length > 24 ? name.slice(0, 22) + '…' : name}</span>
-                </div>
-              ))}
-              <button onClick={resetZoom} style={{ marginTop: '8px', width: '100%', padding: '4px 10px', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-secondary)', color: 'var(--text-muted)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                <IconRefresh size={12} /> 重置视图
-              </button>
+      <div className="content-area">
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+          {error ? (
+            <div style={{ margin: 'auto', padding: '80px', color: '#ef4444' }}><p>{error}</p></div>
+          ) : !graphData ? (
+            <div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>
+              <IconHourglass size={32} /> 计算 attention matrix...
             </div>
-
-            <div ref={chartRef} style={{ flex: 1 }} />
-
-            {selectedNode && (
-              <div className="graph-neighbors-panel" style={{ width: '320px', borderLeft: '1px solid var(--border-color)', overflow: 'auto', background: 'var(--bg-secondary)' }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '4px' }}>{selectedNode.topic}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                      {selectedNode.cluster_name} · 能量 {selectedNode.energy} · {selectedNode.degree} 条关联
-                    </div>
+          ) : graphData.nodes.length < 2 ? (
+            <div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>
+              <IconEmpty size={64} /><p>至少需要 2 条记录才能生成图谱</p>
+            </div>
+          ) : (
+            <ErrorBoundary fallback={<div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>图谱渲染异常<button onClick={() => window.location.reload()} style={{ marginLeft: '12px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer' }}>重试</button></div>}>
+              <div className="graph-legend" style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 10, background: 'rgba(15,23,42,0.85)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px 16px', fontSize: '12px', maxWidth: '240px' }}>
+                <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>聚类（共 {graphData.entry_count} 条）</div>
+                {graphData.clusters.map((name, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: CLUSTER_COLORS[i % CLUSTER_COLORS.length], flexShrink: 0 }} />
+                    <span style={{ fontSize: '11px', lineHeight: 1.3 }}>{name.length > 24 ? name.slice(0, 22) + '…' : name}</span>
                   </div>
-                  <button onClick={() => { setSelectedNode(null); setSimilarEntries([]); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer', padding: '4px' }}>×</button>
-                </div>
-                <div style={{ padding: '16px 20px' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    Attention 关联 ({similarEntries.length})
-                  </div>
-                  {similarEntries.length === 0 ? (
-                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>无关联节点</div>
-                  ) : (
-                    similarEntries.map(({ node, weight }) => (
-                      <div key={node.id} onClick={() => openEntry(node.id)}
-                        style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '2px' }}>{node.topic}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
-                          <span>{new Date(node.timestamp).toLocaleDateString('zh-CN')}</span>
-                          <span style={{ color: '#38bdf8' }}>{(weight * 100).toFixed(0)}%</span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                ))}
+                <button onClick={resetZoom} style={{ marginTop: '8px', width: '100%', padding: '4px 10px', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-secondary)', color: 'var(--text-muted)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                  <IconRefresh size={12} /> 重置视图
+                </button>
               </div>
-            )}
-          </ErrorBoundary>
-        )}
-      </main>
 
-      <EntryDetail entry={entryDetail} onClose={() => { setEntryDetail(null); setSelectedEntryId(null); }} />
+              <div ref={chartRef} style={{ flex: 1 }} />
+
+              {selectedNode && (
+                <div className="graph-neighbors-panel" style={{ width: '320px', borderLeft: '1px solid var(--border-color)', overflow: 'auto', background: 'var(--bg-secondary)' }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '4px' }}>{selectedNode.topic}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {selectedNode.cluster_name} · 能量 {selectedNode.energy} · {selectedNode.degree} 条关联
+                      </div>
+                    </div>
+                    <button onClick={() => { setSelectedNode(null); setSimilarEntries([]); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer', padding: '4px' }}>×</button>
+                  </div>
+                  <div style={{ padding: '16px 20px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                      Attention 关联 ({similarEntries.length})
+                    </div>
+                    {similarEntries.length === 0 ? (
+                      <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>无关联节点</div>
+                    ) : (
+                      similarEntries.map(({ node, weight }) => (
+                        <div key={node.id} onClick={() => openEntry(node.id)}
+                          style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}>
+                          <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '2px' }}>{node.topic}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>{new Date(node.timestamp).toLocaleDateString('zh-CN')}</span>
+                            <span style={{ color: '#38bdf8' }}>{(weight * 100).toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </ErrorBoundary>
+          )}
+        </main>
+
+        {entryDetail && (
+          <EntryDetail entry={entryDetail} onClose={() => { setEntryDetail(null); setSelectedEntryId(null); }} />
+        )}
+      </div>
     </div>
   );
 }

@@ -129,7 +129,7 @@ Content-Type: application/json
 
 ```
 backend/        FastAPI 服务 (main.py, db.py, mcp_server.py)
-frontend/       Next.js 14 时间线 UI
+frontend/       Next.js 14 时间线 UI (pages: / /feed /tags /graph)
 scripts/tools/  可复用工具 (auto_record, context_manager...)
 scripts/seeds/  种子数据脚本
 deploy/         部署脚本
@@ -152,3 +152,24 @@ docs/           设计文档
 - 数据库在 `data/learning-log.db`，不要手动修改
 - 标签遵循反向域名: `cn.dolphinmind.learning.log.tag.{category}.{name}`
 - API 文档: http://localhost:8002/docs
+
+## 侧边栏交互规则（关键）
+
+所有 4 页 (`/` `/feed` `/tags` `/graph`) 共享 `EntryDetail` 组件：
+
+**关闭方式**（仅有）:
+- × 按钮 / Escape 键
+- 保存/删除后自动 `onClose()`
+- 时间线页：同一条目再次点击 toggle 关闭
+- Feed 页：backdrop 遮罩点击关闭
+
+**禁止关闭**:
+- ❌ 点击侧边栏内部任何位置（stopPropagation 在根 div）
+- ❌ 切换 tab / 编辑框内点击
+- ❌ 点击关联索引条目
+
+**布局差异**:
+- `/` `/tags` `/graph`：`.content-area` flex 布局，sidebar 与 main 并列
+- `/feed`：`position: fixed` 覆盖模式 + backdrop
+
+**相关文件**: `frontend/components/entry/EntryDetail.tsx:104` (stopPropagation), `frontend/app/page.tsx:63` (handleSelect toggle), `frontend/styles/index.css:413-451` (sidebar-detail CSS, 含移动端响应式)

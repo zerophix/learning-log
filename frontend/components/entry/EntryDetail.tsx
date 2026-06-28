@@ -101,6 +101,7 @@ export default function EntryDetail({ entry, onClose, onRefresh, showNeighborsPa
         aria-label={activeEntry.topic}
         className="sidebar-detail"
         style={{ padding: '0 16px' }}
+        onClick={e => e.stopPropagation()}
       >
         {/* 顶部栏 */}
         <div style={{
