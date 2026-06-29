@@ -40,6 +40,11 @@ Thumbs.db
 *.swp
 *.swo
 
+# ── Playwright / Screenshots ───
+.playwright-mcp/
+*.png
+*.jpg
+
 # ── MCP / Runtime ──────────────
 .claude/settings.local.json
 .lingma/

@@ -5,7 +5,7 @@ import type {
   EnhancedGraphEdge,
   EnhancedTriggerEdge,
   EnhancedConceptJump,
-  EdgeTypeFilter,
+  GraphEdgeType,
 } from '@/types/graph';
 import {
   calculateNodeSize,
@@ -17,7 +17,7 @@ import {
   calculateGalaxyLayout,
 } from '@/lib/graph-utils';
 
-const TRIGGER_COLOR = '#5eead4';
+export const TRIGGER_COLOR = '#5eead4';
 const JUMP_COLOR = '#c084fc';
 
 export interface ForceGraphOptionParams {
@@ -30,7 +30,7 @@ export interface ForceGraphOptionParams {
   selectedNode: EnhancedGraphNode | null;
   hoveredNode: EnhancedGraphNode | null;
   neighborNodes: { nodes: EnhancedGraphNode[]; edges: EnhancedGraphEdge[] } | null;
-  edgeTypeFilter: EdgeTypeFilter;
+  edgeTypeFilter: GraphEdgeType;
 }
 
 export interface TimelineOptionParams {
@@ -69,14 +69,6 @@ export function createForceGraphOption(params: ForceGraphOptionParams): EChartsO
 
   const isEdgeDimmed = (source: number, target: number) => {
     return isDimmed(source) || isDimmed(target);
-  };
-
-  const EDGE_NEUTRAL = '#475569';
-
-  const EDGE_FILTER_COLORS: Record<string, string> = {
-    content: '#38bdf8',
-    tags: '#34d399',
-    temporal: '#fbbf24',
   };
 
   const buildEdges = () => {

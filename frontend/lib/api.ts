@@ -122,6 +122,7 @@ export const api = {
       }).then(r => checkResponse<CreateEntryResponse>(r)).then(res => {
         invalidateCache('/api/entries');
         invalidateCache('/api/stats');
+        invalidateCache('/api/graph/attention');
         return res;
       }),
 
@@ -132,7 +133,9 @@ export const api = {
         body: JSON.stringify(data),
       }).then(r => checkResponse<UpdateEntryResponse>(r)).then(res => {
         invalidateCache('/api/entries');
+        invalidateCache('/api/stats');
         invalidateCache('/api/graph');
+        invalidateCache('/api/graph/attention');
         return res;
       }),
 
@@ -141,6 +144,7 @@ export const api = {
         invalidateCache('/api/entries');
         invalidateCache('/api/stats');
         invalidateCache('/api/graph');
+        invalidateCache('/api/graph/attention');
         return res;
       }),
 

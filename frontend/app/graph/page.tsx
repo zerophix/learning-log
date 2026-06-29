@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { api } from '@/lib/api';
 import Navigation from '@/components/layout/Navigation';
 import PageHeader from '@/components/layout/PageHeader';
@@ -23,17 +23,12 @@ import {
   createTimelineOption,
   createGalaxyOption,
 } from '@/lib/graph-echarts-options';
+import { useGraphState } from '@/hooks/useGraphState';
 import type {
   EnhancedGraphNode,
-  EnhancedGraphEdge,
   EnhancedGraphCluster,
   EnhancedGraphData,
-  EnhancedGraphFilter,
   EnhancedGraphViewType,
-  EnhancedViewConfig,
-  EnhancedTimeRangePreset,
-  EdgeTypeFilter,
-  Entry,
   ResearchType,
 } from '@/types/graph';
 import * as echarts from 'echarts';
@@ -47,53 +42,23 @@ const VIEW_LABELS: Record<EnhancedGraphViewType, string> = {
   galaxy: '星系图',
 };
 
-const DEFAULT_FILTER: EnhancedGraphFilter = {
-  minEdgeWeight: 0.1,
-};
-
-const DEFAULT_VIEW_CONFIG: EnhancedViewConfig = {
-  type: 'force',
-  zoom: 1,
-  center: { x: 0, y: 0 },
-  showEdges: true,
-  showLabels: false,
-  showClusters: true,
-  showArrows: false,
-};
-
 // ==================== 主组件 ====================
 
 export default function GraphPage() {
-  // 数据状态
-  const [graphData, setGraphData] = useState<EnhancedGraphData | null>(null);
-  const [filteredData, setFilteredData] = useState<EnhancedGraphData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    state,
+    setGraphData, setLoading, setError, setFilteredData, setStats,
+    selectNode, hoverNode, setEntryDetail, setSearchQuery, setMatchedIds,
+    clearInteraction,
+    setViewType, updateViewConfig,
+    updateFilter, toggleClusterPanel, setEdgeTypeFilter, setGalaxyCenter,
+    clearFilters: resetFilters, setTopK, setShowFps, setCurrentFps,
+  } = useGraphState();
 
-  // 交互状态
-  const [selectedNode, setSelectedNode] = useState<EnhancedGraphNode | null>(null);
-  const [neighborNodes, setNeighborNodes] = useState<{ nodes: EnhancedGraphNode[]; edges: EnhancedGraphEdge[] } | null>(null);
-  const [hoveredNode, setHoveredNode] = useState<EnhancedGraphNode | null>(null);
-  const [entryDetail, setEntryDetail] = useState<Entry | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [matchedNodeIds, setMatchedNodeIds] = useState<Set<number>>(new Set());
+  const { graphData, filteredData, error, loading, stats } = state.data;
+  const { selectedNode, neighborNodes, hoveredNode, entryDetail, searchQuery, matchedNodeIds } = state.interaction;
+  const { viewType, viewConfig, filter, showClusterPanel, edgeTypeFilter, galaxyCenterId, topK, showFps, currentFps } = state.view;
 
-  // 视图状态
-  const [viewType, setViewType] = useState<EnhancedGraphViewType>('force');
-  const [viewConfig, setViewConfig] = useState<EnhancedViewConfig>(DEFAULT_VIEW_CONFIG);
-  const [filter, setFilter] = useState<EnhancedGraphFilter>(DEFAULT_FILTER);
-  const [showClusterPanel, setShowClusterPanel] = useState(false);
-
-  // 边类型筛选
-  const [edgeTypeFilter, setEdgeTypeFilter] = useState<EdgeTypeFilter>('all');
-
-  // 星系图中心节点
-  const [galaxyCenterId, setGalaxyCenterId] = useState<number | null>(null);
-
-  // 性能优化状态
-  const [topK, setTopK] = useState(80);
-  const [showFps, setShowFps] = useState(false);
-  const [currentFps, setCurrentFps] = useState(0);
   const frameCountRef = useRef(0);
   const fpsIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
@@ -115,17 +80,7 @@ export default function GraphPage() {
       cancelAnimationFrame(animId);
       clearInterval(fpsIntervalRef.current);
     };
-  }, [showFps]);
-
-  // 统计信息
-  const [stats, setStats] = useState({
-    nodeCount: 0,
-    edgeCount: 0,
-    clusterCount: 0,
-    avgDegree: 0,
-    avgEnergy: 0,
-    density: 0,
-  });
+  }, [showFps, setCurrentFps]);
 
   // Refs
   const chartRef = useRef<HTMLDivElement>(null);
