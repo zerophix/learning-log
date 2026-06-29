@@ -54,6 +54,10 @@ connected_providers: dict[str, set] = {}
 pending_requests: dict[str, dict] = {}
 # stream_id -> {"progress": str, "done": bool, "result": dict}
 streaming_results: dict[str, dict] = {}
+# prompt_fingerprint -> {"prompt": str, "platform": str, "result": dict, "timestamp": float}
+# 防重提交：相同 prompt + platform 在 60s 内不重复发送
+prompt_cache: dict[str, dict] = {}
+PROMPT_CACHE_TTL = 60  # 秒
 # ws_id -> metadata
 provider_meta: dict[str, dict] = {}
 _main_event_loop: asyncio.AbstractEventLoop | None = None
@@ -62,6 +66,39 @@ _start_time = time.time()
 
 def _log(msg: str):
     logger.info(msg)
+
+
+def _make_fingerprint(prompt: str, platform: str) -> str:
+    """生成 prompt 指纹（归一化后取 hash）"""
+    normalized = " ".join(prompt.strip().lower().split())
+    return f"{platform}:::{normalized}"
+
+
+def _check_dedup(prompt: str, platform: str) -> dict | None:
+    """防重检查：相同 prompt+platform 在 TTL 内是否已有结果
+
+    返回已有结果 dict 或 None（表示不重复）。
+    """
+    fp = _make_fingerprint(prompt, platform)
+    with _state_lock:
+        now = time.time()
+        # 清理过期缓存
+        expired = [k for k, v in prompt_cache.items() if now - v["timestamp"] > PROMPT_CACHE_TTL]
+        for k in expired:
+            del prompt_cache[k]
+        # 检查
+        entry = prompt_cache.get(fp)
+        if entry and entry.get("result") and "text" in entry["result"]:
+            _log(f"  🔁 防重命中: {fp[:60]}...")
+            return entry["result"]
+    return None
+
+
+def _set_dedup(prompt: str, platform: str, result: dict):
+    """记录 prompt 指纹到缓存"""
+    fp = _make_fingerprint(prompt, platform)
+    with _state_lock:
+        prompt_cache[fp] = {"prompt": prompt, "platform": platform, "result": result, "timestamp": time.time()}
 
 
 # ── WebSocket 部分 ─────────────────────────────────────
@@ -112,6 +149,11 @@ async def handle_message(websocket, message: str, ws_id: str):
                     streaming_results[stream_id]["updated"] = True
                     if done:
                         streaming_results[stream_id]["done"] = True
+                        # 防重：记录完整结果
+                        prompt_text = streaming_results[stream_id].get("prompt", "")
+                        platform = streaming_results[stream_id].get("platform", "")
+                        if prompt_text and platform:
+                            _set_dedup(prompt_text, platform, {"text": text})
 
     elif msg_type == "status":
         platforms = data.get("platforms", [])
@@ -412,12 +454,25 @@ class BridgeHTTPHandler(BaseHTTPRequestHandler):
                 self._json_response({"error": "need prompt"}, 400)
                 return
 
+            # 防重检查
+            cached = _check_dedup(prompt, platform)
+            if cached:
+                if use_stream:
+                    stream_id = str(uuid.uuid4())
+                    with _state_lock:
+                        streaming_results[stream_id] = {"progress": cached.get("text", ""), "done": True}
+                    self._json_response({"stream_id": stream_id, "cached": True})
+                else:
+                    self._json_response(cached)
+                return
+
             if use_stream:
                 # 流式：异步执行，立即返回 stream_id
                 stream_id = str(uuid.uuid4())
                 with _state_lock:
                     streaming_results[stream_id] = {
                         "progress": "", "done": False, "updated": False,
+                        "prompt": prompt, "platform": platform,
                     }
 
                 # 在主事件循环上调度 ask_platform
@@ -434,8 +489,10 @@ class BridgeHTTPHandler(BaseHTTPRequestHandler):
                 self._json_response({"stream_id": stream_id})
                 return
             else:
-                # 同步等待（原有逻辑）
+                # 同步等待
                 result = asyncio.run(ask_platform(platform, prompt, timeout))
+                if result and result.get("text"):
+                    _set_dedup(prompt, platform, result)
                 self._json_response(result)
                 return
 
