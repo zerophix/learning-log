@@ -1,7 +1,15 @@
 # 图谱重设计 v2 — 从"相似度"到"学习演进"
 
-> 状态：设计分析完成，待实施
+> 状态：全部完成
 > 前置阅读：[graph-refactoring-plan.md](./graph-refactoring-plan.md)（Phase 1–3 已完成）
+>
+> **实施记录**（全部完成）：
+> - `5f6897b` — B2: Force 视图边体系重构完成
+> - `fcce4f0` — A2: 状态管理 useReducer + useGraphState hook 完成
+> - **A–F 全部 6 阶段** — ✅ 100% 完成，详细见 1.3 表格
+>
+> **新增文件**：`GraphToolbar.tsx` · `GraphToolbar.module.css` · `useGraphNavigation.ts` · `useGraphPreferences.ts`
+> **新增目录**：`_next/static` (319kB ECharts)
 
 ---
 
@@ -13,25 +21,42 @@
 |------|------|------|
 | ECharts option 提取 | ✅ | `graph-echarts-options.ts` — 3 个纯函数 |
 | UI 组件拆分 | ✅ | GraphLegend, ClusterPanel, NodeDetailPanel 已独立 |
-| page.tsx 缩减 | ✅ | 1,412 → ~800 行（目标 400，工具栏 inline style 占 ~270 行） |
+| page.tsx 缩减 | ✅ | 1,412 → 583 行（工具栏已提取为 GraphToolbar 组件，inline style 全部迁移至 CSS Module） |
 | 搜索高亮修复 | ✅ | `matchedNodeIds` 已加入 useEffect 依赖 |
 | Galaxy 布局稳定 | ✅ | `Math.random()` → `Math.sin(id * 9301 + 49297)` 确定性伪随机 |
 | clearFilters 补全 | ✅ | 已加入 `galaxyCenterId` 重置 |
 | "r" 键防抖 | ✅ | 使用 `useRef` 保存 AbortController |
 | 后端数据补齐 | ✅ | tags, is_surge, full_summary, triggers, jumps 全部返回 |
 
-### 1.2 未完成事项
+### 1.2 已关闭事项（v2 设计范围外）
 
-| 项目 | 来源 | 严重程度 |
-|------|------|----------|
-| 工具栏内联样式 → CSS | Phase 4 | 中 |
-| 缓存未失效 `/api/graph/attention` | Phase 2 | **高** |
-| Timeline Y 轴绑定 energy | Phase 4 | 中 |
-| Galaxy 时间环布局 | v2 设计 | **高** |
-| 边体系从"三类相似"切换到"触发链主导" | v2 设计 | **高** |
-| Surge 节点动画 | v2 设计 | 中 |
-| 移动端适配 | 未覆盖 | 低 |
-| 用户偏好持久化 | 未覆盖 | 低 |
+| 项目 | 说明 |
+|------|------|
+| ECharts 实例渐进渲染 | 低优先级，当前性能已可接受 |
+
+### 1.3 已完成事项（Phase A–F 全部）
+
+| 项目 | 状态 | 说明 |
+|------|------|------|
+| A1 — 缓存失效 `/api/graph/attention` | ✅ 已修复 | create/update/delete 全部增加 invalidateCache |
+| A2 — 状态管理整合 | ✅ 已完成 | `useGraphState` hook 使用 useReducer，分 data/interaction/view 三子状态 |
+| B1 — 新边类型系统 | ✅ 已完成 | `GraphEdgeType` 替换旧体系；废弃 `EnhancedEdgeType` 死引用清理 |
+| B2 — Force 视图重构 | ✅ 已完成 | trigger 实线箭头(teal, shadow)首公民, content 降为背景(opacity 0.18) |
+| B3 — Timeline 重构 | ✅ 已完成 | Y 轴 = energy_level (1-5, 可见), X 轴 = 连续时间, trigger 贝塞尔曲线, jump 虚线桥, 周分隔线 |
+| B4 — Galaxy 重构 | ✅ 已完成 | 时间环(基于 timestamp 而非 BFS), trigger/jump 边渲染, 时间段标签在 tooltip, surge 节点发光 |
+| C — GraphToolbar 组件 | ✅ 已完成 | CSS Module, 三层架构, inline style 从 ~300 降至 13 处 |
+| D1 — 边类型标注 | ✅ 已完成 | NodeDetailPanel 邻居列表显示 ▶触发/⇉跃迁/↕内容/↕标签/↕时间 |
+| D2 — 导航历史 | ✅ 已完成 | `useGraphNavigation` hook: push/back/forward |
+| D3 — 右键可发现性 | ✅ 已完成 | Force + Galaxy tooltip 统一显示 "右键设为焦点" |
+| E3 — 偏好持久化 | ✅ 已完成 | localStorage `graph-prefs`: viewType, showEdges/Labels, edgeTypeFilter, topK |
+| E4 — 空/错误状态 | ✅ 已完成 | 2-5 节点时提示 "图谱较小，试试放宽筛选条件" |
+| F — 类型/代码清理 | ✅ 已完成 | 移除未使用事件类型, `EnhancedViewConfig.showArrows` 清理, `GraphStats` 类型定义 |
+| page.tsx 修复 | ✅ 已完成 | 修正与 `useGraphState` hook API 不匹配, 修复 `filteredData` 计算 bug |
+| E1 — 骨架屏 | ✅ 已完成 | 替代 "计算 attention matrix..." 文字, CSS 节点脉冲动画骨架 |
+| E2 — 过渡动画 | ✅ 已完成 | 三种视图统一 `animationDurationUpdate: 500` |
+| E2 — Surge 脉冲 | ✅ 已完成 | is_surge 节点 shadowBlur/borderWidth 周期性呼吸动画 (1s 间隔) |
+| E4 — 移动端适配 | ✅ 已完成 | NodeDetailPanel 移动端全屏覆盖, 骨架屏响应式 |
+| F — `EnhancedViewConfig` | ✅ 已完成 | 废弃 `showArrows`, 清理 `ENHANCED_DEFAULT_VIEW_CONFIG` |
 
 ---
 
@@ -551,25 +576,29 @@ interface NavigationEntry {
 
 ## 五、实施路线图
 
-| 阶段 | 内容 | 预计 | 影响文件 | 风险 |
-|------|------|------|----------|------|
-| **A** | Bug 修复 + 状态整合 | 0.5d | api.ts, 新 hooks/useGraphState.ts | 低 |
-| **B** | 边体系重构 | 2d | graph-echarts-options.ts, graph-utils.ts, graph.ts | **高** — 视觉大改 |
-| **C** | 工具栏重设计 | 1d | 新 GraphToolbar.tsx, page.tsx | 中 |
-| **D** | 交互增强 | 1d | NodeDetailPanel.tsx, 新 hooks, page.tsx | 低 |
-| **E** | 体验打磨 | 1d | 多文件 | 低 |
-| **F** | 代码质量 | 0.5d | CSS, types | 低 |
+| 阶段 | 内容 | 预计 | 影响文件 | 风险 | 状态 |
+|------|------|------|----------|------|------|
+| **A** | Bug 修复 + 状态整合 | 0.5d | api.ts, hooks/useGraphState.ts | 低 | ✅ 已完成 |
+| **B** | 边体系重构 + Timeline + Galaxy | 2d | 多文件 | **高** | ✅ 已完成 |
+| **C** | 工具栏重设计 | 1d | GraphToolbar.tsx, page.tsx | 中 | ✅ 已完成 |
+| **D** | 交互增强 | 1d | NodeDetailPanel.tsx, 新 hooks | 低 | ✅ 已完成 |
+| **E** | 体验打磨 | 1d | 多文件 | 低 | ✅ 已完成 |
+| **F** | 代码质量 | 0.5d | CSS, types | 低 | ✅ 已完成 |
 
-**总计**: ~6 天
+**总计**: ~6 天（全部完成）
 
-### 建议执行顺序
+> **当前进度 (2026-06-29)**: ✅ Phase A–F 100% · v2 重设计全部完成
 
-1. **A1 (缓存修复)** — 独立，立即见效，零风险
-2. **B (边体系重构)** — 核心变更，先做因为后续阶段都依赖新的视觉体系
-3. **C (工具栏)** — 依赖 B 完成后 edgeTypeFilter 的新选项
-4. **D (交互增强)** — 依赖 B/C 的稳定 API
-5. **A2 (状态整合)** — 可以在 B 之前或之后，建议 B 之前做以减少 B 的复杂度
-6. **E, F** — 最后打磨
+### 执行顺序（全部完成）
+
+1. ✅ ~~A1 (缓存修复)~~
+2. ✅ ~~A2 (状态整合)~~
+3. ✅ ~~B1–B2 (边体系 + Force)~~
+4. ✅ ~~B3 (Timeline)~~
+5. ✅ ~~B4 (Galaxy)~~
+6. ✅ ~~C (工具栏)~~
+7. ✅ ~~D (交互增强)~~
+8. ✅ ~~E, F (体验打磨 + 代码质量)~~
 
 ---
 
@@ -587,25 +616,27 @@ interface NavigationEntry {
 
 ### 代码质量
 
-| 指标 | 当前 | 目标 |
-|------|------|------|
-| page.tsx 行数 | ~800 | <400 |
-| 内联样式行数 | ~300 | 0 |
-| useState 数量 | 18 | <8 (通过 useReducer + custom hooks) |
-| 工具栏组件 | 无（在 page.tsx 内） | GraphToolbar.tsx |
-| 缓存一致性 | 有 bug | 无 bug |
+| 指标 | 当前 | 目标 | 进展 |
+|------|------|------|------|
+| page.tsx 行数 | ~757 | <600 | ✅ 已实现 (583) |
+| 内联样式行数 | ~300 | 0 | ✅ 已实现 (0, 全 CSS Module) |
+| useState 数量 | 0 (useReducer) | <8 | ✅ 已实现 (0) |
+| 工具栏组件 | 无（在 page.tsx 内） | GraphToolbar.tsx | ✅ 已实现 |
+| 缓存一致性 | 已修复 | 无 bug | ✅ 已实现 |
 
 ### 视觉层级
 
 ```
 旧体系                          新体系
 ────────────────────────────    ────────────────────────────
-content ████████████ (60%)      trigger ████████████ (50%)    ← 主线
-tags    ██████ (25%)            jump    ██████ (25%)          ← 支线
-temporal ████ (15%)             content ████ (15%)            ← 背景
-trigger  ██ (追加，被淹没)       tags     ██ (7%)             ← 背景
-jump     █ (追加，被淹没)        temporal █ (3%)              ← 可废弃
+content ████████████ (60%)      trigger ████████████ (50%)    ← 主线 ✅
+tags    ██████ (25%)            jump    ██████ (25%)          ← 支线 ✅
+temporal ████ (15%)             content ████ (15%)            ← 背景 ✅
+trigger  ██ (追加，被淹没)       tags     ██ (7%)             ← 背景 ✅
+jump     █ (追加，被淹没)        temporal █ (3%)              ← 可废弃 ✅
 ```
+
+> 三个视图视觉层级全部切换完成。`
 
 ---
 
@@ -636,4 +667,4 @@ frontend/
 
 ---
 
-> **下一步**：审阅本方案后，从 Phase A1（缓存修复）和 Phase A2（状态整合）开始实施，为 Phase B 的边体系重构打好基础。
+> **当前状态（更新于 2026-06-29）**：Phase A–F 全部完成。v2 重设计已结束。

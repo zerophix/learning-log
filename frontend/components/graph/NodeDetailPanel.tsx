@@ -17,15 +17,12 @@ export default function NodeDetailPanel({
   onClose, onViewDetail, onGalaxyFocus,
 }: NodeDetailPanelProps) {
   return (
-    <div style={{
-      width: '280px',
+    <div className="graph-node-detail" style={{
       borderLeft: '1px solid var(--border-color)',
       overflow: 'auto',
       background: 'var(--bg-secondary)',
-      flexShrink: 0,
       display: 'flex',
       flexDirection: 'column',
-      animation: 'slideInRight 0.2s ease',
     }}>
       <div style={{
         padding: '12px 14px',
@@ -218,7 +215,12 @@ export default function NodeDetailPanel({
                         color: edge.color || '#334155',
                         fontSize: '9px',
                       }}>
-                        ↕ {(edge.weight * 100).toFixed(0)}%
+                        {edge.type === 'trigger' ? '▶触发' :
+                         edge.type === 'concept_jump' ? '⇉跃迁' :
+                         edge.type === 'content' ? '↕内容' :
+                         edge.type === 'tags' ? '↕标签' :
+                         edge.type === 'temporal' ? '↕时间' : '↕'}
+                        {' '}{(edge.weight * 100).toFixed(0)}%
                       </span>
                     )}
                   </div>

@@ -122,6 +122,7 @@ export const api = {
       }).then(r => checkResponse<CreateEntryResponse>(r)).then(res => {
         invalidateCache('/api/entries');
         invalidateCache('/api/stats');
+        invalidateCache('/api/graph');
         invalidateCache('/api/graph/attention');
         return res;
       }),

@@ -74,11 +74,16 @@ export interface AttentionGraph {
 
 // ==================== 基础类型 ====================
 
-/** 关联类型 */
-export type EnhancedEdgeType = 'content' | 'tags' | 'temporal';
+/** 图谱边类型（新体系，从"触发链优先"到"概念跃迁"再到"相似度为背景"） */
+export type GraphEdgeType = 
+  | 'trigger'       // 触发链：A 引出 B（有向，主线）
+  | 'concept_jump'  // 概念跃迁：策略切换（有向，跨域）
+  | 'content'       // 内容相似（无向，背景）
+  | 'tags'          // 标签重叠（无向，背景）
+  | 'temporal';     // 时间相邻（无向，背景）→ 被 trigger 取代，可废弃
 
 /** 边筛选类型 */
-export type EdgeTypeFilter = EnhancedEdgeType | 'all';
+export type EdgeTypeFilter = GraphEdgeType | 'all';
 
 /** 视图类型 */
 export type EnhancedGraphViewType = 'force' | 'timeline' | 'galaxy';
@@ -102,6 +107,8 @@ export interface EnhancedGraphNode {
   energy: number;
   /** 是否为顿悟/能量爆发点 */
   is_surge: boolean;
+  /** 是否为顿悟时刻 */
+  aha_moment: boolean;
   /** 时间戳 */
   timestamp: string;
   /** 研究类型 */
@@ -163,7 +170,7 @@ export interface EnhancedGraphEdge {
   /** 关联权重 (0-1) */
   weight: number;
   /** 关联类型（主要类型） */
-  type: EnhancedEdgeType;
+  type: GraphEdgeType;
   /** 各维度的关联强度 */
   heads?: {
     /** 内容相似度 */
@@ -327,19 +334,17 @@ export interface EnhancedHoverState {
 /** 视图配置 */
 export interface EnhancedViewConfig {
   /** 当前视图类型 */
-  type: EnhancedGraphViewType;
+  type?: EnhancedGraphViewType;
   /** 缩放级别 */
-  zoom: number;
+  zoom?: number;
   /** 视图中心 */
-  center: { x: number; y: number };
+  center?: { x: number; y: number };
   /** 是否显示边 */
   showEdges: boolean;
   /** 是否显示标签 */
   showLabels: boolean;
   /** 是否显示聚类区域 */
-  showClusters: boolean;
-  /** 是否显示箭头 */
-  showArrows: boolean;
+  showClusters?: boolean;
 }
 
 // ==================== API 参数类型 ====================
@@ -362,32 +367,6 @@ export interface EnhancedGraphQueryParams {
   research_type?: ResearchType;
 }
 
-// ==================== 事件类型 ====================
-
-/** 节点点击事件 */
-export interface EnhancedNodeClickEvent {
-  node: EnhancedGraphNode;
-  event: MouseEvent;
-}
-
-/** 节点悬停事件 */
-export interface EnhancedNodeHoverEvent {
-  node: EnhancedGraphNode | null;
-  event: MouseEvent;
-}
-
-/** 边点击事件 */
-export interface EnhancedEdgeClickEvent {
-  edge: EnhancedGraphEdge;
-  event: MouseEvent;
-}
-
-/** 视图变换事件 */
-export interface EnhancedViewTransformEvent {
-  zoom: number;
-  center: { x: number; y: number };
-}
-
 // ==================== 常量 ====================
 
 /** 默认视图配置 */
@@ -398,7 +377,6 @@ export const ENHANCED_DEFAULT_VIEW_CONFIG: EnhancedViewConfig = {
   showEdges: true,
   showLabels: false,
   showClusters: true,
-  showArrows: false,
 };
 
 /** 默认筛选条件 */

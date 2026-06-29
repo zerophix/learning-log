@@ -301,7 +301,7 @@ async def run_sse_server(port: int):
 
 
 async def main():
-    from services.lifecycle import start as start_backend
+    from app.services.lifecycle import start as start_backend
     print("=" * 60, file=sys.stderr)
     print("🚀 Learning Log MCP Server v3.1 (Multi-Transport)", file=sys.stderr)
     print(f"   Project: {PROJECT_DIR}", file=sys.stderr)

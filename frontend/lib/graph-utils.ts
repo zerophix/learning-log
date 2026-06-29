@@ -16,7 +16,7 @@ import type {
   EnhancedGraphFilter,
   EnhancedGraphSearch,
   EnhancedViewConfig,
-  EnhancedEdgeType,
+  GraphEdgeType,
   EnhancedTimeRange,
   ResearchType,
 } from '@/types/graph';
@@ -38,10 +38,12 @@ export const CLUSTER_COLORS = [
 ];
 
 /** 关联类型颜色 */
-export const EDGE_TYPE_COLORS: Record<EnhancedEdgeType, string> = {
+export const EDGE_TYPE_COLORS: Record<GraphEdgeType, string> = {
   content: '#38bdf8', // 蓝色 - 内容相似
   tags: '#34d399',    // 绿色 - 标签重叠
   temporal: '#fbbf24', // 橙色 - 时间相邻
+  trigger: '#5eead4', // 青色 - 触发链
+  concept_jump: '#c084fc', // 紫色 - 概念跃迁
 };
 
 /** 研究类型颜色 */
@@ -59,7 +61,7 @@ export function getClusterColor(clusterId: number): string {
 /** 获取边的颜色（根据主要关联类型） */
 export function getEdgeColor(edge: EnhancedGraphEdge | AttentionEdge): string {
   if ('type' in edge && edge.type) {
-    return EDGE_TYPE_COLORS[edge.type as EnhancedEdgeType] || '#334155';
+    return EDGE_TYPE_COLORS[edge.type as GraphEdgeType] || '#334155';
   }
   
   // 根据 heads 判断主要类型
@@ -111,6 +113,7 @@ export function transformAttentionGraph(data: AttentionGraph): EnhancedGraphData
     full_summary: node.full_summary || '',
     energy: node.energy,
     is_surge: node.is_surge ?? false,
+    aha_moment: node.aha ?? false,
     timestamp: node.timestamp,
     research_type: node.research_type as ResearchType,
     tags: node.tags || [],
@@ -178,7 +181,7 @@ export function transformAttentionGraph(data: AttentionGraph): EnhancedGraphData
 }
 
 /** 根据 heads 判断边的主要类型 */
-function getEdgeTypeFromHeads(heads: { content: number; tags: number; temporal: number }): EnhancedEdgeType {
+function getEdgeTypeFromHeads(heads: { content: number; tags: number; temporal: number }): GraphEdgeType {
   const { content, tags, temporal } = heads;
   const max = Math.max(content, tags, temporal);
   if (max === content) return 'content';
@@ -452,7 +455,7 @@ export function calculateGraphStats(
 
 // ==================== 时间线布局 ====================
 
-/** 计算时间线布局 */
+/** 计算时间线布局 — Y 轴绑定 energy_level */
 export function calculateTimelineLayout(
   nodes: EnhancedGraphNode[],
   width: number,
@@ -467,19 +470,88 @@ export function calculateTimelineLayout(
   );
 
   const timelineWidth = width - padding * 2;
-  const timelineHeight = height - padding * 2;
+  const chartHeight = height - padding * 2;
 
+  // Y 轴映射：energy 1~5 → chart 底部到顶部
   sorted.forEach((node, index) => {
     const x = padding + (index / Math.max(sorted.length - 1, 1)) * timelineWidth;
-    const amplitude = Math.min(timelineHeight * 0.4, 150);
-    const deterministicOffset = (Math.sin(node.id * 1.5) * 0.5 + 0.5) * 0.8 + 0.2;
-    const yOffset = (index % 2 === 0 ? -1 : 1) * amplitude * deterministicOffset;
-    const y = height / 2 + yOffset;
+    const energyFraction = (node.energy - 1) / 4; // 0~1
+    const y = padding + chartHeight * (1 - energyFraction); // 顶部 = energy 5
 
     positions.set(node.id, { x, y });
   });
 
   return positions;
+}
+
+// ==================== 时间环工具（v2 Galaxy） ====================
+
+/** 计算时间环：根据与中心节点的时间差确定环层级 */
+export function calculateTimeRings(
+  nodes: EnhancedGraphNode[],
+  centerId: number,
+  daysPerRing: number = 7
+): Map<number, number> {
+  const rings = new Map<number, number>();
+  const centerNode = nodes.find(n => n.id === centerId);
+  if (!centerNode) return rings;
+
+  const centerTime = new Date(centerNode.timestamp).getTime();
+
+  nodes.forEach(node => {
+    if (node.id === centerId) {
+      rings.set(node.id, 0);
+      return;
+    }
+    const diffDays = Math.abs(new Date(node.timestamp).getTime() - centerTime) / (1000 * 60 * 60 * 24);
+    const ring = Math.min(Math.floor(diffDays / daysPerRing) + 1, 10);
+    rings.set(node.id, ring);
+  });
+
+  return rings;
+}
+
+/** 计算时间线分隔线（按周） */
+export function calculateTimeSeparators(
+  nodes: EnhancedGraphNode[],
+  width: number,
+  padding: number = 80
+): Array<{ x: number; label: string }> {
+  if (nodes.length < 2) return [];
+
+  const sorted = [...nodes].sort((a, b) =>
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+  const timelineWidth = width - padding * 2;
+
+  // 收集所有周边界
+  const weeks = new Set<string>();
+  const separators: Array<{ x: number; label: string }> = [];
+
+  sorted.forEach((node, index) => {
+    const d = new Date(node.timestamp);
+    const weekKey = `${d.getFullYear()}-W${Math.ceil(((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / 86400000 + d.getDay() + 1) / 7)}`;
+
+    if (!weeks.has(weekKey)) {
+      if (weeks.size > 0) {
+        const x = padding + (index / Math.max(sorted.length - 1, 1)) * timelineWidth;
+        const fmt = `${d.getMonth() + 1}/${d.getDate()}`;
+        separators.push({ x, label: fmt });
+      }
+      weeks.add(weekKey);
+    }
+  });
+
+  return separators;
+}
+
+/** 获取时间段标签 */
+export function getTimeRingLabel(ring: number, centerTime: Date, daysPerRing: number = 7): string {
+  if (ring === 0) return '中心';
+  const start = new Date(centerTime.getTime() - ring * daysPerRing * 24 * 60 * 60 * 1000);
+  const end = new Date(centerTime.getTime() + ring * daysPerRing * 24 * 60 * 60 * 1000);
+  const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+  return `${fmt(start)}-${fmt(end)}`;
 }
 
 // ==================== 星系图布局 ====================

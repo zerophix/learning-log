@@ -6,10 +6,10 @@ import Navigation from '@/components/layout/Navigation';
 import PageHeader from '@/components/layout/PageHeader';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import EntryDetail from '@/components/entry/EntryDetail';
-import { IconNetwork, IconHourglass, IconEmpty, IconRefresh } from '@/components/ui/Icons';
 import GraphLegend from '@/components/graph/GraphLegend';
 import ClusterPanel from '@/components/graph/ClusterPanel';
 import NodeDetailPanel from '@/components/graph/NodeDetailPanel';
+import GraphToolbar from '@/components/graph/GraphToolbar';
 import {
   transformAttentionGraph,
   applyFilter,
@@ -24,25 +24,19 @@ import {
   createGalaxyOption,
 } from '@/lib/graph-echarts-options';
 import { useGraphState } from '@/hooks/useGraphState';
+import { useGraphPreferences } from '@/hooks/useGraphPreferences';
 import type {
   EnhancedGraphNode,
-  EnhancedGraphCluster,
   EnhancedGraphData,
   EnhancedGraphViewType,
-  ResearchType,
+  EnhancedGraphFilter,
+  EdgeTypeFilter,
+  EnhancedTimeRangePreset,
 } from '@/types/graph';
+import type { ResearchType } from '@/types';
 import * as echarts from 'echarts';
 import type { EChartsOption } from 'echarts';
-
-// ==================== 常量定义 ====================
-
-const VIEW_LABELS: Record<EnhancedGraphViewType, string> = {
-  force: '力导向图',
-  timeline: '时间线',
-  galaxy: '星系图',
-};
-
-// ==================== 主组件 ====================
+import { IconNetwork, IconHourglass, IconEmpty } from '@/components/ui/Icons';
 
 export default function GraphPage() {
   const {
@@ -50,19 +44,45 @@ export default function GraphPage() {
     setGraphData, setLoading, setError, setFilteredData, setStats,
     selectNode, hoverNode, setEntryDetail, setSearchQuery, setMatchedIds,
     clearInteraction,
-    setViewType, updateViewConfig,
-    updateFilter, toggleClusterPanel, setEdgeTypeFilter, setGalaxyCenter,
-    clearFilters: resetFilters, setTopK, setShowFps, setCurrentFps,
+    setViewType, updateViewConfig, updateFilter, toggleClusterPanel,
+    setEdgeTypeFilter, setGalaxyCenter, setNeighborNodes,
+    clearFilters, setTopK, setShowFps, setCurrentFps,
+    hasActiveFilters,
   } = useGraphState();
 
-  const { graphData, filteredData, error, loading, stats } = state.data;
+  const { graphData, error, loading, stats } = state.data;
   const { selectedNode, neighborNodes, hoveredNode, entryDetail, searchQuery, matchedNodeIds } = state.interaction;
   const { viewType, viewConfig, filter, showClusterPanel, edgeTypeFilter, galaxyCenterId, topK, showFps, currentFps } = state.view;
 
+  const { init: initPrefs, persist: persistPrefs } = useGraphPreferences();
+
+  // 加载偏好设置
+  useEffect(() => {
+    const prefs = initPrefs();
+    if (prefs.viewType) setViewType(prefs.viewType);
+    if (prefs.showEdges !== undefined) updateViewConfig(prev => ({ ...prev, showEdges: prefs.showEdges as boolean }));
+    if (prefs.showLabels !== undefined) updateViewConfig(prev => ({ ...prev, showLabels: prefs.showLabels as boolean }));
+    if (prefs.edgeTypeFilter) setEdgeTypeFilter(prefs.edgeTypeFilter);
+    if (prefs.topK) setTopK(prefs.topK);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 持久化偏好
+  useEffect(() => {
+    persistPrefs({
+      viewType,
+      showEdges: viewConfig.showEdges,
+      showLabels: viewConfig.showLabels,
+      edgeTypeFilter,
+      topK,
+    });
+  }, [viewType, viewConfig.showEdges, viewConfig.showLabels, edgeTypeFilter, topK, persistPrefs]);
+
   const frameCountRef = useRef(0);
   const fpsIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const pulseIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
-  // FPS 监控逻辑（使用 ref，仅每 500ms 更新一次渲染）
+  // FPS 监控
   useEffect(() => {
     if (!showFps) {
       setCurrentFps(0);
@@ -82,7 +102,6 @@ export default function GraphPage() {
     };
   }, [showFps, setCurrentFps]);
 
-  // Refs
   const chartRef = useRef<HTMLDivElement>(null);
   const echartsRef = useRef<echarts.ECharts | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -109,13 +128,12 @@ export default function GraphPage() {
         setError(err.message || '加载图谱失败');
         setLoading(false);
       });
-  }, [topK]);
+  }, [topK, setLoading, setGraphData, setError]);
 
   useEffect(() => {
     setGraphData(null);
     setError(null);
-    setSelectedNode(null);
-    setNeighborNodes(null);
+    selectNode(null);
     fetchAbortRef.current?.abort();
     const controller = new AbortController();
     fetchAbortRef.current = controller;
@@ -124,16 +142,14 @@ export default function GraphPage() {
       controller.abort();
       if (fetchAbortRef.current === controller) fetchAbortRef.current = null;
     };
-  }, [loadGraph]);
+  }, [loadGraph, setGraphData, setError, selectNode]);
 
   // ==================== 键盘快捷键 ====================
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setSelectedNode(null);
-        setNeighborNodes(null);
-        setEntryDetail(null);
+        clearInteraction();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
@@ -149,15 +165,14 @@ export default function GraphPage() {
         loadGraph(controller.signal);
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [loadGraph]);
+  }, [loadGraph, clearInteraction, setViewType]);
 
   // ==================== 数据筛选 ====================
 
-  useEffect(() => {
-    if (!graphData) return;
+  const filteredData = useMemo(() => {
+    if (!graphData) return null;
 
     const { nodes, edges } = applyFilter(graphData.nodes, graphData.edges, filter);
     const filteredNodeIds = new Set(nodes.map(n => n.id));
@@ -170,7 +185,7 @@ export default function GraphPage() {
       jumps: graphData.jumps.filter(j =>
         filteredNodeIds.has(j.source) && filteredNodeIds.has(j.target)
       ),
-      clusters: graphData.clusters.map((c: EnhancedGraphCluster) => ({
+      clusters: graphData.clusters.map(c => ({
         ...c,
         nodes: c.nodes.filter(id => nodes.some(n => n.id === id)),
         count: c.nodes.filter(id => nodes.some(n => n.id === id)).length,
@@ -179,18 +194,18 @@ export default function GraphPage() {
       entry_count: graphData.entry_count,
     };
 
-    setFilteredData(filtered);
-
     // 计算统计信息
     const s = calculateGraphStats(filtered.nodes, filtered.edges, filtered.clusters);
     setStats(s);
-  }, [graphData, filter]);
+
+    return filtered;
+  }, [graphData, filter, setStats]);
 
   // ==================== 搜索处理 ====================
 
   useEffect(() => {
     if (!graphData || !searchQuery.trim()) {
-      setMatchedNodeIds(new Set());
+      setMatchedIds(new Set());
       return;
     }
 
@@ -200,16 +215,16 @@ export default function GraphPage() {
       searchSummary: true,
       searchTags: true,
     });
-    setMatchedNodeIds(matched);
-  }, [graphData, searchQuery]);
+    setMatchedIds(matched);
+  }, [graphData, searchQuery, setMatchedIds]);
 
   // ==================== 事件处理 ====================
 
   const handleNodeClick = useCallback((node: EnhancedGraphNode) => {
-    setSelectedNode(node);
+    selectNode(node);
     const neighbors = getNeighborNodes(node.id, filteredData?.nodes || [], filteredData?.edges || [], 1);
     setNeighborNodes(neighbors);
-  }, [filteredData]);
+  }, [filteredData, selectNode, setNeighborNodes]);
 
   const openEntry = async (id: number) => {
     try {
@@ -220,43 +235,66 @@ export default function GraphPage() {
 
   const handleViewChange = (type: EnhancedGraphViewType) => {
     setViewType(type);
-    setViewConfig(prev => ({ ...prev, type }));
-    // 切换到星系图时，如果没有中心节点则清空
+    updateViewConfig(prev => ({ ...prev, type }));
     if (type !== 'galaxy') {
-      setGalaxyCenterId(null);
+      setGalaxyCenter(null);
     }
   };
 
-  /** 星系图：设置指定节点为中心 */
-  const setGalaxyCenter = (nodeId: number) => {
-    setGalaxyCenterId(nodeId);
+  const setGalaxyFocus = (nodeId: number) => {
+    setGalaxyCenter(nodeId);
     setViewType('galaxy');
-    setViewConfig(prev => ({ ...prev, type: 'galaxy' }));
+    updateViewConfig(prev => ({ ...prev, type: 'galaxy' }));
   };
 
-  const handleFilterChange = (newFilter: Partial<EnhancedGraphFilter>) => {
-    setFilter(prev => ({ ...prev, ...newFilter }));
+  // 简化版 filter handler (兼容 GraphToolbar 的简单值传递)
+  const handleFilterResearchType = (val: string) => {
+    updateFilter(prev => ({
+      ...prev,
+      researchTypes: val ? [val as ResearchType] : [],
+    }));
+  };
+
+  const handleFilterEnergy = (val: string) => {
+    updateFilter(prev => ({
+      ...prev,
+      energyRange: val ? val.split('-').map(Number) as [number, number] : undefined,
+    }));
+  };
+
+  const handleFilterTime = (val: string) => {
+    updateFilter(prev => ({
+      ...prev,
+      timeRange: val ? { type: val as EnhancedTimeRangePreset } : undefined,
+    }));
   };
 
   const toggleEdgeVisibility = () => {
-    setViewConfig(prev => ({ ...prev, showEdges: !prev.showEdges }));
+    updateViewConfig(prev => ({ ...prev, showEdges: !prev.showEdges }));
   };
 
   const toggleLabelVisibility = () => {
-    setViewConfig(prev => ({ ...prev, showLabels: !prev.showLabels }));
+    updateViewConfig(prev => ({ ...prev, showLabels: !prev.showLabels }));
   };
 
-  const clearFilters = () => {
-    setFilter(DEFAULT_FILTER);
+  const handleClearFilters = () => {
+    clearFilters();
     setSearchQuery('');
-    setMatchedNodeIds(new Set());
-    setGalaxyCenterId(null);
+    setMatchedIds(new Set());
+    setGalaxyCenter(null);
   };
 
-  // 保持 ref 与最新回调同步（渲染时直接赋值，不触发额外渲染）
+  const handleRefresh = () => {
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+    loadGraph(controller.signal);
+  };
+
+  // 保持 ref 与最新回调同步
   handleNodeClickRef.current = handleNodeClick;
-  setHoveredNodeRef.current = setHoveredNode;
-  setGalaxyCenterRef.current = setGalaxyCenterId;
+  setHoveredNodeRef.current = hoverNode;
+  setGalaxyCenterRef.current = setGalaxyCenter;
 
   // ==================== ECharts 懒初始化 + 更新 ====================
 
@@ -318,7 +356,7 @@ export default function GraphPage() {
     let option: EChartsOption;
     switch (viewType) {
       case 'timeline':
-        option = createTimelineOption({ data: filteredData, nodeMap, maxDeg, width, height });
+        option = createTimelineOption({ data: filteredData, nodeMap, maxDeg, width, height, showEdges: viewConfig.showEdges });
         break;
       case 'galaxy':
         option = createGalaxyOption({
@@ -338,13 +376,34 @@ export default function GraphPage() {
     }
 
     chart.setOption(option, true);
+
+    // Surge 节点脉冲动画
+    clearInterval(pulseIntervalRef.current);
+    const surgeNodes = filteredData.nodes.filter(n => n.is_surge);
+    if (surgeNodes.length > 0) {
+      let pulseOn = false;
+      pulseIntervalRef.current = setInterval(() => {
+        pulseOn = !pulseOn;
+        chart.setOption({
+          series: [{
+            data: surgeNodes.map(n => ({
+              id: String(n.id),
+              itemStyle: {
+                shadowBlur: pulseOn ? 30 : 14,
+                borderWidth: pulseOn ? 4 : 2,
+              },
+            })),
+          }],
+        }, { notMerge: false });
+      }, 1000);
+    }
   }, [filteredData, viewType, galaxyCenterId, viewConfig.showLabels, viewConfig.showEdges,
-      selectedNode, hoveredNode, neighborNodes, matchedNodeIds, edgeTypeFilter]);
+      selectedNode, hoveredNode, neighborNodes, matchedNodeIds, edgeTypeFilter, hoverNode]);
 
-  // ==================== ECharts 清理（组件卸载时） ====================
-
+  // ECharts 清理
   useEffect(() => {
     return () => {
+      clearInterval(pulseIntervalRef.current);
       if (resizeHandlerRef.current) {
         window.removeEventListener('resize', resizeHandlerRef.current);
       }
@@ -372,10 +431,15 @@ export default function GraphPage() {
     }));
   }, [filteredData]);
 
-  const hasActiveFilters = filter.researchTypes !== undefined || filter.energyRange !== undefined || filter.timeRange !== undefined;
+  // 过滤条件转换为 GraphToolbar 需要的简单值
+  const filterResearchType = filter.researchTypes?.[0];
+  const filterEnergyRange = filter.energyRange ? `${filter.energyRange[0]}-${filter.energyRange[1]}` : undefined;
+  const filterTimeRange = filter.timeRange?.type;
+
+  const activeFilterCount = hasActiveFilters ? 1 : 0;
 
   return (
-    <div className="page-shell" style={{ padding: '0 16px' }}>
+    <div className="page-shell">
       <PageHeader icon={<IconNetwork size={24} />} title="研究图谱">
         <Navigation />
       </PageHeader>
@@ -383,279 +447,37 @@ export default function GraphPage() {
       <div className="content-area">
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
           {/* 工具栏 */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '10px 16px',
-            borderBottom: '1px solid var(--border-color)',
-            background: 'var(--bg-secondary)',
-            flexWrap: 'wrap',
-          }}>
-            {/* 视图切换 */}
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {(['force', 'timeline', 'galaxy'] as EnhancedGraphViewType[]).map(type => (
-                <button
-                  key={type}
-                  onClick={() => handleViewChange(type)}
-                  title={`${VIEW_LABELS[type]} (${type === 'force' ? '1' : type === 'timeline' ? '2' : '3'})`}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '6px',
-                    border: viewType === type ? '1px solid var(--accent-sky)' : '1px solid var(--border-color)',
-                    background: viewType === type ? 'var(--accent-sky)' : 'transparent',
-                    color: viewType === type ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                    fontSize: '12px',
-                    fontWeight: viewType === type ? 600 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {VIEW_LABELS[type]}
-                </button>
-              ))}
+          <GraphToolbar
+            viewType={viewType}
+            showEdges={viewConfig.showEdges}
+            showLabels={viewConfig.showLabels}
+            showClusterPanel={showClusterPanel}
+            edgeTypeFilter={edgeTypeFilter}
+            searchQuery={searchQuery}
+            clusterCount={filteredData?.clusters.length || 0}
+            hasActiveFilters={!!activeFilterCount}
+            filterResearchType={filterResearchType}
+            filterEnergyRange={filterEnergyRange}
+            filterTimeRange={filterTimeRange}
+            onViewChange={handleViewChange}
+            onToggleEdges={toggleEdgeVisibility}
+            onToggleLabels={toggleLabelVisibility}
+            onEdgeTypeFilterChange={setEdgeTypeFilter}
+            onSearchChange={setSearchQuery}
+            onToggleClusterPanel={toggleClusterPanel}
+            onClearFilters={handleClearFilters}
+            onRefresh={handleRefresh}
+            onFilterResearchType={handleFilterResearchType}
+            onFilterEnergy={handleFilterEnergy}
+            onFilterTime={handleFilterTime}
+          />
+
+          {/* FPS 显示 */}
+          {showFps && (
+            <div style={{ position: 'absolute', top: 56, right: 8, zIndex: 50, color: 'var(--text-muted)', fontSize: 10 }}>
+              {currentFps} FPS
             </div>
-
-            <span style={{ width: '1px', height: '20px', background: 'var(--border-color)' }} />
-
-            {/* 筛选器 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <select
-                value={filter.researchTypes?.[0] || ''}
-                onChange={e => handleFilterChange({
-                  researchTypes: e.target.value ? [e.target.value as ResearchType] : undefined
-                })}
-                style={{
-                  padding: '5px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-primary)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="">类型</option>
-                <option value="deep-research">深度研究</option>
-                <option value="topic-exploration">主题探索</option>
-                <option value="domain-mapping">领域映射</option>
-              </select>
-
-              <select
-                value={filter.energyRange?.[0] ? `${filter.energyRange[0]}-${filter.energyRange[1]}` : ''}
-                onChange={e => {
-                  const val = e.target.value;
-                  if (val) {
-                    const [min, max] = val.split('-').map(Number);
-                    handleFilterChange({ energyRange: [min, max] as [number, number] });
-                  } else {
-                    handleFilterChange({ energyRange: undefined });
-                  }
-                }}
-                style={{
-                  padding: '5px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-primary)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="">能量</option>
-                <option value="4-5">高 (4-5)</option>
-                <option value="3-3">中 (3)</option>
-                <option value="1-2">低 (1-2)</option>
-              </select>
-
-              <select
-                value={filter.timeRange?.type || ''}
-                onChange={e => {
-                  const val = e.target.value;
-                  if (val) {
-                    handleFilterChange({ timeRange: { type: val as EnhancedTimeRangePreset } });
-                  } else {
-                    handleFilterChange({ timeRange: undefined });
-                  }
-                }}
-                style={{
-                  padding: '5px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-primary)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="">时间</option>
-                <option value="7d">7天</option>
-                <option value="30d">30天</option>
-                <option value="90d">90天</option>
-              </select>
-            </div>
-
-            <span style={{ width: '1px', height: '20px', background: 'var(--border-color)' }} />
-
-            {/* 显示控制 */}
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button
-                onClick={toggleEdgeVisibility}
-                title="显示/隐藏边"
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--border-color)',
-                  background: viewConfig.showEdges ? 'rgba(56,189,248,0.2)' : 'transparent',
-                  color: viewConfig.showEdges ? 'var(--accent-sky)' : 'var(--text-muted)',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                }}
-              >
-                E {viewConfig.showEdges ? '✓' : '✗'}
-              </button>
-              <button
-                onClick={toggleLabelVisibility}
-                title="显示/隐藏标签"
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--border-color)',
-                  background: viewConfig.showLabels ? 'rgba(56,189,248,0.2)' : 'transparent',
-                  color: viewConfig.showLabels ? 'var(--accent-sky)' : 'var(--text-muted)',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                }}
-              >
-                L {viewConfig.showLabels ? '✓' : '✗'}
-              </button>
-            </div>
-
-            {/* 边类型筛选 */}
-            <select
-              value={edgeTypeFilter}
-              onChange={e => setEdgeTypeFilter(e.target.value as EdgeTypeFilter)}
-              style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-primary)',
-                color: edgeTypeFilter === 'all' ? 'var(--text-muted)' : 'var(--accent-sky)',
-                fontSize: '11px',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="all">全部</option>
-              <option value="content">内容相似</option>
-              <option value="tags">标签重叠</option>
-              <option value="temporal">时间相邻</option>
-            </select>
-
-            {/* 搜索框 */}
-            <div style={{ flex: 1, minWidth: '120px', position: 'relative' }}>
-              <input
-                ref={searchRef}
-                type="text"
-                placeholder="搜索节点... (⌘F)"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Escape') {
-                    setSearchQuery('');
-                    searchRef.current?.blur();
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '5px 24px 5px 10px',
-                  borderRadius: '6px',
-                  border: searchQuery ? '1px solid var(--accent-sky)' : '1px solid var(--border-color)',
-                  background: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '11px',
-                  outline: 'none',
-                }}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  style={{
-                    position: 'absolute',
-                    right: '4px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    padding: '2px',
-                    fontSize: '14px',
-                    lineHeight: 1,
-                  }}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-
-            {/* 聚类面板切换 */}
-            <button
-              onClick={() => setShowClusterPanel(!showClusterPanel)}
-              title="聚类列表"
-              style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: showClusterPanel ? 'rgba(56,189,248,0.2)' : 'transparent',
-                color: showClusterPanel ? 'var(--accent-sky)' : 'var(--text-muted)',
-                fontSize: '11px',
-                cursor: 'pointer',
-              }}
-            >
-              ☰ {filteredData?.clusters.length || 0} 聚类
-            </button>
-
-            {/* 清除筛选 */}
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--accent-amber)',
-                  background: 'transparent',
-                  color: 'var(--accent-amber)',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                }}
-              >
-                清除
-              </button>
-            )}
-
-            {/* 刷新 */}
-            <button
-              onClick={() => {
-                const controller = new AbortController();
-                loadGraph(controller.signal);
-              }}
-              title="刷新 (R)"
-              style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'transparent',
-                color: 'var(--text-secondary)',
-                fontSize: '11px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              <IconRefresh size={12} /> R
-            </button>
-          </div>
+          )}
 
           {/* 图谱主区域 */}
           <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
@@ -669,9 +491,10 @@ export default function GraphPage() {
                   const newIds = current.includes(id)
                     ? current.filter(cid => cid !== id)
                     : [...current, id];
-                  handleFilterChange({
+                  updateFilter(prev => ({
+                    ...prev,
                     clusterIds: newIds.length > 0 ? newIds : undefined,
-                  });
+                  }));
                 }}
               />
             )}
@@ -681,17 +504,11 @@ export default function GraphPage() {
               <div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>
                 <p>{error}</p>
                 <button
-                  onClick={() => {
-                    const controller = new AbortController();
-                    loadGraph(controller.signal);
-                  }}
+                  onClick={handleRefresh}
                   style={{
-                    marginTop: '12px',
-                    padding: '8px 16px',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
+                    marginTop: '12px', padding: '8px 16px',
+                    border: '1px solid var(--border-color)', borderRadius: '6px',
+                    background: 'var(--bg-secondary)', color: 'var(--text-primary)',
                     cursor: 'pointer',
                   }}
                 >
@@ -699,22 +516,33 @@ export default function GraphPage() {
                 </button>
               </div>
             ) : loading ? (
-              <div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <IconHourglass size={32} /> 计算 attention matrix...
+              <div className="graph-skeleton">
+                <div className="graph-skeleton-circles">
+                  <div className="skeleton-node skeleton-node-sm" />
+                  <div className="skeleton-node skeleton-node-lg" />
+                  <div className="skeleton-node skeleton-node-md" />
+                  <div className="skeleton-node skeleton-node-sm" />
+                </div>
+                <div className="skeleton-text-row">
+                  <div className="skeleton-line-wide" style={{ width: '160px' }} />
+                  <div className="skeleton-line-wide" style={{ width: '100px', height: '10px' }} />
+                </div>
               </div>
             ) : !filteredData || filteredData.nodes.length < 2 ? (
               <div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)', textAlign: 'center' }}>
                 <IconEmpty size={64} style={{ marginBottom: '16px' }} />
                 <p>至少需要 2 条记录才能生成图谱</p>
+                {filteredData && filteredData.nodes.length === 0 && graphData && graphData.nodes.length > 0 && (
+                  <p style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                    图谱较小，试试放宽筛选条件
+                  </p>
+                )}
               </div>
             ) : (
               <ErrorBoundary fallback={
                 <div style={{ margin: 'auto', padding: '80px', color: 'var(--text-muted)' }}>
                   图谱渲染异常
-                  <button
-                    onClick={() => window.location.reload()}
-                    style={{ marginLeft: '12px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer' }}
-                  >
+                  <button onClick={() => window.location.reload()} style={{ marginLeft: '12px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer' }}>
                     重试
                   </button>
                 </div>
@@ -735,9 +563,9 @@ export default function GraphPage() {
                       node={selectedNode}
                       neighbors={neighborNodes.nodes}
                       neighborEdges={neighborNodes.edges}
-                      onClose={() => { setSelectedNode(null); setNeighborNodes(null); }}
+                      onClose={() => { selectNode(null); setNeighborNodes(null); }}
                       onViewDetail={openEntry}
-                      onGalaxyFocus={setGalaxyCenter}
+                      onGalaxyFocus={setGalaxyFocus}
                     />
                   )}
                 </div>

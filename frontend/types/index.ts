@@ -243,6 +243,17 @@ export interface FeedParams {
   research_type?: string;
 }
 
+// --- Graph Stats 类型 ---
+
+export interface GraphStats {
+  nodeCount: number;
+  edgeCount: number;
+  clusterCount: number;
+  avgDegree: number;
+  avgEnergy: number;
+  density: number;
+}
+
 // --- 辅助类型 ---
 
 export type ViewLevel = 'tags' | 'entries' | 'detail';

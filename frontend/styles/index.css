@@ -372,6 +372,71 @@ body {
   opacity: 1;
 }
 
+/* ── Graph Loading Skeleton ── */
+
+.graph-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  height: 100%;
+  padding: 80px;
+}
+
+.graph-skeleton-circles {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  animation: skeletonFadeIn 0.6s ease;
+}
+
+@keyframes skeletonFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.skeleton-node {
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e293b 30%, #334155 50%, #1e293b 70%);
+  background-size: 200% 200%;
+  animation: skeletonPulse 1.8s ease-in-out infinite;
+}
+
+.skeleton-node-lg {
+  width: 48px;
+  height: 48px;
+  animation-delay: 0s;
+}
+
+.skeleton-node-md {
+  width: 32px;
+  height: 32px;
+  animation-delay: 0.2s;
+}
+
+.skeleton-node-sm {
+  width: 24px;
+  height: 24px;
+  animation-delay: 0.4s;
+}
+
+.skeleton-line-wide {
+  width: 200px;
+  height: 12px;
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, #334155 50%, var(--bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-text-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ── Common Inline Style Extraction ── */
 
 .text-xs { font-size: var(--font-xs); color: var(--text-muted); }
@@ -516,5 +581,36 @@ body {
     width: 400px;
     min-width: 320px;
     margin-left: 16px;
+  }
+}
+
+/* ── Graph page mobile responsive ── */
+
+.graph-node-detail {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .graph-node-detail {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-left: none !important;
+    z-index: 90;
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@media (max-width: 480px) {
+  .graph-skeleton {
+    padding: 40px 20px;
+  }
+
+  .graph-skeleton-circles {
+    gap: 20px;
   }
 }
