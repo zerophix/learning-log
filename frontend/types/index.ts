@@ -114,6 +114,7 @@ export interface AttentionNode {
   id: number;
   topic: string;
   summary: string;
+  full_summary: string;
   energy: number;
   aha: boolean;
   research_type: string;
@@ -122,6 +123,8 @@ export interface AttentionNode {
   timestamp: string;
   degree: number;
   tag_count: number;
+  tags: string[];
+  is_surge: boolean;
 }
 
 export interface AttentionEdge {
@@ -135,9 +138,25 @@ export interface AttentionEdge {
   };
 }
 
+export interface TriggerEdge {
+  source: number;
+  target: number;
+  weight: number;
+  day_diff: number;
+}
+
+export interface ConceptJumpEdge {
+  source: number;
+  target: number;
+  from_type: string;
+  to_type: string;
+}
+
 export interface AttentionGraph {
   nodes: AttentionNode[];
   edges: AttentionEdge[];
+  triggers: TriggerEdge[];
+  jumps: ConceptJumpEdge[];
   clusters: string[];
   weights: { content: number; tags: number; temporal: number };
   entry_count: number;

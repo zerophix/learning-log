@@ -20,6 +20,7 @@ export interface AttentionNode {
   id: number;
   topic: string;
   summary: string;
+  full_summary: string;
   energy: number;
   aha: boolean;
   research_type: string;
@@ -28,6 +29,8 @@ export interface AttentionNode {
   timestamp: string;
   degree: number;
   tag_count: number;
+  tags: string[];
+  is_surge: boolean;
 }
 
 /** 后端返回的原始边数据 */
@@ -42,10 +45,28 @@ export interface AttentionEdge {
   };
 }
 
+/** 后端返回的触发链边 */
+export interface TriggerEdge {
+  source: number;
+  target: number;
+  weight: number;
+  day_diff: number;
+}
+
+/** 后端返回的概念跳跃边 */
+export interface ConceptJumpEdge {
+  source: number;
+  target: number;
+  from_type: string;
+  to_type: string;
+}
+
 /** 后端返回的原始图谱数据 */
 export interface AttentionGraph {
   nodes: AttentionNode[];
   edges: AttentionEdge[];
+  triggers: TriggerEdge[];
+  jumps: ConceptJumpEdge[];
   clusters: string[];
   weights: { content: number; tags: number; temporal: number };
   entry_count: number;
@@ -55,6 +76,9 @@ export interface AttentionGraph {
 
 /** 关联类型 */
 export type EnhancedEdgeType = 'content' | 'tags' | 'temporal';
+
+/** 边筛选类型 */
+export type EdgeTypeFilter = EnhancedEdgeType | 'all';
 
 /** 视图类型 */
 export type EnhancedGraphViewType = 'force' | 'timeline' | 'galaxy';
@@ -72,8 +96,12 @@ export interface EnhancedGraphNode {
   topic: string;
   /** 摘要 */
   summary: string;
+  /** 完整摘要（未截断） */
+  full_summary: string;
   /** 能量等级 (1-5) */
   energy: number;
+  /** 是否为顿悟/能量爆发点 */
+  is_surge: boolean;
   /** 时间戳 */
   timestamp: string;
   /** 研究类型 */
@@ -196,12 +224,36 @@ export interface EnhancedGraphWeights {
   temporal: number;
 }
 
+/** 增强触发链边 */
+export interface EnhancedTriggerEdge {
+  source: number;
+  target: number;
+  weight: number;
+  day_diff: number;
+  isHighlighted?: boolean;
+  isDimmed?: boolean;
+}
+
+/** 增强概念跳跃边 */
+export interface EnhancedConceptJump {
+  source: number;
+  target: number;
+  from_type: string;
+  to_type: string;
+  isHighlighted?: boolean;
+  isDimmed?: boolean;
+}
+
 /** 增强图谱数据 */
 export interface EnhancedGraphData {
   /** 节点列表 */
   nodes: EnhancedGraphNode[];
   /** 边列表 */
   edges: EnhancedGraphEdge[];
+  /** 触发链边 */
+  triggers: EnhancedTriggerEdge[];
+  /** 概念跳跃边 */
+  jumps: EnhancedConceptJump[];
   /** 聚类列表 */
   clusters: EnhancedGraphCluster[];
   /** 权重配置 */

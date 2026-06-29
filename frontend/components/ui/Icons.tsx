@@ -127,10 +127,11 @@ export function IconDelete({ size = 16, color = 'currentColor' }: IconProps) {
 
 // ==================== 标签图标 ====================
 
-export function IconTag({ size = 12, color = '#64748b' }: IconProps) {
+export function IconTag({ size = 14, color = '#64748b' }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M7 7H7.01M7 3H5C4.46957 3 3.96086 3.21071 3.58579 3.58579C3.21071 3.96086 3 4.46957 3 5V7M17 7H17.01M7 17H7.01M17 17H17.01M17 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V17M12 12H12.01M7 12H7.01M17 12H17.01M12 7H12.01M12 17H12.01" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M20.59 13.41L13.42 20.58C13.2343 20.766 13.0121 20.9119 12.7666 21.0085C12.5211 21.1051 12.2573 21.1506 11.9927 21.1423C11.728 21.134 11.4676 21.072 11.2285 20.9603C10.9893 20.8486 10.7766 20.6896 10.6028 20.4908L4 13V4H13L20.59 11.59C20.9625 11.9625 21.1716 12.4689 21.1716 12.995C21.1716 13.5211 20.9625 14.0275 20.59 14.4V13.41Z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="8.5" cy="8.5" r="1.5" stroke={color} strokeWidth="1.3"/>
     </svg>
   );
 }

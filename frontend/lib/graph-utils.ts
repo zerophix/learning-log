@@ -8,6 +8,8 @@ import type {
   EnhancedGraphEdge,
   EnhancedGraphCluster,
   EnhancedGraphData,
+  EnhancedTriggerEdge,
+  EnhancedConceptJump,
   AttentionGraph,
   AttentionNode,
   AttentionEdge,
@@ -106,10 +108,12 @@ export function transformAttentionGraph(data: AttentionGraph): EnhancedGraphData
     id: node.id,
     topic: node.topic,
     summary: node.summary || '',
+    full_summary: node.full_summary || '',
     energy: node.energy,
+    is_surge: node.is_surge ?? false,
     timestamp: node.timestamp,
     research_type: node.research_type as ResearchType,
-    tags: [], // 后端需要返回 tags 字段
+    tags: node.tags || [],
     cluster_id: node.cluster,
     cluster_name: node.cluster_name,
     degree: node.degree,
@@ -128,6 +132,20 @@ export function transformAttentionGraph(data: AttentionGraph): EnhancedGraphData
       width: calculateEdgeWidth(edge.weight),
     };
   });
+
+  const triggers = (data.triggers || []).map((t): EnhancedTriggerEdge => ({
+    source: t.source,
+    target: t.target,
+    weight: t.weight,
+    day_diff: t.day_diff,
+  }));
+
+  const jumps = (data.jumps || []).map((j): EnhancedConceptJump => ({
+    source: j.source,
+    target: j.target,
+    from_type: j.from_type,
+    to_type: j.to_type,
+  }));
 
   // 从 nodes 中提取聚类信息
   const clusterMap = new Map<number, EnhancedGraphCluster>();
@@ -151,6 +169,8 @@ export function transformAttentionGraph(data: AttentionGraph): EnhancedGraphData
   return {
     nodes,
     edges,
+    triggers,
+    jumps,
     clusters,
     weights: data.weights,
     entry_count: data.entry_count,
@@ -451,10 +471,11 @@ export function calculateTimelineLayout(
 
   sorted.forEach((node, index) => {
     const x = padding + (index / Math.max(sorted.length - 1, 1)) * timelineWidth;
-    // 交错排列，避免重叠
-    const offset = index % 2 === 0 ? -1 : 1;
-    const y = height / 2 + offset * (Math.random() * 0.3 + 0.1) * timelineHeight * 0.5;
-    
+    const amplitude = Math.min(timelineHeight * 0.4, 150);
+    const deterministicOffset = (Math.sin(node.id * 1.5) * 0.5 + 0.5) * 0.8 + 0.2;
+    const yOffset = (index % 2 === 0 ? -1 : 1) * amplitude * deterministicOffset;
+    const y = height / 2 + yOffset;
+
     positions.set(node.id, { x, y });
   });
 
@@ -517,7 +538,8 @@ export function calculateGalaxyLayout(
     const angleStep = (Math.PI * 2) / ring.length;
 
     ring.forEach((nodeId, nodeIndex) => {
-      const angle = nodeIndex * angleStep + Math.random() * angleStep * 0.3;
+      const jitter = (Math.sin(nodeId * 9301 + 49297) * 0.5 + 0.5) * 0.3;
+      const angle = nodeIndex * angleStep + jitter * angleStep;
       positions.set(nodeId, {
         x: centerX + Math.cos(angle) * radius,
         y: centerY + Math.sin(angle) * radius,

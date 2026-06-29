@@ -1,543 +1,127 @@
-# Learning Log 图谱重构计划
+# 图谱页面重构计划
 
-## 一、项目概述
+## 当前问题
 
-### 1.1 当前状态分析
+**来源**: 图谱页面 1412 行单文件 `frontend/app/graph/page.tsx`，存在架构、性能、数据流、交互四类问题。
 
-**现有技术实现：**
-- 技术栈：ECharts 5.4.3 力导向图
-- 布局：图谱占据主要区域，右侧面板显示关联信息
-- 交互：点击节点显示关联列表，支持拖拽、缩放
-- 视觉：4个硬编码聚类颜色，节点大小根据度数调整
+### 架构问题
+1. **单文件过大** — 1412 行包含数据加载、3 种 ECharts 视图生成、状态管理、搜索、UI 渲染、键盘事件全部逻辑
+2. **ECharts option 生成器在组件闭包内** — `createForceGraphOption`/`createTimelineOption`/`createGalaxyOption` 无法独立测试/复用
+3. **样式全部内联** — 无 CSS 类名，不利于主题切换和样式复用
+4. **死状态** — `edgeThreshold` 声明但未使用；`rawGraphData` 与 `graphData` 同步设置，冗余
 
-**存在的问题：**
-1. **聚类系统僵化**：4个固定聚类（深度研究/主题探索/领域映射/未分类），缺乏语义意义
-2. **关联展示单一**：仅用边的粗细表示权重，缺乏多维度视觉编码
-3. **时间维度缺失**：无法展示知识随时间的演化路径
-4. **交互体验有限**：缺少搜索、筛选、多视图切换等功能
-5. **性能优化不足**：大数据集时力导向图布局效果不佳
+### 性能问题
+5. **搜索高亮不触发 ECharts 更新** — `matchedNodeIds` 未加入 useEffect 依赖，输入搜索词图表不响应
+6. **每次筛选重建 ECharts 实例** — `dispose()`+`init()` 而非 `setOption` 增量更新，丢失用户缩放/平移状态
+7. **FPS 监控每秒重渲染** — `requestAnimationFrame` + `setState` 导致整个组件树每秒重渲染一次
+8. **Galaxy 视图 `Math.random()`** — 每次渲染布局抖动，位置不一致
 
-### 1.2 重构目标
+### 数据流问题
+9. **后端不返回 tags** — `EnhancedGraphNode.tags` 恒为 `[]`，`searchTags` 和 `tagIds` 过滤永远无结果
+10. **summary 被后端截断 100 字** — 侧边栏摘要信息不完整
+11. **缓存未失效** — Create/update/delete 只失效 `/api/graph`，未失效 `/api/graph/attention`
 
-1. **关联强度可视化** - 用多维度视觉元素直观展示知识之间的关联强弱
-2. **时间演化展示** - 展示知识随时间的演进路径
-3. **智能主题聚类** - 基于标签和内容自动分组，生成语义化聚类标签
-4. **多维度交互** - 支持筛选、搜索、多视图切换
+### 交互问题
+12. **Timeline Y 轴固定公式** — 振幅 120px，节点少时稀疏、多时重叠
+13. **Galaxy `Math.random()`** — 布局不稳定
+14. **清除筛选不重置 `galaxyCenterId`**
+15. **"r" 键刷新无防抖** — 旧请求不被 abort，可能并发堆积
+16. **类型筛选单选但系统支持多选** — select 与 clusterIds 多选交互不一致
+17. **左右图例可能重叠** — 均为 `position: absolute`，窄屏重叠
+18. **Galaxy 无边箭头** — 与 Force 视图不统一
 
----
+## 重构范围
 
-## 二、整体架构设计
+| 变更 | 影响文件 |
+|------|---------|
+| 提取 ECharts option 生成器 | 新 `lib/graph-echarts-options.ts` |
+| 拆分 UI 组件 | 新 `components/graph/GraphToolbar.tsx` |
+| | 新 `components/graph/ClusterPanel.tsx` |
+| | 新 `components/graph/NodeDetailPanel.tsx` |
+| | 新 `components/graph/GraphLegend.tsx` |
+| 重构 page.tsx | `app/graph/page.tsx`（预期缩减到 ~300 行）|
+| 修改 graph-utils.ts | 修复 `calculateTimelineLayout`/`calculateGalaxyLayout` |
+| 修改 api.ts | 修复缓存失效 |
+| 修改后端 graph.py | 返回完整 summary + tags |
 
-### 2.1 布局结构
+## 执行计划
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  Navigation                                                         │
-│  [📖 学习日志]  [时间线] [图谱] [Feed] [标签]                       │
-├─────────────────────────────────────────────────────────────────────┤
-│  工具栏: [搜索框] [筛选器] [视图切换] [时间范围]                    │
-├──────────────┬──────────────────────────────────────┬───────────────┤
-│              │                                      │               │
-│  左侧面板    │           主图谱区域                  │   右侧面板    │
-│  (280px)     │                                      │   (320px)     │
-│              │                                      │               │
-│  • 聚类列表   │   • 力导向图 / 时间线 / 星系图       │  • 节点详情   │
-│  • 标签云     │   • 支持多种布局和视角               │  • 关联列表   │
-│  • 时间轴     │                                      │  • 操作按钮   │
-│              │                                      │               │
-├──────────────┴──────────────────────────────────────┴───────────────┤
-│  底部状态栏: 节点数 | 边数 | 当前视图 | 时间范围                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
+### Phase 0: 准备
+- P0.1 创建 `components/graph/` 目录
+- P0.2 备份 page.tsx
 
-### 2.2 核心视图模式
+### Phase 1: 提取 ECharts option 生成器
+- P1.1 创建 `lib/graph-echarts-options.ts`
+- P1.2 将 `createForceGraphOption` 迁移为纯函数，参数显式化
+- P1.3 将 `createTimelineOption` 迁移，使用 `calculateTimelineLayout`（已存在）
+- P1.4 将 `createGalaxyOption` 迁移，使用 `calculateGalaxyLayout`（已存在）
+- P1.5 page.tsx 导入并使用，消除闭包耦合
 
-#### 视图 A: 力导向图（默认）
-- **用途**: 展示知识网络的整体结构
-- **特性**: 
-  - 节点大小 = 能量值 + 关联数
-  - 边的粗细 = 关联强度
-  - 边的颜色 = 关联类型（内容/标签/时间）
-  - 聚类自动布局，同主题节点聚集
+### Phase 2: 修复 Bug — page.tsx 内联修复
+- P2.1 `matchedNodeIds` 加入 ECharts useEffect 依赖
+- P2.2 FPS 改为 Ref 不触发渲染
+- P2.3 移除 `edgeThreshold` 死状态
+- P2.4 合并 `rawGraphData`+`graphData` 为单一状态
+- P2.5 `clearFilters` 增加 `galaxyCenterId` 重置
+- P2.6 "r" 键使用 `useRef` 保存 controller 并 abort 旧请求
+- P2.7 修复 galaxy `Math.random()` → 确定性伪随机
 
-#### 视图 B: 时间线视图
-- **用途**: 展示知识随时间的演化
-- **特性**:
-  - 水平时间轴，节点按时间排列
-  - 连线展示知识的演进路径
-  - 支持时间范围筛选
-  - 可看到知识发展的脉络
+### Phase 3: 提取 UI 组件
+- P3.1 创建 `GraphToolbar.tsx` — 视图切换、筛选器、搜索、显示控制
+- P3.2 创建 `ClusterPanel.tsx` — 聚类侧边栏
+- P3.3 创建 `NodeDetailPanel.tsx` — 选中节点详情面板
+- P3.4 创建 `GraphLegend.tsx` — 底部图例
+- P3.5 page.tsx 集成组件
 
-#### 视图 C: 星系图
-- **用途**: 聚焦某个核心主题的深度探索
-- **特性**:
-  - 中心节点 + 卫星节点的辐射状布局
-  - 支持多层展开
-  - 适合深度研究某个领域
+### Phase 4: 样式改进 + 最终清理
+- P4.1 底部图例改为 flex 避免重叠
+- P4.2 移除所有内联样式，替换为 CSS Module 或全局类
+- P4.3 统一视图间不一致（Galaxy 加箭头，Timeline 加标签）
+- P4.4 验证：`npm run build` 无错误
 
----
+## 重构结果
 
-## 三、智能聚类系统
+| 指标 | 重构前 | 重构后 |
+|------|--------|--------|
+| `page.tsx` 行数 | 1412 行 | 762 行 (46% ↓) |
+| 文件数 | 1 个 | 5 个（拆出 3 组件 + 1 模块）|
+| ECharts 重建策略 | dispose+init 每次 | init 一次 + setOption 增量 |
+| Galaxy 布局 | Math.random() 抖动 | 确定性伪随机 |
+| 搜索高亮 | 不触发图表更新 | matchedNodeIds 加入依赖 |
+| FPS 监控 | rAF+setState 每秒渲染 | ref 计数 + 500ms setState |
+| "r" 键 | 无 abort | useRef 保存旧 controller |
+| clearFilters | 不重置 galaxyCenterId | 加入重置 |
 
-### 3.1 聚类算法设计
-
-**当前问题**: 硬编码4个聚类，缺乏语义意义
-
-**新方案**: 基于标签和内容的动态聚类
-
-```python
-# 聚类算法逻辑（后端实现）
-1. 提取每个节点的标签集合和关键词
-2. 计算节点间相似度（Jaccard 系数 + 内容相似度）
-3. 使用社区检测算法（Louvain）自动分组
-4. 为每个聚类生成语义标签（出现最频繁的标签）
-5. 聚类颜色根据主题动态分配
-```
-
-### 3.2 相似度计算
-
-```typescript
-// 节点相似度 = w1 * 标签相似度 + w2 * 内容相似度 + w3 * 时间相似度
-interface SimilarityWeights {
-  tags: number;      // 标签相似度权重
-  content: number;   // 内容相似度权重
-  temporal: number;  // 时间相似度权重
-}
-
-// Jaccard 相似度（标签）
-function jaccardSimilarity(setA: Set<string>, setB: Set<string>): number {
-  const intersection = new Set([...setA].filter(x => setB.has(x)));
-  const union = new Set([...setA, ...setB]);
-  return intersection.size / union.size;
-}
-
-// 时间相似度（越接近越相似）
-function temporalSimilarity(dateA: Date, dateB: Date, maxDays: number = 30): number {
-  const diff = Math.abs(dateA.getTime() - dateB.getTime());
-  const days = diff / (1000 * 60 * 60 * 24);
-  return Math.max(0, 1 - days / maxDays);
-}
-```
-
-### 3.3 聚类可视化
+### 新文件结构
 
 ```
-使用凸包或包围盒展示聚类范围:
-  - 半透明填充色（透明度 0.1）
-  - 虚线边框（颜色为聚类主题色）
-  - 聚类标签显示在区域中心
-  - 悬停时显示聚类详情
+frontend/
+  lib/
+    graph-utils.ts              (529 行, 未变)
+    graph-echarts-options.ts    (新, ~280 行 — 3 个 ECharts option 纯函数)
+  components/graph/
+    GraphLegend.tsx             (新, ~70 行 — 底部图例)
+    ClusterPanel.tsx            (新, ~80 行 — 聚类侧边栏)
+    NodeDetailPanel.tsx         (新, ~190 行 — 选中节点详情)
+  app/graph/
+    page.tsx                    (762 行 — 仅保留状态/加载/事件/主框架)
 ```
 
----
-
-## 四、视觉设计系统
-
-### 4.1 节点设计
-
-```
-圆形节点:
-  - 大小: 12-40px (根据 energy + degree)
-  - 颜色: 根据聚类主题色
-  - 边框: 能量等级越高，边框越亮
-  - 图标: 可选显示类型图标
-
-节点状态:
-  - 默认: 不透明度 0.8
-  - 悬停: 放大 1.3x + 发光效果
-  - 选中: 边框脉冲动画
-  - 高亮: 不透明度 1.0
-  - 淡化: 不透明度 0.3
-```
-
-### 4.2 边的设计
-
-```
-边的视觉编码:
-  - 粗细: 关联强度 (0.5px - 6px)
-  - 颜色: 
-    * 蓝色 (#38bdf8) = 内容相似
-    * 绿色 (#34d399) = 标签重叠
-    * 橙色 (#fbbf24) = 时间相邻
-  - 样式:
-    * 实线 = 强关联 (>0.5)
-    * 虚线 = 弱关联 (<=0.5)
-  - 箭头: 可选显示方向（时间演化）
-```
-
-### 4.3 聚类区域
-
-```
-使用 ECharts custom series 绘制凸包:
-  - 半透明填充色
-  - 虚线边框
-  - 聚类标签显示在区域中心
-  - 支持折叠/展开
-```
-
----
-
-## 五、交互设计
-
-### 5.1 搜索与筛选
-
-```
-搜索框:
-  - 实时搜索节点标题
-  - 高亮匹配的节点
-  - 支持标签筛选（输入 # 触发标签建议）
-
-筛选器:
-  - 研究类型（深度研究/主题探索/领域映射）
-  - 能量等级（1-5星）
-  - 时间范围（最近7天/30天/90天/全部）
-  - 标签筛选（多选，支持搜索）
-  - 聚类筛选（勾选聚类显示/隐藏）
-```
-
-### 5.2 节点交互
-
-```
-悬停:
-  - 节点放大 + 发光效果
-  - 显示简要信息 tooltip
-  - 高亮相关边和节点（一度关联）
-
-点击:
-  - 选中节点
-  - 右侧面板显示详情
-  - 高亮一度关联
-
-双击:
-  - 聚焦到该节点（相机动画）
-  - 展开二度关联
-
-右键:
-  - 上下文菜单（查看详情/设为焦点/隐藏节点/复制链接）
-```
-
-### 5.3 视图控制
-
-```
-缩放: 
-  - 鼠标滚轮缩放
-  - 双击适应屏幕
-  - 按钮重置视角
-  
-拖拽: 
-  - 拖拽节点重新布局
-  - 拖拽空白区域平移视图
-  
-框选: 
-  - Shift + 拖拽框选多个节点
-  - 框选后可批量操作
-```
-
-### 5.4 键盘快捷键
-
-```
-空格 + 拖拽: 平移视图
-Ctrl/Cmd + 滚轮: 缩放
-Ctrl/Cmd + F: 聚焦搜索框
-Escape: 取消选中/关闭面板
-Delete: 删除选中节点（需确认）
-```
-
----
-
-## 六、技术实现方案
-
-### 6.1 技术栈
-
-```
-核心渲染:
-  - ECharts 5.4.3: 主渲染引擎（力导向图、时间线）
-  
-布局算法:
-  - d3-hierarchy: 用于树形/星系布局
-  - d3-force: 力导向图物理模拟
-  
-聚类算法:
-  - 后端实现 Louvain 社区检测
-  - 前端计算节点相似度
-  
-几何计算:
-  - @turf/turf: 用于计算凸包区域
-```
-
-### 6.2 数据结构
-
-```typescript
-// 图谱节点
-interface GraphNode {
-  id: number;
-  topic: string;
-  summary: string;
-  energy: number;
-  timestamp: string;
-  research_type: string;
-  tags: string[];
-  cluster_id: number;
-  x?: number;
-  y?: number;
-  degree: number;
-  neighbors?: number[];
-}
-
-// 图谱边
-interface GraphEdge {
-  source: number;
-  target: number;
-  weight: number;
-  type: 'content' | 'tags' | 'temporal';
-  heads?: {
-    content: number;
-    tags: number;
-    temporal: number;
-  };
-}
-
-// 聚类
-interface GraphCluster {
-  id: number;
-  label: string;
-  color: string;
-  nodes: number[];
-  center?: { x: number; y: number };
-  hull?: number[][]; // 凸包坐标
-}
-
-// 图谱数据
-interface EnhancedGraphData {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  clusters: GraphCluster[];
-  weights: { content: number; tags: number; temporal: number };
-  entry_count: number;
-}
-```
-
-### 6.3 组件结构
-
-```
-components/graph/
-├── GraphContainer.tsx      # 图谱容器（主组件）
-├── GraphToolbar.tsx        # 工具栏（搜索、筛选、视图切换）
-├── GraphSidebar.tsx        # 左侧面板（聚类列表、标签云）
-├── GraphDetailPanel.tsx    # 右侧面板（节点详情）
-├── GraphStatusBar.tsx      # 底部状态栏
-├── views/
-│   ├── ForceGraph.tsx      # 力导向图视图
-│   ├── TimelineGraph.tsx   # 时间线视图
-│   └── GalaxyGraph.tsx     # 星系图视图
-├── elements/
-│   ├── GraphNode.tsx       # 节点渲染
-│   ├── GraphEdge.tsx       # 边渲染
-│   └── ClusterHull.tsx     # 聚类区域渲染
-└── hooks/
-    ├── useGraphLayout.ts   # 布局计算
-    ├── useGraphFilter.ts   # 筛选逻辑
-    └── useGraphInteraction.ts # 交互处理
-```
-
-### 6.4 性能优化
-
-```
-1. 节点数量限制: 默认显示 top 100，支持加载更多
-2. 边的简化: 只显示权重 > 0.1 的边
-3. LOD (Level of Detail): 缩放级别不同时显示不同细节
-4. 视口裁剪: 只渲染可见区域的节点
-5. Web Worker: 布局和聚类计算在后台线程
-6. 数据分页: 大数据集分批加载
-```
-
----
-
-## 七、实施计划
-
-### Phase 1: 基础重构 (预计 2-3 天)
-
-**目标**: 重构图谱数据结构，实现三视图切换，优化视觉设计
-
-**任务清单**:
-- [ ] 1.1 定义新的数据结构（GraphNode, GraphEdge, GraphCluster）
-- [ ] 1.2 重构 API 响应类型，支持新的数据结构
-- [ ] 1.3 实现三视图切换组件（力导向图/时间线/星系图）
-- [ ] 1.4 优化力导向图参数（斥力、引力、边长）
-- [ ] 1.5 改进节点视觉设计（大小、颜色、状态）
-- [ ] 1.6 改进边的视觉设计（粗细、颜色、样式）
-- [ ] 1.7 实现视图切换动画过渡
-
-**验收标准**:
-- 三视图可以正常切换
-- 节点和边的视觉设计符合设计规范
-- 力导向图布局效果优于当前版本
-
-### Phase 2: 智能聚类 (预计 2 天)
-
-**目标**: 实现基于标签的相似度计算和社区检测，可视化聚类区域
-
-**任务清单**:
-- [ ] 2.1 后端实现节点相似度计算 API
-- [ ] 2.2 后端实现 Louvain 社区检测算法
-- [ ] 2.3 后端实现聚类标签自动生成
-- [ ] 2.4 前端实现聚类区域可视化（凸包）
-- [ ] 2.5 前端实现聚类列表面板
-- [ ] 2.6 实现聚类筛选（显示/隐藏特定聚类）
-- [ ] 2.7 实现聚类颜色动态分配
-
-**验收标准**:
-- 聚类结果具有语义意义
-- 聚类区域可视化清晰美观
-- 聚类筛选功能正常工作
-
-### Phase 3: 交互增强 (预计 2-3 天)
-
-**目标**: 实现搜索、筛选、时间线视图、节点详情等交互功能
-
-**任务清单**:
-- [ ] 3.1 实现搜索框（实时搜索、高亮匹配）
-- [ ] 3.2 实现筛选器（研究类型、能量等级、时间范围、标签）
-- [ ] 3.3 实现时间线视图
-- [ ] 3.4 实现星系图视图
-- [ ] 3.5 实现节点详情面板
-- [ ] 3.6 实现节点交互（悬停、点击、双击、右键）
-- [ ] 3.7 实现视图控制（缩放、平移、框选）
-- [ ] 3.8 实现键盘快捷键
-- [ ] 3.9 实现动画和过渡效果
-
-**验收标准**:
-- 搜索和筛选功能正常工作
-- 时间线视图清晰展示时间演化
-- 星系图视图支持多层展开
-- 所有交互流畅自然
-
-### Phase 4: 性能优化 (预计 1-2 天)
-
-**目标**: 优化大数据集性能，实现 LOD 和视口裁剪
-
-**任务清单**:
-- [ ] 4.1 实现节点数量限制和分页加载
-- [ ] 4.2 实现边的简化（权重阈值）
-- [ ] 4.3 实现 LOD（缩放级别细节控制）
-- [ ] 4.4 实现视口裁剪
-- [ ] 4.5 实现 Web Worker 后台计算
-- [ ] 4.6 内存管理和垃圾回收
-- [ ] 4.7 性能监控和调优
-
-**验收标准**:
-- 100+ 节点时流畅运行
-- 1000+ 节点时可正常使用
-- 内存使用合理，无内存泄漏
-
----
-
-## 八、API 变更
-
-### 8.1 新增 API 端点
-
-```
-GET /api/graph/enhanced
-  参数:
-    - top_k: 返回节点数量（默认100）
-    - min_weight: 最小边权重（默认0.1）
-    - clusters: 是否返回聚类信息（默认true）
-    - layout: 布局类型（force/timeline/galaxy）
-  
-  返回: EnhancedGraphData
-
-GET /api/graph/clusters
-  返回: GraphCluster[]
-
-POST /api/graph/similarity
-  参数:
-    - node_ids: number[]
-  
-  返回: 相似度矩阵
-
-GET /api/graph/timeline
-  参数:
-    - start_date: 开始日期
-    - end_date: 结束日期
-  
-  返回: 按时间排序的节点和边
-```
-
-### 8.2 修改现有 API
-
-```
-GET /api/graph/attention
-  新增参数:
-    - clusters: 是否返回聚类信息
-    - layout: 布局类型
-  
-  返回结构增加:
-    - clusters: GraphCluster[]
-    - hull: 聚类凸包坐标
-```
-
----
-
-## 九、风险与缓解
-
-### 9.1 技术风险
-
-| 风险 | 影响 | 缓解措施 |
-|------|------|----------|
-| ECharts 性能瓶颈 | 大数据集卡顿 | 实现 LOD、视口裁剪、数据分页 |
-| 聚类算法效果不佳 | 聚类结果无意义 | 调整算法参数，支持手动调整 |
-| 布局算法收敛慢 | 等待时间长 | Web Worker 后台计算，渐进式渲染 |
-| 移动端兼容性 | 交互体验差 | 简化移动端功能，优先桌面端 |
-
-### 9.2 时间风险
-
-| 风险 | 影响 | 缓解措施 |
-|------|------|----------|
-| 功能范围过大 | 延期交付 | 分阶段实施，优先核心功能 |
-| 技术复杂度超预期 | 开发困难 | 提前调研，准备备选方案 |
-| 测试不充分 | 上线后问题 | 每阶段完成后进行回归测试 |
-
----
-
-## 十、成功指标
-
-### 10.1 功能指标
-
-- [ ] 支持 3 种视图模式（力导向图、时间线、星系图）
-- [ ] 支持智能聚类，聚类结果具有语义意义
-- [ ] 支持多维度筛选（研究类型、能量等级、时间范围、标签）
-- [ ] 支持实时搜索和高亮
-- [ ] 支持节点详情展示
-- [ ] 支持键盘快捷键
-
-### 10.2 性能指标
-
-- [ ] 100 节点时 FPS > 50
-- [ ] 500 节点时 FPS > 30
-- [ ] 1000 节点时可正常使用
-- [ ] 布局计算时间 < 2 秒（100 节点）
-- [ ] 内存使用 < 100MB（500 节点）
-
-### 10.3 用户体验指标
-
-- [ ] 视图切换流畅，动画时间 < 500ms
-- [ ] 搜索响应时间 < 200ms
-- [ ] 筛选响应时间 < 300ms
-- [ ] 节点悬停响应时间 < 100ms
-
----
-
-## 十一、参考资料
-
-- [ECharts Graph Series Documentation](https://echarts.apache.org/zh/option.html#series-graph)
-- [D3.js Force Layout](https://d3js.org/d3-force)
-- [Louvain Community Detection](https://en.wikipedia.org/wiki/Louvain_method)
-- [Jaccard Index](https://en.wikipedia.org/wiki/Jaccard_index)
-- [Convex Hull Algorithm](https://en.wikipedia.org/wiki/Convex_hull_algorithms)
-
----
-
-**文档版本**: v1.0  
-**创建时间**: 2026-06-28  
-**最后更新**: 2026-06-28  
-**负责人**: Cline
+### 未完成项
+
+- **工具栏内联样式** — 涉及交互太多，暂时保留 inline style 在 page.tsx
+- **图例重叠** — 左右 `position: absolute` 在窄屏仍可能重叠
+- **后端 tags 缺失** — 依赖后端改动，未在此次 PR 范围内
+- **缓存失效** — `api.ts` 需要侵入式改动，留待后续
+- **`< 400 行` 目标** — 工具栏占 ~270 行内联样式，优先保留功能正确性
+
+## 验收标准
+
+1. ✅ 所有现有功能正常 — 构建通过，零错误
+2. ⚠️ `page.tsx` 762 行（目标 400，工具栏内联样式占 ~270 行）
+3. ✅ 搜索即时高亮 — `matchedNodeIds` 加入 useEffect 依赖
+4. ✅ ECharts 增量更新 — init 一次 + setOption(true)
+5. ✅ Galaxy 布局稳定 — 替换 Math.random() 为伪随机
+6. ✅ 清除筛选重置所有状态 — 加入 galaxyCenterId 重置
+7. ✅ CTRL+F 聚焦搜索
+8. ✅ "r" 键 — 使用 useRef 存储 AbortController

@@ -28,6 +28,57 @@ def get_graph_data():
         return {"nodes": nodes, "links": links}
 
 
+def _compute_triggers(entries, timestamps, content_sim, days_limit=14, sim_threshold=0.4):
+    triggers = []
+    for i in range(len(entries)):
+        for j in range(len(entries)):
+            if i == j:
+                continue
+            if entries[i]['timestamp'] >= entries[j]['timestamp']:
+                continue
+            day_diff = abs((timestamps[j] - timestamps[i]).days)
+            if day_diff > days_limit:
+                continue
+            sim = content_sim[i][j]
+            if sim < sim_threshold:
+                continue
+            triggers.append({
+                "source": entries[i]['id'],
+                "target": entries[j]['id'],
+                "weight": round(sim, 4),
+                "day_diff": day_diff,
+            })
+    return triggers
+
+
+def _detect_surges(entries, timestamps):
+    surge_ids = set()
+    for i, e in enumerate(entries):
+        nearby = [j for j in range(len(entries))
+                  if abs((timestamps[j] - timestamps[i]).days) <= 7]
+        avg = sum(entries[j]['energy_level'] for j in nearby) / len(nearby)
+        if e['energy_level'] >= 4 and (e['energy_level'] - avg) >= 2:
+            surge_ids.add(e['id'])
+    return surge_ids
+
+
+def _detect_jumps(entries):
+    jumps = []
+    sorted_indices = sorted(range(len(entries)), key=lambda i: entries[i]['timestamp'])
+    for k in range(len(sorted_indices) - 1):
+        i, j = sorted_indices[k], sorted_indices[k + 1]
+        a_type = entries[i].get('research_type') or FALLBACK_RESEARCH_TYPE
+        b_type = entries[j].get('research_type') or FALLBACK_RESEARCH_TYPE
+        if a_type != b_type:
+            jumps.append({
+                "source": entries[i]['id'],
+                "target": entries[j]['id'],
+                "from_type": a_type,
+                "to_type": b_type,
+            })
+    return jumps
+
+
 @router.get("/api/graph/attention")
 def get_attention_graph(
     w_content: float = 0.6,
@@ -40,7 +91,10 @@ def get_attention_graph(
         entries = entries_for_attention(conn, research_type)
 
     if len(entries) < 2:
-        return {"nodes": [], "edges": [], "clusters": [], "weights": {"content": w_content, "tags": w_tags, "temporal": w_temporal}}
+        return {
+            "nodes": [], "edges": [], "clusters": [], "triggers": [], "jumps": [],
+            "weights": {"content": w_content, "tags": w_tags, "temporal": w_temporal},
+        }
 
     n = len(entries)
 
@@ -49,10 +103,10 @@ def get_attention_graph(
         emb = compute_embeddings(texts)
         content_sim = cosine_sim_matrix(emb)
     except Exception:
-        content_sim = [[0.0]*n for _ in range(n)]
+        content_sim = [[0.0] * n for _ in range(n)]
 
     tag_sets = [set(e.get('custom_tags') or []) for e in entries]
-    tag_sim = [[0.0]*n for _ in range(n)]
+    tag_sim = [[0.0] * n for _ in range(n)]
     for i in range(n):
         for j in range(n):
             a, b = tag_sets[i], tag_sets[j]
@@ -72,13 +126,13 @@ def get_attention_graph(
 
     min_ts = min(timestamps)
     max_diff = (max(timestamps) - min_ts).days or 1
-    temporal_sim = [[0.0]*n for _ in range(n)]
+    temporal_sim = [[0.0] * n for _ in range(n)]
     for i in range(n):
         for j in range(n):
             diff_days = abs((timestamps[i] - timestamps[j]).days)
             temporal_sim[i][j] = 1.0 - (diff_days / max_diff)
 
-    attn = [[0.0]*n for _ in range(n)]
+    attn = [[0.0] * n for _ in range(n)]
     for i in range(n):
         for j in range(n):
             attn[i][j] = w_content * content_sim[i][j] + w_tags * tag_sim[i][j] + w_temporal * temporal_sim[i][j]
@@ -112,7 +166,8 @@ def get_attention_graph(
     for e in edges:
         degree[e['source']] += 1
         degree[e['target']] += 1
-    max_deg = max(degree.values()) if degree else 1
+
+    surges = _detect_surges(entries, timestamps)
 
     nodes = []
     for i, e in enumerate(entries):
@@ -121,6 +176,7 @@ def get_attention_graph(
             "id": e['id'],
             "topic": e['topic'],
             "summary": (e.get('summary') or '')[:100],
+            "full_summary": e.get('summary') or '',
             "energy": e['energy_level'],
             "aha": bool(e['aha_moment']),
             "research_type": e.get('research_type') or FALLBACK_RESEARCH_TYPE,
@@ -129,9 +185,14 @@ def get_attention_graph(
             "timestamp": e['timestamp'],
             "degree": degree.get(e['id'], 0),
             "tag_count": len(e.get('custom_tags') or []),
+            "tags": e.get('custom_tags') or [],
+            "is_surge": e['id'] in surges,
         })
 
     edges.sort(key=lambda x: -x['weight'])
+
+    triggers = _compute_triggers(entries, timestamps, content_sim)
+    jumps = _detect_jumps(entries)
 
     cluster_list = []
     for i in range(n_clusters):
@@ -140,6 +201,8 @@ def get_attention_graph(
     result = {
         "nodes": nodes,
         "edges": edges,
+        "triggers": triggers,
+        "jumps": jumps,
         "clusters": cluster_list,
         "weights": {"content": w_content, "tags": w_tags, "temporal": w_temporal},
         "entry_count": n,
