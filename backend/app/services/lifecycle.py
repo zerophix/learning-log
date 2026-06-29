@@ -5,9 +5,9 @@ import time
 import subprocess
 import requests
 
-from config import PROJECT_DIR, BACKEND_URL, BACKEND_PORT, RUNTIME_DIR
+from app.core.config import PROJECT_DIR, BACKEND_URL, BACKEND_PORT, RUNTIME_DIR
 
-BACKEND_SCRIPT = os.path.join(PROJECT_DIR, "backend", "main.py")
+BACKEND_SCRIPT = os.path.join(PROJECT_DIR, "backend", "app", "main.py")
 VENV_PYTHON = os.path.join(PROJECT_DIR, "venv", "bin", "python3")
 PID_FILE = os.path.join(RUNTIME_DIR, "backend.pid")
 PORT_FILE = os.path.join(RUNTIME_DIR, "backend.port")

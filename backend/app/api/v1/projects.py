@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
-from utils.db_utils import db_session, row_to_dict, parse_entry_rows
+from app.utils.db_utils import db_session, row_to_dict, parse_entry_rows
 
 router = APIRouter()
 

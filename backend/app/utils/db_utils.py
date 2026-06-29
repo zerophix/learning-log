@@ -2,7 +2,7 @@ import json
 import sqlite3
 from contextlib import contextmanager
 from fastapi import HTTPException
-from db import DB_PATH
+from app.db import DB_PATH
 
 
 def get_db():

@@ -10,9 +10,9 @@ import sys
 from typing import Optional, List
 from mcp.server import Server
 from mcp.types import Tool, TextContent
-from services.lifecycle import ensure, save_entry
-from services.ai_service import analyze, get_default_entry
-from config import PROJECT_DIR, BACKEND_URL, MCP_SSE_PORT
+from app.services.lifecycle import ensure, save_entry
+from app.services.ai_service import analyze, get_default_entry
+from app.core.config import PROJECT_DIR, BACKEND_URL, MCP_SSE_PORT
 
 from dotenv import load_dotenv
 

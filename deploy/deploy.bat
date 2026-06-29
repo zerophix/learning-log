@@ -18,13 +18,13 @@ echo.
 REM Create directory structure
 echo Creating directory structure...
 if not exist "%TARGET_DIR%\backend" mkdir "%TARGET_DIR%\backend"
+if not exist "%TARGET_DIR%\backend\app" mkdir "%TARGET_DIR%\backend\app"
 if not exist "%TARGET_DIR%\data" mkdir "%TARGET_DIR%\data"
 if not exist "%TARGET_DIR%\frontend" mkdir "%TARGET_DIR%\frontend"
 
 REM Copy backend files
 echo Copying backend files...
-if exist "backend\db.py" copy "backend\db.py" "%TARGET_DIR%\backend\" >nul
-if exist "backend\main.py" copy "backend\main.py" "%TARGET_DIR%\backend\" >nul
+if exist "backend\app" xcopy /E /I /Q "backend\app" "%TARGET_DIR%\backend\app" >nul
 if exist "backend\requirements.txt" copy "backend\requirements.txt" "%TARGET_DIR%\backend\" >nul
 
 REM Create requirements.txt if not exists
@@ -61,7 +61,7 @@ echo Dependencies installed
 REM Initialize database
 echo.
 echo Initializing database...
-python db.py
+python -c "from app.db import init_db; init_db()"
 
 REM Start server
 echo.
@@ -72,4 +72,4 @@ echo.
 echo Press Ctrl+C to stop the server
 echo.
 
-python main.py
+cd "%TARGET_DIR%\backend" && python -m app.main

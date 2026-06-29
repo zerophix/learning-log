@@ -2,7 +2,7 @@ import re
 import hashlib
 import uuid
 from collections import Counter
-from db import DB_PATH
+from app.db import DB_PATH
 
 try:
     import jieba

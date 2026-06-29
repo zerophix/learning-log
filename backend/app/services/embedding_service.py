@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-from utils.text_processing import STOP_WORDS, ENGLISH_STOP
+from app.utils.text_processing import STOP_WORDS, ENGLISH_STOP
 
 _EMBEDDING_MODEL = None
 

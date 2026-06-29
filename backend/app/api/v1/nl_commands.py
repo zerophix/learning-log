@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
-from utils.db_utils import get_db, row_to_dict
-from models import NLCommandCreate
+from app.utils.db_utils import get_db, row_to_dict
+from app.models import NLCommandCreate
 
 router = APIRouter()
 

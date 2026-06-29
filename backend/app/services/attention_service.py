@@ -1,5 +1,5 @@
 import json
-from utils.db_utils import row_to_dict
+from app.utils.db_utils import row_to_dict
 
 
 def _parse_entry(entry):

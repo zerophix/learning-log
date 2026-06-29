@@ -128,7 +128,7 @@ Content-Type: application/json
 ## 目录结构
 
 ```
-backend/        FastAPI 服务 (main.py → models/ api/v1/ services/ db/ utils/)
+backend/        FastAPI 服务 (app/main.py → app/{core,api,db,models,services,utils})
 frontend/       Next.js 14 时间线 UI (pages: / /feed /graph)
 scripts/tools/  可复用工具 (auto_record, context_manager...)
 scripts/seeds/  种子数据脚本
@@ -147,7 +147,7 @@ docs/           设计文档
 
 ## 约束
 
-- 后端由 launchd 持久化运行（`learnlog service install`），关闭 IDE/终端不影响
+- 后端由 `app/main.py` 提供 FastAPI app，`python3 -m app.main` 启动
 - MCP Server 通过 `mcp_server.py` 独占提供（已移除旧 FastApiMCP 自动挂载）
 - 数据库在 `data/learning-log.db`，不要手动修改
 - 标签遵循反向域名: `cn.dolphinmind.learning.log.tag.{category}.{name}`

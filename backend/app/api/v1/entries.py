@@ -5,12 +5,12 @@ import hashlib
 import sqlite3
 from datetime import datetime, timedelta
 from collections import Counter
-from utils.db_utils import get_db, db_session, row_to_dict, parse_entry_rows
-from utils.text_processing import extract_summary, auto_extract_tags, ensure_tags
-from services.attention_service import infer_research_type
-from services.embedding_service import compute_embeddings, to_python
-from utils.date_utils import get_week_dates
-from models import LearningEntryCreate, LearningEntryUpdate, BatchEntryRequest
+from app.utils.db_utils import get_db, db_session, row_to_dict, parse_entry_rows
+from app.utils.text_processing import extract_summary, auto_extract_tags, ensure_tags
+from app.services.attention_service import infer_research_type
+from app.services.embedding_service import compute_embeddings, to_python
+from app.utils.date_utils import get_week_dates
+from app.models import LearningEntryCreate, LearningEntryUpdate, BatchEntryRequest
 
 router = APIRouter()
 

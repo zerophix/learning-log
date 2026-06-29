@@ -5,9 +5,9 @@ Re-exports DB_PATH and init_db for backward-compatible imports.
 import os
 import sqlite3
 
-from config import DB_PATH
-from db.schema import create_tables
-from db.migrations import run_migrations
+from app.core.config import DB_PATH
+from app.db.schema import create_tables
+from app.db.migrations import run_migrations
 
 
 def init_db():

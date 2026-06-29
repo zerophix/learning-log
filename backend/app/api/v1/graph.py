@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 from collections import Counter
 from datetime import datetime
-from utils.db_utils import db_session, row_to_dict
-from services.attention_service import entries_for_attention
-from services.embedding_service import compute_embeddings, cosine_sim_matrix, to_python
-from services.clustering_service import louvain_community_detection, generate_cluster_labels
+from app.utils.db_utils import db_session, row_to_dict
+from app.services.attention_service import entries_for_attention
+from app.services.embedding_service import compute_embeddings, cosine_sim_matrix, to_python
+from app.services.clustering_service import louvain_community_detection, generate_cluster_labels
 
 router = APIRouter()
 

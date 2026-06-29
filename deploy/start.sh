@@ -55,7 +55,7 @@ FRONTEND_PID=$!
 echo "🔧 启动后端 (端口 8002)..."
 cd "$SCRIPT_DIR/backend"
 source "$SCRIPT_DIR/venv/bin/activate"
-python3 main.py &
+python3 app/main.py &
 BACKEND_PID=$!
 
 sleep 3

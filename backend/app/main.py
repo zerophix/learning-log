@@ -5,9 +5,9 @@ FastAPI backend with auto-growing tag system + attention graph
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
-from db import init_db
-from config import DB_PATH
-from services.embedding_service import get_embedding_model
+from app.db import init_db
+from app.core.config import DB_PATH
+from app.services.embedding_service import get_embedding_model
 
 app = FastAPI(title="Learning Log API", version="2.0.0")
 
@@ -27,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from api import router
+from app.api import router
 
 app.include_router(router)
 

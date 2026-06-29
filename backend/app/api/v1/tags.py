@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
 import sqlite3
-from utils.db_utils import get_db, row_to_dict, parse_entry_rows, db_session
-from models import TagCreate, TagLinkCreate
+from app.utils.db_utils import get_db, row_to_dict, parse_entry_rows, db_session
+from app.models import TagCreate, TagLinkCreate
 
 router = APIRouter()
 

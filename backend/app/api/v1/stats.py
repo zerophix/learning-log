@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from utils.db_utils import db_session
+from app.utils.db_utils import db_session
 
 router = APIRouter()
 
