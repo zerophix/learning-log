@@ -48,6 +48,17 @@ docs/
 
 | 文档 | 用途 |
 |------|------|
-| `CLAUDE.md` | AI 协作指南（MCP 工具、命令、约束） |
+| `CLAUDE.md` | AI 协作指南（MCP 工具、命令、约束、AI 模型） |
 | `README.md` | 项目介绍 + 快速开始 |
-| `.claude/skills/` | 5 个 Claude Code Skill（记录/灵感/状态/命令/服务） |
+| `backend/.env` | AI 模型配置（Ollama URL + 模型名） |
+| `.claude/skills/` | Claude Code 中文短命令 Skill（5 个） |
+| `~/.config/opencode/skills/` | OpenCode 全局 Skill（4 个） |
+
+## 关键端口
+
+| 端口 | 服务 | 用途 |
+|------|------|------|
+| 8002 | FastAPI Backend | REST API + 数据库 |
+| 3000 | Next.js Frontend | 网页界面 |
+| 8010 | MCP SSE Server | AI 代理 MCP 接入 |
+| 11434 | Ollama | 本地 AI 推理 |

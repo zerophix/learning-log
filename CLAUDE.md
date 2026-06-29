@@ -7,10 +7,15 @@
 ## 架构
 
 ```
-FastAPI :8002  →  SQLite (data/learning-log.db)
-Next.js :3000  →  时间线 / ECharts图谱 / Feed筛选
-MCP Server     →  5 个工具: capture_learning, batch_capture, learning_log_status,
-                   deep_record, quick_capture
+用户层:  Claude Code / Cline / OpenCode / 浏览器 :3000
+              │ MCP / HTTP
+服务层:  MCP SSE Server :8010  ← 任何 AI 代理均可接入
+         FastAPI Backend :8002
+         Next.js Frontend :3000
+              │ Ollama API
+AI 层:   Ollama (qwen3-coder:30b / 本地模型)
+              │
+数据层:  SQLite → data/learning-log.db
 ```
 
 ## 多 AI 代理接入
@@ -22,7 +27,7 @@ MCP Server 支持 **两种传输模式**，覆盖所有主流 AI 编程代理：
 | STDIO | 标准输入输出 | Claude Code, Cursor | `.mcp.json` 或 IDE 设置 |
 | SSE | HTTP 服务 | **任意** MCP 客户端 | `{ "type": "sse", "url": "..." }` |
 
-### 方式 1：STDIO（Claude Code 默认）
+### 方式 1：STDIO（Claude Code / Cursor 默认）
 
 项目根目录 `.mcp.json` 已配置，Claude Code 自动加载：
 ```json
@@ -43,15 +48,18 @@ MCP Server 支持 **两种传输模式**，覆盖所有主流 AI 编程代理：
 
 ```bash
 # 安装 MCP 持久化服务（开机自启）
-llmcp install
+python3 scripts/tools/mcp_manager.py install
 
 # 查看状态
-llmcp status
+python3 scripts/tools/mcp_manager.py status
+
+# 卸载
+python3 scripts/tools/mcp_manager.py uninstall
 ```
 
-安装后，在其他 AI 代理中配置：
+安装后，服务运行在 `http://localhost:8010/sse`。在其他 AI 代理中配置：
 
-**Cline (VS Code)** — 在 `~/.config/cline/mcp_settings.json` 或 VS Code 设置中添加：
+**Cline (VS Code)** — 在 `~/.config/cline/mcp_settings.json` 中添加：
 ```json
 {
   "mcpServers": {
@@ -85,7 +93,6 @@ llmcp status
 ```
 
 > 💡 MCP SSE 服务随系统启动自动运行，关闭 IDE/终端不影响。
-> 管理命令: `llmcp install|status|uninstall|start`
 
 ### 方式 3：HTTP API（通用 — 任何 AI 均可）
 
@@ -131,28 +138,50 @@ Content-Type: application/json
 ## 目录结构
 
 ```
-backend/        FastAPI 服务 (app/main.py → app/{core,api,db,models,services,utils})
-                protocols/mcp.py MCP 协议层, scripts/ CLI 工具
+backend/        FastAPI + MCP 服务
+  app/           核心: main.py / core/ / api/ / services/ / db/ / models/ / utils/
+  protocols/     MCP 协议层 (mcp.py)
+  scripts/       CLI 工具 (auto_capture, quick_record...)
+  .env           AI 模型配置 (Ollama URL + 模型名)
 frontend/       Next.js 14 时间线 UI (pages: / /feed /graph)
-deploy/         部署脚本
-docs/           设计文档（分类存放）
-  architecture/  系统架构全景
-  backend/       后端设计系统
-  frontend/      前端设计系统
-  graph/         图谱架构 + AI 协作能力
-  guide/         复现指南 + 接入配置
-  assets/        文档配图（PNG）
-scripts/        迁移脚本、种子数据、adhoc 工具
+                public/logo.svg  SVG Logo
+deploy/         launchd plist + 启动脚本
+docs/           设计文档（分类）
+  architecture/  architecture/ backend/ frontend/ graph/ guide/ assets/
+scripts/        迁移脚本、种子数据、adhoc 工具、MCP 管理
 install/        Shell 集成（learnlog CLI 源文件）
-~/.config/opencode/skills/ Skills (/记录 /状态 /命令)
+.claude/skills/ Claude Code Skill（中文短命令）
 ```
+
+## AI 模型配置
+
+AI 分析服务使用本地 Ollama，配置在 `backend/.env`：
+
+```env
+AI_API_URL=http://localhost:11434/api/generate
+AI_MODEL=qwen3-coder:30b          # 本地 Ollama 模型
+```
+
+可用模型查看：`curl http://localhost:11434/api/tags`
 
 ## Skills
 
-自定义 Skill 在全局目录 `~/.config/opencode/skills/`:
-- `/记录` — **统一记录技能**（三级深度：L1 Quick 灵感 · L2 Phase 阶段 · L3 Deep 沉淀）。标题格式 `{领域}: {核心动作/变化}`。结论先行，图胜于文。
-- `/状态` — Learning Log 系统状态
+### OpenCode Skills（全局目录）
+
+`~/.config/opencode/skills/` 下有 5 个 Skill:
+- `learnlog-record` — 深度知识沉淀
+- `learnlog-status` — 系统状态查询
+- `learnlog-commands` — 命令列表
+- `web-ai` — Web AI 桥接查询
+
+### Claude Code Skills（项目内）
+
+`.claude/skills/` 下有 5 个 Skill（中文短命令）:
+- `/记录` — 统一记录（三级深度：L1 灵感 / L2 阶段 / L3 沉淀）
+- `/状态` — 系统状态
+- `/灵感` — 快速顿悟捕获
 - `/命令` — 列出所有命令
+- `/服务` — 后台服务管理
 
 ### 自动阶段记录规则
 
@@ -168,7 +197,9 @@ install/        Shell 集成（learnlog CLI 源文件）
 
 - 后端由 `app/main.py` 提供 FastAPI app，`cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8002` 启动
 - 启动环境变量需要 `PYTHONUNBUFFERED=1` 否则后台进程会卡住
+- AI 服务配置在 `backend/.env`，模型需与本地 Ollama 已安装模型一致
 - MCP Server 通过 `mcp_server.py` 独占提供（已移除旧 FastApiMCP 自动挂载）
+- MCP SSE 服务由 `deploy/run-mcp.sh` 启动，管理命令: `python3 scripts/tools/mcp_manager.py install|status|uninstall`
 - 数据库在 `data/learning-log.db`，不要手动修改
 - 标签遵循反向域名: `cn.dolphinmind.learning.log.tag.{category}.{name}`
 - API 文档: http://localhost:8002/docs
