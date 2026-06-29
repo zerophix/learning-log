@@ -2,7 +2,7 @@
 
 从 AI 对话到结构化知识图谱的完整闭环。
 
-> 设计文档: `docs/ARCHITECTURE.md` · `docs/BACKEND.md` · `docs/FRONTEND.md` · `docs/GRAPH.md` · `docs/AI-CAPABILITIES.md` · `docs/REPRODUCE.md`
+> 设计文档: `docs/ARCHITECTURE.md` · `docs/BACKEND.md` · `docs/FRONTEND.md` · `docs/GRAPH.md` · `docs/AI-CAPABILITIES.md` · `docs/REPRODUCE.md` · `docs/WEB-AI-BRIDGE.md`
 
 ## 架构
 
@@ -158,7 +158,8 @@ docs/           设计文档
 
 ## 约束
 
-- 后端由 `app/main.py` 提供 FastAPI app，`python3 -m app.main` 启动
+- 后端由 `app/main.py` 提供 FastAPI app，`cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8002` 启动
+- 启动环境变量需要 `PYTHONUNBUFFERED=1` 否则后台进程会卡住
 - MCP Server 通过 `mcp_server.py` 独占提供（已移除旧 FastApiMCP 自动挂载）
 - 数据库在 `data/learning-log.db`，不要手动修改
 - 标签遵循反向域名: `cn.dolphinmind.learning.log.tag.{category}.{name}`

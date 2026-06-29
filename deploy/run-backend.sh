@@ -12,4 +12,5 @@ if [ ! -f "$VENV_PYTHON" ]; then
 fi
 
 cd "$PROJECT_DIR/backend"
+export PYTHONUNBUFFERED=1
 exec "$VENV_PYTHON" -m uvicorn app.main:app --host 0.0.0.0 --port "${LEARNLOG_PORT:-8002}"

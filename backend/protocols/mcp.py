@@ -33,7 +33,7 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name="capture_learning",
-            description="自动捕获并分析学习内容，提取关键信息后保存到 Learning Log 知识库。AI 可在对话中主动调用此工具记录有价值的洞察。",
+            description="自动分析学习内容并记录 (L2 Phase)。AI 提取关键信息后保存。适用于日常对话中捕获知识片段。",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -52,7 +52,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="batch_capture",
-            description="批量处理多条学习内容并保存",
+            description="批量处理多条学习内容并保存 (L2 Phase)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -75,20 +75,20 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="deep_record",
-            description="深度知识沉淀。将 AI 已在对话中完成的完整分析内容直接保存。内容格式：一句话结论 + 系统全景(Mermaid) + Why(第一性原理) + 架构与流程 + 关键决策(对比表) + STAR+迁移。全部放入 insight 字段，mermaid 代码块(```mermaid)放置于对应章节。等同于 /记录 skill。",
+            description="深度知识沉淀 (L3 Deep)。等同于 /记录。格式必需：结论 + 图景(Mermaid) + Why(第一性原理) + 架构与流程(ASCII) + 关键决策(对比表) + STAR+迁移。≥800字。全部放入 insight，mermaid 代码块置于对应章节。",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "topic": {"type": "string", "description": "学习主题（简短标题，10字以内）"},
-                    "insight": {"type": "string", "description": "协议对齐格式全文（≥1200字），包含：一句话结论、系统全景(Mermaid+ASCII)、Why(第一性原理)、架构与流程(ASCII)、关键决策(对比表)、STAR+迁移"},
+                    "topic": {"type": "string", "description": "主题 ({领域}: {核心变化})"},
+                    "insight": {"type": "string", "description": "L3 格式全文（≥800字）：结论 + 图景(Mermaid) + Why(第一性原理) + 架构与流程(ASCII) + 关键决策(对比表) + STAR+迁移模式"},
                     "tags": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "标签列表（3-5个关键词）"
+                        "description": "标签（3-5个）"
                     },
                     "energy": {
                         "type": "integer",
-                        "description": "精力消耗 1-5",
+                        "description": "精力 1-5",
                         "default": 5
                     },
                     "source": {
@@ -102,12 +102,12 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="quick_capture",
-            description="快速捕获顿悟/灵感。自动标记 energy=5 和 aha=true。内容完整展开后全部放入 insight。等同于 /灵感 skill。",
+            description="快速捕获灵感/顿悟 (L1 Quick)。等同于 /灵感。格式：结论 + 核心洞察 + 类比 + 应用场景 + 可迁移模式。200-500字。自动 energy=5, aha=true。",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "topic": {"type": "string", "description": "灵感/洞察主题"},
-                    "insight": {"type": "string", "description": "顿悟内容（完整展开，≥500字，含核心洞察+类比+应用场景+可迁移模式）"},
+                    "topic": {"type": "string", "description": "灵感主题 ({领域}: {核心洞察})"},
+                    "insight": {"type": "string", "description": "L1 格式（200-500字）：结论 + 核心洞察 + 类比 + 应用场景 + 可迁移模式"},
                     "source": {
                         "type": "string",
                         "description": "来源",

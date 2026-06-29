@@ -3,22 +3,11 @@
 # 任何 AI 代理提交后自动触发。后端离线时静默跳过。
 
 set +e
-LEARNLOG="$HOME/.local/bin/learnlog"
 BACKEND_URL="http://localhost:8002/api/stats"
-
-# 后端不在线则静默退出
 curl -sf "$BACKEND_URL" >/dev/null 2>&1 || exit 0
 
-MSG=$(git log -1 --format="%s" 2>/dev/null)
-FILES=$(git diff-tree --no-commit-id -r --name-only HEAD 2>/dev/null)
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-[ -z "$MSG" ] && exit 0
+REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null)"
+[ -z "$REPO_DIR" ] && exit 0
 
-# 只用 commit subject + 文件列表（不读 body 避免编码问题）
-CONTENT="## 完成内容
-$MSG（分支: $BRANCH）
-
-## 文件变更
-$(echo "$FILES" | sed 's/^/- /' | head -20)"
-
-echo "$CONTENT" | "$LEARNLOG" record "阶段: $MSG" --pipe --energy 3 --type topic-exploration 2>/dev/null || true
+# 全部在 Python 中完成，绕开 bash 编码陷阱
+"$HOME/.local/bin/learnlog" _commit-hook "$REPO_DIR" 2>/dev/null || true
