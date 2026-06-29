@@ -1,6 +1,8 @@
 # Learning Log 前端设计系统 · 完整参考文档
 
 > **目标读者**：AI / 开发者。本文档完整描述前端的设计语言、组件体系、样式规范和技术栈，足以让 AI 据此 1:1 复现整个前端。
+>
+> 前置阅读: `ARCHITECTURE.md` · 复现步骤: `REPRODUCE.md` · 后端: `BACKEND.md` · 图谱: `GRAPH.md`
 
 ---
 
@@ -1067,6 +1069,27 @@ module.exports = nextConfig;
 11. **业务组件**: EntryCard → EntryDetail → EntryDetailContent → EntryForm → EntryTags → DeleteConfirm → FilterBar → StatsPanel → PageHeader → Navigation → TimelineView
 12. **页面组装**: `app/layout.tsx` → `app/page.tsx` → `app/graph/page.tsx` → `app/feed/page.tsx`
 13. **启动（生产模式）**: `npm run build && npm start -p 3000`，确保后端在 `localhost:8002` 运行
+
+---
+
+## 附录 A: 已修复的架构/代码问题
+
+以下问题在代码审查中被发现并修复：
+
+| 优先级 | 问题 | 修复说明 |
+|--------|------|----------|
+| P0 | API Base URL 硬编码 | 改为 `NEXT_PUBLIC_API_URL` 环境变量 |
+| P0 | `aha_moment` 类型冲突 (number vs boolean) | 统一为 boolean，API 响应层做序列化 |
+| P0 | Graph `useEffect` 内存泄漏 | 移除 `import('echarts')` 动态加载，useRef 持有实例 |
+| P0 | JS hover 全部用 onMouseEnter/Leave | 替换为 CSS Module `:hover` 伪类 |
+| P1 | `any` 类型泛滥 | 补充具体接口定义 |
+| P1 | 无 Design Token 系统 | 建立 `--spacing-*` `--radius-*` `--font-*` CSS 变量 |
+| P1 | 无骨架屏 | 创建 `Skeleton` 组件替代文字加载态 |
+| P1 | N+1 查询 + 无缓存 | 后端增加批量接口，前端无 SWR/React Query |
+| P2 | 无响应式设计 | 添加媒体查询断点，侧栏全屏覆盖 |
+| P2 | EntryDetail 职责过重 | 拆分 EntryDetailContent/FormField |
+| P2 | 清理废弃 props、类型位置错误、动态 import 类型 | 全部修正 |
+| P3 | CSS 文件空洞、字号体系杂乱、固定暗色主题等 | 归类到 CSS 变量 + 层级规范 |
 
 ---
 

@@ -2,6 +2,8 @@
 
 从 AI 对话到结构化知识图谱的完整闭环。
 
+> 设计文档: `docs/ARCHITECTURE.md` · `docs/BACKEND.md` · `docs/FRONTEND.md` · `docs/GRAPH.md` · `docs/AI-CAPABILITIES.md` · `docs/REPRODUCE.md`
+
 ## 架构
 
 ```

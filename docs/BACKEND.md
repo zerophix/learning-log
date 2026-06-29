@@ -1,6 +1,8 @@
 # Learning Log 后端设计系统 · 完整参考文档
 
 > **目标读者**：AI / 开发者。本文档完整描述后端的技术架构、数据库设计、API 规范、MCP 服务和脚本工具生态，足以让 AI 据此 1:1 复现整个后端。
+>
+> 前置阅读: `ARCHITECTURE.md` · 复现步骤: `REPRODUCE.md` · 前端: `FRONTEND.md` · 图谱: `GRAPH.md`
 
 ---
 
@@ -1188,6 +1190,34 @@ AI_MODEL=qwen2.5
 6. **启动后端**: `python3 -m app.main` → 验证 `curl http://localhost:8002/api/stats`
 7. **启动 MCP** (可选): `python3 mcp_server.py`
 8. **验证**: `python3 scripts/test_mcp.py` → 3 个测试全部通过
+
+---
+
+## 附录 A: 重构历史
+
+### A.1 变更阶段
+
+| 阶段 | 内容 | 风险 | 状态 |
+|------|------|------|------|
+| 1 | Pydantic 模型 → `models/__init__.py` | 低 | ✅ |
+| 2 | 工具函数 → `utils/{db_utils,text_processing,date_utils}.py` | 低 | ✅ |
+| 3 | API 路由 → `api/v1/{entries,tags,graph,projects,stats,nl_commands}.py` | 中 | ✅ |
+| 4 | 业务逻辑 → `services/{embedding,attention,ai,lifecycle,clustering}_service.py` | 中 | ✅ |
+| 5 | 数据库层 → `db/{schema,migrations}.py` | 中 | ✅ |
+| 6 | MCP 模块化 → `protocols/mcp.py` + `mcp_server.py` | 低 | ✅ |
+| B | `protocols/mcp.py` 抽取；`mcp_server.py` 8 行代理 | 低 | ✅ |
+| C | 脚本迁移 → `scripts/` | 低 | ✅ |
+| D | 所有包 `__init__.py` re-export | 低 | ✅ |
+| E | 配置 → `app/core/config.py` | 低 | ✅ |
+| F | 全量代码移入 `app/` 容器包 | 低 | ✅ |
+
+### A.2 性能优化
+
+| 问题 | 优化前 | 优化后 | 改动 |
+|------|--------|--------|------|
+| `/api/graph/attention` Louvain O(n²) | **120s 超时** | **~150ms** | comm_sum_tot 缓存 + max_iterations=50 |
+| Feed 页 eager attention 加载 | 每次挂载拉取 | 点击"加载聚类"按钮触发 | ~300ms 节省 |
+| ECharts 动态 import | 每次视图切换重载 800KB | 模块级静态 import | 0 额外下载 |
 
 ---
 
