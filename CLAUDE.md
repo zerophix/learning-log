@@ -2,7 +2,7 @@
 
 从 AI 对话到结构化知识图谱的完整闭环。
 
-> 设计文档: `docs/ARCHITECTURE.md` · `docs/BACKEND.md` · `docs/FRONTEND.md` · `docs/GRAPH.md` · `docs/AI-CAPABILITIES.md` · `docs/REPRODUCE.md` · `docs/WEB-AI-BRIDGE.md`
+> 设计文档入口: `docs/README.md`（按分类浏览所有设计文档）
 
 ## 架构
 
@@ -135,7 +135,16 @@ backend/        FastAPI 服务 (app/main.py → app/{core,api,db,models,services
                 protocols/mcp.py MCP 协议层, scripts/ CLI 工具
 frontend/       Next.js 14 时间线 UI (pages: / /feed /graph)
 deploy/         部署脚本
-docs/           设计文档
+docs/           设计文档（分类存放）
+  architecture/  系统架构全景
+  backend/       后端设计系统
+  frontend/      前端设计系统
+  graph/         图谱架构 + AI 协作能力
+  web-ai-bridge/ Web AI Bridge 桥接系统
+  guide/         复现指南 + 接入配置
+  assets/        文档配图（PNG）
+scripts/        迁移脚本、种子数据、adhoc 工具
+install/        Shell 集成（learnlog CLI 源文件）
 ~/.config/opencode/skills/ Skills (/记录 /状态 /命令)
 ```
 

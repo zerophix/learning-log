@@ -2,7 +2,7 @@
 
 > **目标读者**：AI / 开发者。本文档完整描述后端的技术架构、数据库设计、API 规范、MCP 服务和脚本工具生态，足以让 AI 据此 1:1 复现整个后端。
 >
-> 前置阅读: `ARCHITECTURE.md` · 复现步骤: `REPRODUCE.md` · 前端: `FRONTEND.md` · 图谱: `GRAPH.md`
+> 前置阅读: `../architecture/ARCHITECTURE.md` · 复现步骤: `../guide/REPRODUCE.md` · 前端: `../frontend/FRONTEND.md` · 图谱: `../graph/GRAPH.md`
 
 ---
 

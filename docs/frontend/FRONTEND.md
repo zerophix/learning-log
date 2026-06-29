@@ -2,7 +2,7 @@
 
 > **目标读者**：AI / 开发者。本文档完整描述前端的设计语言、组件体系、样式规范和技术栈，足以让 AI 据此 1:1 复现整个前端。
 >
-> 前置阅读: `ARCHITECTURE.md` · 复现步骤: `REPRODUCE.md` · 后端: `BACKEND.md` · 图谱: `GRAPH.md`
+> 前置阅读: `../architecture/ARCHITECTURE.md` · 复现步骤: `../guide/REPRODUCE.md` · 后端: `../backend/BACKEND.md` · 图谱: `../graph/GRAPH.md`
 
 ---
 

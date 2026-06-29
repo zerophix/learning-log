@@ -2,7 +2,7 @@
 
 > **目标读者**：AI / 开发者。30 秒理解系统全貌，定位所需文档。
 >
-> 详细文档：`BACKEND.md` · `FRONTEND.md` · `GRAPH.md` · `AI-CAPABILITIES.md`
+> 详细文档：`../backend/BACKEND.md` · `../frontend/FRONTEND.md` · `../graph/GRAPH.md` · `../graph/AI-CAPABILITIES.md`
 
 ---
 
@@ -84,6 +84,6 @@
 
 | 通道 | 触发 | 延迟 | 文档 |
 |------|------|------|------|
-| MCP 工具调用 | AI 自动识别 → `capture_learning` | 实时 | `AI-CAPABILITIES.md` |
-| Skill 脚本 | 用户 `/记录` → 结构化分析 → CLI 入库 | 近实时 | `AI-CAPABILITIES.md` |
-| 文件监听 | `.md` 丢入 `watch/` | ≤30min | `AI-CAPABILITIES.md` |
+| MCP 工具调用 | AI 自动识别 → `capture_learning` | 实时 | `../graph/AI-CAPABILITIES.md` |
+| Skill 脚本 | 用户 `/记录` → 结构化分析 → CLI 入库 | 近实时 | `../graph/AI-CAPABILITIES.md` |
+| 文件监听 | `.md` 丢入 `watch/` | ≤30min | `../graph/AI-CAPABILITIES.md` |

@@ -16,7 +16,7 @@ llf                            # 最近记录
 
 ## AI 接入
 
-把 `docs/ai-prompt-card.md` 的内容粘贴到任何 AI 对话开头即可。
+把 `../graph/AI-CAPABILITIES.md` 的内容粘贴到任何 AI 对话开头即可。
 
 ## Claude Code Skills
 

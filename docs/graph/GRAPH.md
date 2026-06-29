@@ -2,7 +2,7 @@
 
 > **目标读者**：AI / 开发者。本文档完整覆盖图谱页面的架构演进、设计决策、三种视图的视觉编码方案、以及所有已完成的重构阶段（Phase 1–5 + Phase A–F）。
 >
-> 前置阅读: `ARCHITECTURE.md` · 前端基础: `FRONTEND.md` · 复现步骤: `REPRODUCE.md`
+> 前置阅读: `../architecture/ARCHITECTURE.md` · 前端基础: `../frontend/FRONTEND.md` · 复现步骤: `../guide/REPRODUCE.md`
 >
 > **状态**: 全部完成 ✅
 

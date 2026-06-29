@@ -2,7 +2,7 @@
 
 > 从零开始 1:1 复现整个系统。任何 AI 按此文档操作即可完整重建。
 
-详细架构参考: `ARCHITECTURE.md` · `BACKEND.md` · `FRONTEND.md` · `GRAPH.md` · `AI-CAPABILITIES.md`
+详细架构参考: `../architecture/ARCHITECTURE.md` · `../backend/BACKEND.md` · `../frontend/FRONTEND.md` · `../graph/GRAPH.md` · `../graph/AI-CAPABILITIES.md`
 
 ---
 
@@ -277,7 +277,7 @@ bash deploy/start.sh
 
 ## 6. AI 协作设置 (可选)
 
-详见 `AI-CAPABILITIES.md`。将 `docs/AI-PROMPT.md` 内容粘贴到 AI 对话开头即可获得学习记录能力。
+详见 `../graph/AI-CAPABILITIES.md`。将 `../graph/AI-CAPABILITIES.md` 内容粘贴到 AI 对话开头即可获得学习记录能力。
 
 ## 关键文件清单
 

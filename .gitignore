@@ -44,10 +44,12 @@ Thumbs.db
 .playwright-mcp/
 *.png
 *.jpg
+!docs/assets/*.png
+!docs/assets/*.jpg
 
 # ── MCP / Runtime ──────────────
 .claude/settings.local.json
 .lingma/
 .proxyai/
-PROXYAI.md
+# PROXYAI.md 已删除 — 模板文件
 cline.json

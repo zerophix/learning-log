@@ -474,10 +474,12 @@ Gemini → Extension → OpenCode → Filesystem MCP → 读取 src/main.py
 | 文档 | 内容 |
 |------|------|
 | 本文件 | Web AI Bridge 架构总览 |
-| `ARCHITECTURE.md` | 系统整体架构 |
-| `BACKEND.md` | 后端 API 设计 |
-| `FRONTEND.md` | 前端 UI 设计 |
-| `AI-CAPABILITIES.md` | AI 能力矩阵 |
+| `../architecture/ARCHITECTURE.md` | 系统整体架构 |
+| `../backend/BACKEND.md` | 后端 API 设计 |
+| `../frontend/FRONTEND.md` | 前端 UI 设计 |
+| `../graph/GRAPH.md` | 知识图谱架构 |
+| `../graph/AI-CAPABILITIES.md` | AI 能力矩阵 |
+| `../guide/REPRODUCE.md` | 完整复现指南 |
 
 ---
 

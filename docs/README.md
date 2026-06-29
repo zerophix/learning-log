@@ -1,0 +1,58 @@
+# Learning Log — 设计文档目录
+
+> **给 AI 的入口**：首次阅读本项目时，先从这里开始。
+> 按分类浏览，从架构全景到具体实现，逐层深入。
+
+---
+
+## 文档结构
+
+```
+docs/
+├── README.md                  ← 本文档（入口索引）
+├── architecture/              系统架构全景
+│   └── ARCHITECTURE.md        30 秒理解全貌，定位所需文档
+├── backend/                   后端设计系统
+│   └── BACKEND.md             API + 数据库 + MCP 完整规格（~1259 行）
+├── frontend/                  前端设计系统
+│   └── FRONTEND.md            组件 + 样式 + 路由完整规范（~1110 行）
+├── graph/                     知识图谱
+│   ├── GRAPH.md               三视图视觉编码 + 重构历史（~710 行）
+│   └── AI-CAPABILITIES.md     MCP 工具 + Skill + CIDED 决策框架
+├── web-ai-bridge/             Web AI Bridge 桥接系统
+│   └── WEB-AI-BRIDGE.md       ChatGPT Extension 桥接 + SSE 流式推送
+├── guide/                     操作指南
+│   ├── REPRODUCE.md           从零复现完整系统
+│   └── SETUP.md               Shell 集成 + MCP 配置（30 秒接入）
+└── assets/                    文档配图
+    ├── graph-page.png          图谱页面截图
+    ├── graph-edge-filter.png   图谱边过滤截图
+    └── graph-page-playwright.png Playwright 引擎图谱截图
+```
+
+## 阅读顺序推荐
+
+| 角色 | 阅读路径 |
+|------|---------|
+| **首次接触** | `README.md` → `architecture/ARCHITECTURE.md` → 按需进入具体模块 |
+| **后端开发** | `backend/BACKEND.md` → `graph/GRAPH.md` → `guide/REPRODUCE.md` |
+| **前端开发** | `frontend/FRONTEND.md` → `graph/GRAPH.md` |
+| **Web AI 桥接** | `web-ai-bridge/WEB-AI-BRIDGE.md` |
+| **从零搭建** | `guide/REPRODUCE.md` |
+
+## 关键文件一览
+
+| 文件 | 说明 | 行数 |
+|------|------|------|
+| `backend/BACKEND.md` | API 端点、数据库 schema、MCP 协议、性能基准 | ~1259 |
+| `frontend/FRONTEND.md` | 组件树、CSS 变量、ECharts 配置、路由规则 | ~1110 |
+| `graph/GRAPH.md` | 三视图（注意力/时间线/关系）、聚类算法、重构历史 | ~710 |
+| `web-ai-bridge/WEB-AI-BRIDGE.md` | Extension 通信、SSE 流式、5 种架构模式 | ~490 |
+
+## 项目根文档
+
+| 文档 | 用途 |
+|------|------|
+| `CLAUDE.md` | AI 协作指南（MCP 工具、命令、约束） |
+| `README.md` | 项目介绍 + 快速开始 |
+| `.claude/skills/` | 5 个 Claude Code Skill（记录/灵感/状态/命令/服务） |
