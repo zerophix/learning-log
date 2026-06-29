@@ -140,7 +140,6 @@ docs/           设计文档（分类存放）
   backend/       后端设计系统
   frontend/      前端设计系统
   graph/         图谱架构 + AI 协作能力
-  web-ai-bridge/ Web AI Bridge 桥接系统
   guide/         复现指南 + 接入配置
   assets/        文档配图（PNG）
 scripts/        迁移脚本、种子数据、adhoc 工具
