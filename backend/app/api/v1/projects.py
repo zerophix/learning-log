@@ -1,8 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
+from app.core.tag_config import TAG_PREFIX, PROJECT_TYPES
 from app.utils.db_utils import db_session, row_to_dict, parse_entry_rows
 
 router = APIRouter()
+
+_PROJECT_PREFIX = f"{TAG_PREFIX}.project"
 
 
 @router.get("/api/projects")
@@ -10,7 +13,7 @@ def list_projects(project_type: Optional[str] = None):
     with db_session() as conn:
         cursor = conn.cursor()
         if project_type:
-            parent_id = f"cn.dolphinmind.learning.log.tag.project.{project_type}"
+            parent_id = f"{_PROJECT_PREFIX}.{project_type}"
             cursor.execute("SELECT * FROM tags WHERE parent_tag_id = ? AND is_active = 1 ORDER BY tag_name", (parent_id,))
         else:
             cursor.execute("SELECT * FROM tags WHERE tag_category = 'project' AND is_active = 1 ORDER BY tag_name")
@@ -21,8 +24,8 @@ def list_projects(project_type: Optional[str] = None):
 def get_entries_by_project(project_id: str, research_type: Optional[str] = None):
     with db_session() as conn:
         cursor = conn.cursor()
-        if project_id in ['business', 'source-code', 'component']:
-            prefix = f"cn.dolphinmind.learning.log.tag.project.{project_id}."
+        if project_id in PROJECT_TYPES:
+            prefix = f"{_PROJECT_PREFIX}.{project_id}."
             if research_type:
                 cursor.execute(
                     "SELECT * FROM learning_entries WHERE project_tag_id LIKE ? AND research_type = ? ORDER BY timestamp DESC",

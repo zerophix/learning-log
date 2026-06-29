@@ -5,6 +5,7 @@ import hashlib
 import sqlite3
 from datetime import datetime, timedelta
 from collections import Counter
+from app.core.tag_config import TAG_PREFIX, DEFAULT_RESEARCH_TYPE
 from app.utils.db_utils import get_db, db_session, row_to_dict, parse_entry_rows
 from app.utils.text_processing import extract_summary, auto_extract_tags, ensure_tags
 from app.services.attention_service import infer_research_type
@@ -94,7 +95,7 @@ def get_feed_entries(limit: int = 50, offset: int = 0, project_type: Optional[st
         params = []
         if project_type:
             conditions.append("project_tag_id LIKE ?")
-            params.append(f"cn.dolphinmind.learning.log.tag.project.{project_type}.%")
+            params.append(f"{TAG_PREFIX}.project.{project_type}.%")
         if discipline:
             conditions.append("topic_tag_id LIKE ?")
             params.append(f"%.discipline.{discipline}.%")
@@ -189,11 +190,11 @@ def backfill_research_types(dry_run: bool = False):
     changes = []
     for row in rows:
         e = row_to_dict(row)
-        e['research_type'] = e.get('research_type') or 'deep-research'
+        e['research_type'] = e.get('research_type') or DEFAULT_RESEARCH_TYPE
         for k in ('diagram', 'code_snippet', 'analogy', 'transfer_pattern', 'confidence_rating', 'insight'):
             e[k] = e.get(k)
         inferred = infer_research_type(e)
-        original = e.get('research_type', 'deep-research')
+        original = e.get('research_type', DEFAULT_RESEARCH_TYPE)
         if inferred != original:
             changes.append({"id": e['id'], "topic": e['topic'][:60], "from": original, "to": inferred})
             if not dry_run:

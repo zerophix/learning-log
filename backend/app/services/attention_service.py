@@ -1,4 +1,5 @@
 import json
+from app.core.tag_config import DEFAULT_RESEARCH_TYPE, RESEARCH_TYPE_INFERENCE_RULES as _IR
 from app.utils.db_utils import row_to_dict
 
 
@@ -28,10 +29,10 @@ def entries_for_attention(conn, research_type: str | None = None) -> list[dict]:
 
 def infer_research_type(entry: dict) -> str:
     if entry.get('diagram') or entry.get('code_snippet'):
-        return 'domain-mapping'
+        return _IR['diagram_or_code']
     if entry.get('analogy') or entry.get('transfer_pattern'):
-        return 'topic-exploration'
+        return _IR['analogy_or_transfer']
     insight = entry.get('insight') or ''
     if len(insight) > 500 and entry.get('confidence_rating') is not None:
-        return 'deep-research'
-    return entry.get('research_type', 'deep-research')
+        return _IR['long_insight_with_confidence']
+    return entry.get('research_type', DEFAULT_RESEARCH_TYPE)

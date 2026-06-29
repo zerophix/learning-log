@@ -1,8 +1,10 @@
+import os
 import re
 import hashlib
 import uuid
 from collections import Counter
-from app.db import DB_PATH
+from app.core.tag_config import AUTO_TAG_PREFIX, AUTO_TAG_CATEGORY
+from app.core.config import PROJECT_DIR
 
 try:
     import jieba
@@ -12,32 +14,16 @@ except ImportError:
     pseg = None
 
 
-STOP_WORDS = {
-    '的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一',
-    '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着',
-    '没有', '看', '好', '自己', '这', '他', '她', '它', '们', '那', '里',
-    '对', '与', '及', '但', '而', '或', '因为', '所以', '如果', '虽然',
-    '可以', '这个', '那个', '哪些', '什么', '怎么', '如何', '为', '从',
-    '被', '把', '让', '给', '向', '用', '通过', '进行', '使用', '实现',
-    '需要', '能够', '应该', '可能', '已经', '正在', '还是', '就是', '不是',
-    '方式', '方法', '过程', '情况', '部分', '相关', '主要', '基本',
-    '一个', '这个', '那个', '这些', '那些', '非常', '比较', '一些', '很多', '这样',
-}
+def _load_stop_words(filename: str) -> set[str]:
+    path = os.path.join(PROJECT_DIR, "backend", "data", filename)
+    if not os.path.exists(path):
+        return set()
+    with open(path, "r", encoding="utf-8") as f:
+        return {line.strip() for line in f if line.strip()}
 
-ENGLISH_STOP = {
-    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-    'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might',
-    'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
-    'from', 'as', 'into', 'through', 'during', 'before', 'after', 'above',
-    'below', 'this', 'that', 'these', 'those', 'it', 'its', 'they', 'them',
-    'we', 'you', 'he', 'she', 'not', 'no', 'can', 'all', 'each', 'every',
-    'both', 'few', 'more', 'most', 'some', 'any', 'such', 'only', 'own',
-    'same', 'so', 'than', 'too', 'very', 'just', 'because', 'while',
-    'about', 'between', 'under', 'over', 'back', 'then', 'there', 'here',
-    'where', 'which', 'who', 'whom', 'what', 'when', 'why', 'how',
-    'get', 'got', 'make', 'made', 'take', 'took', 'use', 'used', 'using',
-    'like', 'based', 'also', 'well', 'first', 'new', 'one', 'two',
-}
+
+STOP_WORDS = _load_stop_words("stop_words_zh.txt")
+ENGLISH_STOP = _load_stop_words("stop_words_en.txt")
 
 
 def extract_summary(insight: str, max_chars: int = 200) -> str:
@@ -112,7 +98,7 @@ def slugify_tag(name: str) -> str:
     s = name.lower().strip()
     s = re.sub(r'[^a-z0-9\u4e00-\u9fff]+', '-', s)
     s = s.strip('-')
-    return f'auto.{s}' if s else f'auto.{uuid.uuid4().hex[:8]}'
+    return f'{AUTO_TAG_PREFIX}.{s}' if s else f'{AUTO_TAG_PREFIX}.{uuid.uuid4().hex[:8]}'
 
 
 def ensure_tags(conn, tag_names: list[str]) -> list[str]:
@@ -141,7 +127,7 @@ def ensure_tags(conn, tag_names: list[str]) -> list[str]:
                         break
             cursor.execute('''
                 INSERT INTO tags (tag_id, tag_name, tag_category, is_active, is_auto, usage_count)
-                VALUES (?, ?, 'auto', 1, 1, 1)
-            ''', (tag_id, name))
+                VALUES (?, ?, ?, 1, 1, 1)
+            ''', (tag_id, name, AUTO_TAG_CATEGORY))
         tag_ids.append(tag_id)
     return tag_ids

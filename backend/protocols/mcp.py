@@ -13,6 +13,7 @@ from mcp.types import Tool, TextContent
 from app.services.lifecycle import ensure, save_entry
 from app.services.ai_service import analyze, get_default_entry
 from app.core.config import PROJECT_DIR, BACKEND_URL, MCP_SSE_PORT
+from app.core.tag_config import DEFAULT_RESEARCH_TYPE, CUSTOM_TAGS_AHA, CUSTOM_TAGS_AUTO_CAPTURED
 
 from dotenv import load_dotenv
 
@@ -197,7 +198,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             "star_action": None,
             "star_result": None,
             "topic_tag_id": None,
-            "research_type": "deep-research",
+            "research_type": DEFAULT_RESEARCH_TYPE,
             "energy_level": energy,
             "aha_moment": True,
             "source": arguments.get("source", "deep-record"),
@@ -224,11 +225,11 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             "star_action": None,
             "star_result": None,
             "topic_tag_id": None,
-            "research_type": "deep-research",
+            "research_type": DEFAULT_RESEARCH_TYPE,
             "energy_level": 5,
             "aha_moment": True,
             "source": source,
-            "custom_tags": ["aha-moment", "quick-capture"],
+            "custom_tags": CUSTOM_TAGS_AHA,
         }
         entry_id = save_entry(entry_data)
         if entry_id > 0:

@@ -6,6 +6,8 @@ Learning Log - 智能聚类模块
 from collections import Counter
 from typing import Optional
 import re
+from app.core.tag_config import DEFAULT_RESEARCH_TYPE
+from app.core.config_service import get_research_types
 
 
 # ==================== Louvain 社区检测 ====================
@@ -115,7 +117,7 @@ def generate_cluster_labels(
         cluster_topics[cluster].append(topic)
         
         # 研究类型
-        rtype = entry.get('research_type', 'deep-research')
+        rtype = entry.get('research_type', DEFAULT_RESEARCH_TYPE)
         cluster_research_types[cluster].append(rtype)
     
     labels = {}
@@ -166,11 +168,7 @@ def _generate_single_label(
     if research_types:
         rtype_counter = Counter(research_types)
         dominant = rtype_counter.most_common(1)[0][0]
-        rtype_name = {
-            'deep-research': '深度研究',
-            'topic-exploration': '主题探索',
-            'domain-mapping': '领域映射',
-        }.get(dominant, dominant)
+        rtype_name = get_research_types().get(dominant, dominant)
         return f'{rtype_name} #{cluster_id + 1}'
     
     return f'聚类 {cluster_id + 1}'
@@ -210,7 +208,7 @@ def analyze_clusters(
         cluster_data[cluster]['entries'].append(entry['id'])
         cluster_data[cluster]['energies'].append(entry.get('energy_level', 3))
         cluster_data[cluster]['research_types'].append(
-            entry.get('research_type', 'deep-research')
+            entry.get('research_type', DEFAULT_RESEARCH_TYPE)
         )
     
     result = []
@@ -220,7 +218,7 @@ def analyze_clusters(
         
         # 主要研究类型
         rtype_counter = Counter(data['research_types'])
-        dominant = rtype_counter.most_common(1)[0][0] if data['research_types'] else 'deep-research'
+        dominant = rtype_counter.most_common(1)[0][0] if data['research_types'] else DEFAULT_RESEARCH_TYPE
         
         result.append({
             'id': cluster_id,

@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 from app.db import init_db
 from app.core.config import DB_PATH
+from app.core.config_service import ensure_config
 from app.services.embedding_service import get_embedding_model
 
 app = FastAPI(title="Learning Log API", version="2.0.0")
@@ -14,6 +15,7 @@ app = FastAPI(title="Learning Log API", version="2.0.0")
 @app.on_event("startup")
 def startup():
     init_db()
+    ensure_config()
     _conn = sqlite3.connect(DB_PATH)
     _conn.execute("UPDATE tags SET is_active = 0 WHERE is_auto = 0 AND is_active = 1")
     _conn.commit()

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
+from app.core.tag_config import DEFAULT_RESEARCH_TYPE
 
 
 class TagCreate(BaseModel):
@@ -30,7 +31,7 @@ class LearningEntryCreate(BaseModel):
     star_result: Optional[str] = None
     topic_tag_id: Optional[str] = None
     project_tag_id: Optional[str] = None
-    research_type: str = "deep-research"
+    research_type: str = DEFAULT_RESEARCH_TYPE
     related_tag_ids: List[str] = []
     custom_tags: List[str] = []
     analogy: Optional[str] = None

@@ -1,9 +1,11 @@
 """AI-powered learning content analysis service."""
 import json
 import os
+import sys
 from datetime import datetime
 from dotenv import load_dotenv
 import requests
+from app.core.tag_config import CUSTOM_TAGS_AUTO_CAPTURED
 
 PROJECT_DIR = os.environ.get(
     "LEARNLOG_PROJECT_DIR",
@@ -23,7 +25,7 @@ def get_default_entry(raw_content: str) -> dict:
         "insight": "待补充",
         "summary": "待补充",
         "category": "general",
-        "tags": ["auto-captured"],
+        "tags": CUSTOM_TAGS_AUTO_CAPTURED,
         "difficulty": "medium",
     }
 

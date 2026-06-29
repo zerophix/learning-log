@@ -56,6 +56,13 @@ CREATE TABLE IF NOT EXISTS learning_entries (
     FOREIGN KEY (project_tag_id) REFERENCES tags(tag_id)
 );
 
+CREATE TABLE IF NOT EXISTS system_config (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    description TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS nl_commands (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     command_text TEXT NOT NULL,

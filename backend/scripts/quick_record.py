@@ -10,8 +10,11 @@ import requests
 import json
 from datetime import datetime
 
+import sys
+sys.path.insert(0, '/Users/mingxilv/PycharmProjects/learning-log/backend')
+from app.core.tag_config import TAG_PREFIX, LINK_TYPES
+
 BACKEND_URL = "http://localhost:8002"
-TAG_PREFIX = "cn.dolphinmind.learning.log.tag"
 
 def check_backend():
     """检查后端服务是否运行"""
@@ -155,21 +158,21 @@ def interactive_input():
     aha_moment = (aha == 'y')
     
     # 标签选择
+    category_options = [
+        "framework", "database", "middleware", "base", "language",
+        "architecture", "tool", "cache", "mq", "gateway",
+        "security", "monitor", "test", "other"
+    ]
     print("\n🏷️  标签分类:")
-    print("1. framework (框架)  2. database (数据库)  3. middleware (中间件)")
-    print("4. base (基础)  5. language (语言)  6. architecture (架构)")
-    print("7. tool (工具)  8. cache (缓存)  9. mq (消息队列)")
-    print("10. gateway (网关)  11. security (安全)  12. monitor (监控)")
-    print("13. test (测试)  14. other (其他)")
-    
+    for i, cat in enumerate(category_options, 1):
+        print(f"{i}. {cat}", end="  ")
+        if i % 3 == 0:
+            print()
+    if len(category_options) % 3 != 0:
+        print()
+
     cat_choice = input("\n选择分类 (数字): ").strip()
-    category_map = {
-        "1": "framework", "2": "database", "3": "middleware",
-        "4": "base", "5": "language", "6": "architecture",
-        "7": "tool", "8": "cache", "9": "mq",
-        "10": "gateway", "11": "security", "12": "monitor",
-        "13": "test", "14": "other"
-    }
+    category_map = {str(i + 1): cat for i, cat in enumerate(category_options)}
     tag_category = category_map.get(cat_choice, "other")
     
     # 主标签
@@ -186,11 +189,12 @@ def interactive_input():
     
     if has_related == 'y':
         print("\n选择关联类型:")
-        print("1. prerequisite (前置依赖)  2. alternative (替代方案)")
-        print("3. contains (包含关系)  4. related (相关)")
-        link_choice = input("选择 (1-4, 默认 4): ").strip()
-        link_map = {"1": "prerequisite", "2": "alternative", "3": "contains", "4": "related"}
-        link_type = link_map.get(link_choice, "related")
+        for i, lt in enumerate(LINK_TYPES, 1):
+            print(f"{i}. {lt}", end="  ")
+        print()
+        link_choice = input(f"选择 (1-{len(LINK_TYPES)}, 默认 {len(LINK_TYPES)}): ").strip()
+        link_map = {str(i + 1): lt for i, lt in enumerate(LINK_TYPES)}
+        link_type = link_map.get(link_choice, LINK_TYPES[-1])
         
         related_tag_name = input("关联标签名称: ").strip()
         if related_tag_name:

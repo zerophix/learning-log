@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from collections import Counter
 from datetime import datetime
+from app.core.tag_config import FALLBACK_RESEARCH_TYPE
 from app.utils.db_utils import db_session, row_to_dict
 from app.services.attention_service import entries_for_attention
 from app.services.embedding_service import compute_embeddings, cosine_sim_matrix, to_python
@@ -122,7 +123,7 @@ def get_attention_graph(
             "summary": (e.get('summary') or '')[:100],
             "energy": e['energy_level'],
             "aha": bool(e['aha_moment']),
-            "research_type": e.get('research_type') or 'unclassified',
+            "research_type": e.get('research_type') or FALLBACK_RESEARCH_TYPE,
             "cluster": cluster_id,
             "cluster_name": cluster_labels.get(cluster_id, f'聚类 {cluster_id + 1}'),
             "timestamp": e['timestamp'],

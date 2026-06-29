@@ -7,7 +7,7 @@ import sqlite3
 
 from app.core.config import DB_PATH
 from app.db.schema import create_tables
-from app.db.migrations import run_migrations
+from app.db.migrations import run_migrations, run_seeds
 
 
 def init_db():
@@ -16,6 +16,7 @@ def init_db():
     cursor = conn.cursor()
     create_tables(cursor)
     run_migrations(cursor)
+    run_seeds(cursor)
     conn.commit()
     conn.close()
     print(f"✅ Learning Log database initialized at: {DB_PATH}")
