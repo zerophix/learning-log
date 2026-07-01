@@ -22,18 +22,9 @@
       "enabled": true
     },
     "learning-log": {
-      "type": "local",
-      "command": [
-        "/Users/mingxilv/PycharmProjects/learning-log/venv/bin/python3",
-        "/Users/mingxilv/PycharmProjects/learning-log/backend/mcp_server.py"
-      ],
-      "enabled": true,
-      "environment": {
-        "LEARNLOG_PROJECT_DIR": "/Users/mingxilv/PycharmProjects/learning-log",
-        "BACKEND_URL": "http://localhost:8002",
-        "AI_API_URL": "http://localhost:11434/api/generate",
-        "AI_MODEL": "qwen2.5"
-      }
+      "type": "sse",
+      "url": "http://localhost:8010/sse",
+      "enabled": true
     },
     "playwright": {
       "type": "local",

@@ -9,8 +9,13 @@
 
 ```
 docs/
-├── README.md                  ← 本文档（入口索引）
-├── architecture/              系统架构全景
+├── README.md ← 本文档（入口索引）
+├── guimi/ 诡秘之主阅读流水线
+│   ├── README.md 流水线总览（接手流程、Pipeline 架构、数据格式）
+│   ├── AGENT_HANDOFF.md 新 CLI 会话完整接手手册（Step 1-5）
+│   ├── SKILL_SPEC.md /读 /精读 /读研 三件套规格 + 校验清单
+│   └── SCRAPE_GUIDE.md Playwright 批量抓取 + 自动化手册
+├── architecture/ 系统架构全景
 │   └── ARCHITECTURE.md        30 秒理解全貌，定位所需文档
 ├── backend/                   后端设计系统
 │   └── BACKEND.md             API + 数据库 + MCP 完整规格（~1259 行）

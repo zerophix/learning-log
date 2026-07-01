@@ -233,3 +233,50 @@ AI_MODEL=qwen3-coder:30b          # 本地 Ollama 模型
 - `/feed`：`position: fixed` 覆盖模式 + backdrop
 
 **相关文件**: `frontend/components/entry/EntryDetail.tsx:104` (stopPropagation), `frontend/app/page.tsx:63` (handleSelect toggle), `frontend/styles/index.css:413-451` (sidebar-detail CSS, 含移动端响应式)
+
+## 诡秘之主 阅读流水线
+
+> 规则：任何新 CLI 会话打开后，按 **Chapter 6 - 任何 CLI 自动接手流程** 执行，无需人工参与。
+
+### 关键文件
+
+```text
+scripts/tools/scrape_guimi_playwright.py   # 爬取（Playwright，反爬绕过）
+scripts/tools/guimi_pipeline.py            # 流水线调度
+scripts/tools/guimi_batch_reader.py        # API 批次阅读处理器
+scripts/tools/guimi_agent.md               # Agent 接手手册（完整操作指南）
+/tmp/guimi_chapters/                        # 已落盘章节文件（*.md，CID 排序）
+/tmp/guimi_pipeline_state.json             # 抓取 + 处理状态
+/tmp/guimi_completed.json                  # 已处理 CID 集合
+```
+
+### 单人接手流程（新 CLI 复制粘贴）
+
+```bash
+# Step 1: 确认后端运行
+curl -s http://localhost:8002/api/stats || {
+  cd /Users/mingxilv/PycharmProjects/learning-log/backend
+  nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8002 > /tmp/ll_backend.log 2>&1 &
+  sleep 3
+}
+
+# Step 2: 查看队列
+python3 scripts/tools/guimi_batch_reader.py queue
+
+# Step 3: 续跑抓取（后台）
+nohup python3 scripts/tools/scrape_guimi_playwright.py \
+  "$(python3 -c "import json; s=json.load(open('/tmp/guimi_pipeline_state.json')); print(s['scrape'].get('next_url','https://www.sobqg.com/read/guimizhizhu/17859645.html'))")" \
+  2000 > /tmp/guimi_scrape.log 2>&1 &
+
+# Step 4: 处理 5 章
+python3 scripts/tools/guimi_batch_reader.py process 5
+
+# Step 5: 重复 Step 4 直到 queue 显示 0 待处理
+```
+
+### 完整文档（专栏）
+
+- **`docs/guimi/README.md`** — 流水线总览，包含接手流程、Pipeline 架构、数据格式、进度跟踪、自测命令
+- **`docs/guimi/AGENT_HANDOFF.md`** — 新 CLI 会话完整接手手册（Step 1-5 复制粘贴）
+- **`docs/guimi/SKILL_SPEC.md`** — `/读` `/精读` `/读研` 三件套规格 + 校验清单
+- **`scripts/tools/guimi_agent.md`** — Agent 简短流程速查（→ 已迁移至上述文档）

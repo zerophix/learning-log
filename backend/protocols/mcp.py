@@ -268,7 +268,7 @@ async def scheduled_capture():
 async def run_sse_server(port: int):
     from mcp.server.sse import SseServerTransport
     from starlette.applications import Starlette
-    from starlette.routing import Route
+    from starlette.routing import Route, Mount
     from starlette.middleware import Middleware
     from starlette.middleware.cors import CORSMiddleware
     import uvicorn
@@ -276,17 +276,17 @@ async def run_sse_server(port: int):
     sse = SseServerTransport("/messages/")
 
     async def handle_sse(request):
-        async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
+        scope = request.scope
+        receive = request.receive
+        send = request._send
+        async with sse.connect_sse(scope, receive, send) as streams:
             await server.run(streams[0], streams[1], server.create_initialization_options())
-
-    async def handle_messages(request):
-        await sse.handle_post_message(request.scope, request.receive, request._send)
 
     app = Starlette(
         debug=False,
         routes=[
             Route("/sse", endpoint=handle_sse),
-            Route("/messages/", endpoint=handle_messages, methods=["POST"]),
+            Mount("/messages/", app=sse.handle_post_message),
         ],
         middleware=[
             Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]),
